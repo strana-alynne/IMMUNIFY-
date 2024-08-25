@@ -45,6 +45,20 @@ export default function Theme({ children }) {
         fontSize: "1.25rem",
         fontWeight: 700,
       },
+
+      p: {
+        fontSize: "1.5rem",
+        fontWeight: 500,
+      },
+    },
+    components: {
+      MuiDrawer: {
+        styleOverrides: {
+          root: {
+            backgroundColor: "#145B50",
+          },
+        },
+      },
     },
   });
   return (
