@@ -30,11 +30,12 @@ import Select, { SelectChangeEvent } from "@mui/material/Select";
 import FaceIcon from "@mui/icons-material/Face";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
-import SearchIcon from '@mui/icons-material/Search';
+import SearchIcon from "@mui/icons-material/Search";
 import { useRouter } from "next/navigation";
+import { AddCircle } from "@mui/icons-material";
 //responsible for getting the data from the array
-function createData(name, age, bday, purok, mother, status) {
-  return { name, age, bday, purok, mother, status };
+function createData(name, age, bday, purok, mother, status, id) {
+  return { name, age, bday, purok, mother, status, id };
 }
 //Chip Color
 const getChipColor = (status) => {
@@ -70,7 +71,8 @@ const rows = [
     "12/24/2023",
     "farland",
     "Maria Johnsons",
-    "Completed"
+    "Completed",
+    1
   ),
   createData(
     "Sarah Johnsons",
@@ -78,7 +80,8 @@ const rows = [
     "12/24/2023",
     "farland",
     "Maria Johnsons",
-    "Partial"
+    "Partial",
+    2
   ),
   createData(
     "Sarah Johnsons",
@@ -86,7 +89,8 @@ const rows = [
     "12/24/2023",
     "farland",
     "Maria Johnsons",
-    "Missed Schedule"
+    "Missed Schedule",
+    3
   ),
 ];
 
@@ -113,11 +117,7 @@ const purok = [
 ];
 
 //status filter
-const statusArr = [
- "Completed",
- "Partial",
- "Missed Schedule",
-];
+const statusArr = ["Completed", "Partial", "Missed Schedule"];
 const ITEM_HEIGHT = 48;
 const ITEM_PADDING_TOP = 8;
 const MenuProps = {
@@ -134,8 +134,11 @@ export default function ChildRecords() {
   const [purokName, setPurokName] = React.useState([]);
   const [statusName, setStatusName] = React.useState([]);
 
-  const handleRowClick = (name) => {
-    router.push(`/ChildRecords/${name}`);
+  const handleRowClick = (id) => {
+    router.replace(`/pages/ChildRecords/${id}`);
+  };
+  const handleAdd = () => {
+    router.replace(`/pages/ChildRecords/AddChild`);
   };
 
   const handlePurokChange = (event) => {
@@ -167,10 +170,11 @@ export default function ChildRecords() {
               Child Records
             </Typography>
           </Stack>
-          <Grid container alignItems="center" spacing={2}>
+          <Grid container alignItems="start" spacing={2}>
             {/* SEARCH TEXTFIELD */}
             <Grid item xs={4}>
               <TextField
+                size="medium"
                 fullWidth
                 id="outlined-size-small"
                 label="Search..."
@@ -185,7 +189,7 @@ export default function ChildRecords() {
                 }}
               />
             </Grid>
-            
+
             {/* DROPDOWN BY PUROK */}
             <Grid item xs={4}>
               <FormControl fullWidth>
@@ -238,8 +242,14 @@ export default function ChildRecords() {
               </FormControl>
             </Grid>
 
+            {/* ADD BUTTON */}
             <Grid item xs={2}>
-              <Button variant="contained" color="primary">
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<AddCircle />}
+                onClick={handleAdd}
+              >
                 Add Child
               </Button>
             </Grid>
@@ -266,9 +276,12 @@ export default function ChildRecords() {
                 <TableBody>
                   {rows.map((row) => (
                     <TableRow
-                      key={row.name}
-                      sx={{ "&:last-child td, &:last-child th": { border: 0 }, cursor: "pointer" }}
-                      onClick={() => handleRowClick(row.name)}
+                      key={row.id}
+                      sx={{
+                        "&:last-child td, &:last-child th": { border: 0 },
+                        cursor: "pointer",
+                      }}
+                      onClick={() => handleRowClick(row.id)}
                     >
                       <TableCell component="th" scope="row">
                         {row.name}
