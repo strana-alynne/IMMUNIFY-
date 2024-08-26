@@ -8,14 +8,20 @@ export default function Theme({ children }) {
       primary: {
         main: "#0e6b58",
         contrastText: "#f5fafb",
+        light: "#CEF9EC",
+        dark: "#14967F",
       },
       secondary: {
         main: "#EE7423",
         contrastText: "#f5fafb",
+        light: "#FDEDD7",
+        dark: "#DF5917",
       },
       error: {
         main: "#E94A4A",
         contrastText: "#f5fafb",
+        light: "#FCCCCC",
+        dark: "#D62C2C",
       },
     },
 
