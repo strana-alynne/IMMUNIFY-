@@ -24,6 +24,10 @@ export default function Theme({ children }) {
         light: "#FCCCCC",
         dark: "#D62C2C",
       },
+      info: {
+        main: "#B0B0B0",
+        contrastText: "#f5fafb"
+      }
     },
 
     typography: {
