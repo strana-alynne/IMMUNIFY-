@@ -16,9 +16,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 export default function Home() {
   const router = useRouter();
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    const data = new FormData(event.currentTarget);
+  const handleSubmit = () => {
     router.push("./pages/ChildRecords");
   };
   const [showPassword, setShowPassword] = useState(false);
