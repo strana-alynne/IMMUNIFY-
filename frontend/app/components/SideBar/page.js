@@ -21,7 +21,7 @@ import InboxIcon from "@mui/icons-material/MoveToInbox";
 import MailIcon from "@mui/icons-material/Mail";
 import getPath from "../../path";
 const drawerWidth = 240;
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 const openedMixin = (theme) => ({
   width: drawerWidth,
@@ -47,10 +47,11 @@ const closedMixin = (theme) => ({
 const DrawerHeader = styled("div")(({ theme }) => ({
   display: "flex",
   alignItems: "center",
-  justifyContent: "flex-end",
+  justifyContent: "space-between",
   padding: theme.spacing(0, 1),
   // necessary for content to be below app bar
   ...theme.mixins.toolbar,
+  width: "100%",
 }));
 
 const Drawer = styled(MuiDrawer, {
@@ -75,6 +76,7 @@ export default function SideBar() {
   const router = useRouter();
   const [open, setOpen] = React.useState(true);
   const path = getPath();
+  const pathname = usePathname();
 
   const handleDrawerToggle = () => {
     setOpen((prevOpen) => !prevOpen); // Toggle the state
@@ -85,7 +87,9 @@ export default function SideBar() {
   };
 
   const handleNavigation = (path) => {
-    router.push(path);
+    console.log(`current: ${pathname}`);
+    console.log(path);
+    router.replace(path);
   };
 
   return (
@@ -93,8 +97,13 @@ export default function SideBar() {
       <CssBaseline />
       <Drawer variant="permanent" open={open}>
         <DrawerHeader>
-          <img src="/logo-wordmark-white.png" alt="logo" width="180" />
-          <IconButton onClick={handleDrawerToggle}>
+          <img
+            src={open ? "/logo-wordmark-white.png" : "/logo-white.png"} // Change this path as needed
+            alt="logo"
+            width={open ? 180 : 40}
+            // Adjust size for closed state if needed
+          />
+          <IconButton onClick={handleDrawerToggle} sx={{ color: "white" }}>
             {contheme.direction === "rtl" ? (
               <ChevronRightIcon />
             ) : (
@@ -104,31 +113,37 @@ export default function SideBar() {
         </DrawerHeader>
         <Divider />
         <List>
-          {path.map((text) => (
-            <ListItem key={text.id} disablePadding sx={{ display: "block" }}>
-              <ListItemButton
-                sx={{
-                  minHeight: 48,
-                  justifyContent: open ? "initial" : "center",
-                  px: 2.5,
-                }}
-                onClick={() => handleNavigation(text.path)}
-              >
-                <ListItemIcon
+          {path.map((text, index) => (
+            <React.Fragment key={text.id}>
+              <ListItem key={text.id} disablePadding sx={{ display: "block" }}>
+                <ListItemButton
                   sx={{
-                    minWidth: 0,
-                    mr: open ? 3 : "auto",
-                    justifyContent: "center",
+                    minHeight: 48,
+                    justifyContent: open ? "initial" : "center",
+                    px: 2.5,
+                    backgroundColor:
+                      text.path === pathname ? "#164B43" : "#145B50",
                   }}
+                  onClick={() => handleNavigation(text.path)}
                 >
-                  {text.img}
-                </ListItemIcon>
-                <ListItemText
-                  primary={text.label}
-                  sx={{ opacity: open ? 1 : 0 }}
-                />
-              </ListItemButton>
-            </ListItem>
+                  <ListItemIcon
+                    sx={{
+                      minWidth: 0,
+                      mr: open ? 3 : "auto",
+                      justifyContent: "center",
+                      color: "white",
+                    }}
+                  >
+                    {text.img}
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={text.label}
+                    sx={{ opacity: open ? 1 : 0, color: "white" }}
+                  />
+                </ListItemButton>
+              </ListItem>
+              {index === 0 && <Divider />}
+            </React.Fragment>
           ))}
         </List>
       </Drawer>

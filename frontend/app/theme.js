@@ -10,7 +10,7 @@ export default function Theme({ children }) {
         contrastText: "#f5fafb",
         light: "#CEF9EC",
         dark: "#14967F",
-        darker: "#062D29"
+        darker: "#062D29",
       },
       secondary: {
         main: "#EE7423",
@@ -26,8 +26,8 @@ export default function Theme({ children }) {
       },
       info: {
         main: "#B0B0B0",
-        contrastText: "#f5fafb"
-      }
+        contrastText: "#f5fafb",
+      },
     },
 
     typography: {
@@ -59,6 +59,10 @@ export default function Theme({ children }) {
 
       p: {
         fontSize: "1.0rem",
+        fontWeight: 500,
+      },
+      p2: {
+        fontSize: "0.8rem",
         fontWeight: 500,
       },
     },
