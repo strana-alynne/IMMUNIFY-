@@ -11,7 +11,7 @@ export default function Motherinfo() {
   return (
     <Grid container spacing={2}>
       {/* EMAIL */}
-    <Grid item xs={6}>
+    <Grid item xs={4}>
       <TextField
         variant="filled"
         size="small"
@@ -22,7 +22,17 @@ export default function Motherinfo() {
         autoFocus
       />
     </Grid>
-    <Grid item xs={6}></Grid>
+    <Grid item xs={4}>
+    <TextField
+        variant="filled"
+        size="small"
+        fullWidth
+        id="outlined-size-small"
+        label="Contact Number"
+        name="contactNumber"
+        autoFocus
+      />
+    </Grid>
 
     {/* FIRST NAME */}
     <Grid item xs={6}>
