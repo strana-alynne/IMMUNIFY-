@@ -24,7 +24,7 @@ const rows = [
 
 export default function VaccineLagTable() {
   return (
-    <Box>
+    <Box flex={1}>
       <TableContainer component={Paper}>
         <Table sx={{ minWidth: 650 }} size="small" aria-label="a dense table">
           <TableHead>

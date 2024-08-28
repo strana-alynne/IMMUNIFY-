@@ -3,7 +3,7 @@ import SideBar from "@/app/components/SideBar/page";
 import { Box, Container, Typography, Stack, Grid } from "@mui/material";
 import { Assessment } from "@mui/icons-material";
 import DefaulterCard from "@/app/components/DefaulterCard";
-import Map from "@/app/components/map";
+import Map from "@/app/components/Map";
 import DefaultersTable from "./tables/DefaultersTable";
 import VaccineLagTable from "./tables/VaccineLagTable";
 export default function DefaulterAnalysis() {
@@ -19,41 +19,52 @@ export default function DefaulterAnalysis() {
             </Typography>
           </Stack>
         </Stack>
-        <Stack container direction="row">
+
+        <Stack direction="row" spacing={2}>
           {/* GRAPHS AND NUMBERS */}
-          <Stack>
-            <Typography variant="h5" color="primary.darker">
-              HIGHEST NUMBER OF DEFAULTER
-            </Typography>
-            <Grid container direction="row" columnSpacing={2}>
-              <Grid item xs={4}>
-                <DefaulterCard title="Dumoy" description="300" />
+          <Box sx={{ width: "60%" }}>
+            <Stack>
+              <Typography variant="h5" color="primary.darker">
+                HIGHEST NUMBER OF DEFAULTER
+              </Typography>
+              <Grid container spacing={2} sx={{ width: "100%" }}>
+                <Grid item xs={4}>
+                  <DefaulterCard title="Dumoy" description="300" />
+                </Grid>
+                <Grid item xs={4}>
+                  <DefaulterCard title="Farland" description="200" />
+                </Grid>
+                <Grid item xs={4}>
+                  <DefaulterCard title="Dacoville" description="150" />
+                </Grid>
               </Grid>
-              <Grid item xs={4}>
-                <DefaulterCard title="Farland" description="200" />
-              </Grid>
-              <Grid item xs={4}>
-                <DefaulterCard title="Dacoville" description="150" />
-              </Grid>
-            </Grid>
-            <Typography variant="h5" color="primary.darker">
-              DEFAULTER ANALYSIS
-            </Typography>
-            <Grid container direction="row" columnSpacing={2}>
-              <Map />
-            </Grid>
-          </Stack>
+              <Stack>
+                <Typography variant="h5" color="primary.darker">
+                  DEFAULTER ANALYSIS
+                </Typography>
+                <Map />
+              </Stack>
+            </Stack>
+          </Box>
           {/* TABLES */}
-          <Stack>
-            <Typography variant="h5" color="primary.darker">
-              No. of Defaulters per Purok
-            </Typography>
-            <DefaultersTable />
-            <Typography variant="h5" color="primary.darker">
-              Lagging Vaccine Immunization
-            </Typography>
-            <VaccineLagTable />
-          </Stack>
+          <Box sx={{ width: "40%", maxWidth: "400px" }}>
+            <Stack spacing={4}>
+              <Stack spacing={2}>
+                <Typography variant="h5" color="primary.darker">
+                  No. of Defaulters per Purok
+                </Typography>
+                <DefaultersTable />
+              </Stack>
+              <Stack spacing={2}>
+                <Typography variant="h5" color="primary.darker">
+                  Lagging Vaccine Immunization
+                </Typography>
+                <Box>
+                  <VaccineLagTable />
+                </Box>
+              </Stack>
+            </Stack>
+          </Box>
         </Stack>
       </Container>
     </Box>

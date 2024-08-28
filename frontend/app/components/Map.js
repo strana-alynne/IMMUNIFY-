@@ -5,10 +5,10 @@ export default function Map() {
       sx={{
         display: "flex",
         marginTop: "100px",
+        backgroundColor: "black",
       }}
     >
-      <Container fixed sx={{ backgroundColor: "primary" }}>
-        <h1>Inbox</h1>
+      <Container fixed sx={{ backgroundColor: "black" }}>
         <Typography variant="h1" color="primary">
           {" "}
           Map itu siya

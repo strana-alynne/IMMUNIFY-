@@ -29,9 +29,9 @@ export default function DefaultersTable() {
         <Table sx={{ minWidth: 650 }} size="small" aria-label="a dense table">
           <TableHead>
             <TableRow>
-              <TableCell align="left">Purok</TableCell>
-              <TableCell align="left">Immunized</TableCell>
-              <TableCell align="left">Defaulter</TableCell>
+              <TableCell>Purok</TableCell>
+              <TableCell>Immunized</TableCell>
+              <TableCell>Defaulter</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -43,8 +43,8 @@ export default function DefaultersTable() {
                 <TableCell component="th" scope="row">
                   {row.purok}
                 </TableCell>
-                <TableCell align="left">{row.immunized}</TableCell>
-                <TableCell align="left">{row.defaulter}</TableCell>
+                <TableCell>{row.immunized}</TableCell>
+                <TableCell>{row.defaulter}</TableCell>
               </TableRow>
             ))}
           </TableBody>
