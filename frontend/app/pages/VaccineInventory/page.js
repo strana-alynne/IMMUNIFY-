@@ -16,6 +16,7 @@ import {
   Button,
 } from "@mui/material";
 import VaccinesIcon from "@mui/icons-material/Vaccines";
+import { useRouter } from "next/navigation";
 
 function createData(name, calories, fat, carbs, protein, date) {
   return { name, calories, fat, carbs, protein, date };
@@ -52,8 +53,9 @@ const rows = [
 ];
 
 export default function VaccinInventory() {
+  const router = useRouter();
   const handleButtonClick = (id) => {
-    console.log(`Button clicked for ${id}`);
+    router.replace(`/pages/VaccineInventory/${id}`);
   };
   return (
     <Box sx={{ display: "flex", marginTop: "50px" }}>
