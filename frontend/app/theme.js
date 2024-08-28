@@ -17,12 +17,14 @@ export default function Theme({ children }) {
         contrastText: "#f5fafb",
         light: "#FDEDD7",
         dark: "#DF5917",
+        medium: "#F2914",
       },
       error: {
         main: "#E94A4A",
         contrastText: "#f5fafb",
         light: "#FCCCCC",
         dark: "#D62C2C",
+        medium: "#F37676",
       },
       info: {
         main: "#B0B0B0",
