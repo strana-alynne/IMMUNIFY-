@@ -12,7 +12,7 @@ import {
   Face,
   EventBusy,
 } from "@mui/icons-material";
-import Map from "@/app/components/map";
+import Map from "@/app/components/Map";
 export default function Dashboard() {
   return (
     <Box sx={{ display: "flex", marginTop: "50px" }}>
