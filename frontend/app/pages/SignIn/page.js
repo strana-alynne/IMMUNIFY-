@@ -53,7 +53,7 @@ export default function Home() {
             required
             fullWidth
             name="password"
-            label=" New Password"
+            label="Enter New Password"
             type={showPassword ? "text" : "password"}
             id="password"
             autoComplete="current-password"
@@ -72,10 +72,33 @@ export default function Home() {
               ),
             }}
           />
-           <Link href="" variant="body2">
+          <TextField
+            margin="normal"
+            required
+            fullWidth
+            name="password"
+            label="Confirm New Password"
+            type={showPassword ? "text" : "password"}
+            id="password"
+            autoComplete="current-password"
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label="toggle password visibility"
+                    onClick={handleClickShowPassword}
+                    onMouseDown={handleMouseDownPassword}
+                    edge="end"
+                  >
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+          />
+           <Link href="/pages/ForgotPass" variant="body2">
             Forgot password?
           </Link>
-        
           <Button
             type="submit"
             fullWidth
@@ -87,8 +110,8 @@ export default function Home() {
           </Button>
           <Grid container justifyContent="center">
             <Grid item>
-              <Link href="/pages/SignIn" variant="body2">
-                {"Do not have an account? Sign in"}
+              <Link href="/" variant="body2">
+                {"Already have an account? Log in"}
               </Link>
             </Grid>
           </Grid>
