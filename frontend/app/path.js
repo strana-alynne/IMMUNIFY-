@@ -3,13 +3,13 @@ import ChildRecords from "./pages/ChildRecords/page";
 import DefaulterAnalysis from "./pages/DefaulterAnalysis/page";
 import Inbox from "./pages/Inbox/page";
 import Reminders from "./pages/Reminders/page";
-import VaccinInventory from "./pages/VaccineInventory";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import VaccinesIcon from "@mui/icons-material/Vaccines";
 import AssessmentIcon from "@mui/icons-material/Assessment";
 import FaceIcon from "@mui/icons-material/Face";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import Appointments from "./pages/Appointments/page";
+import VaccineInventory from "./pages/VaccineInventory/page";
 import { Message, Notifications } from "@mui/icons-material";
 
 const getPath = () => [
@@ -24,7 +24,7 @@ const getPath = () => [
     id: 2,
     label: "Vaccine Inventory",
     img: <VaccinesIcon />,
-    component: <VaccinInventory />,
+    component: <VaccineInventory />,
     path: "/pages/VaccineInventory",
   },
   {
@@ -62,7 +62,6 @@ const getPath = () => [
     component: <Reminders />,
     path: "/pages/Reminders",
   },
-  
 ];
 
 export default getPath;

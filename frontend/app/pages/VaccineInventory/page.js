@@ -52,7 +52,7 @@ const rows = [
   ),
 ];
 
-export default function VaccinInventory() {
+export default function VaccineInventory() {
   const router = useRouter();
   const handleButtonClick = (id) => {
     router.replace(`/pages/VaccineInventory/${id}`);
