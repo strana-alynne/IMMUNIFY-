@@ -19,6 +19,7 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
+  TablePagination,
 } from "@mui/material";
 import dayjs from "dayjs";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -37,7 +38,19 @@ const Details = ({ params }) => {
   const [quantity, setQuantity] = useState("");
   const [batchNumber, setBatchNumber] = useState("");
   const [inventoryID, setInventoryID] = useState(params.id);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [page, setPage] = useState(0);
 
+  //TABLE THINGSSS
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  // LOADS THE DATA
   useEffect(() => {
     async function loadVaccines() {
       const storedVaccineName = localStorage.getItem("selectedVaccineName");
@@ -217,29 +230,45 @@ const Details = ({ params }) => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {vaccines.map((row) => (
-                    <TableRow
-                      key={row.transaction_id}
-                      sx={{
-                        "&:last-child td, &:last-child th": { border: 0 },
-                        backgroundColor:
-                          row.transaction_type === "STOCK IN"
-                            ? "primary.light"
-                            : "inherit",
-                      }}
-                    >
-                      <TableCell component="th" scope="row">
-                        {row.transaction_date}
-                      </TableCell>
-                      <TableCell>{row.transaction_quantity}</TableCell>
-                      <TableCell>{row.batch_number}</TableCell>
-                      <TableCell>{row.expiration_date}</TableCell>
-                      <TableCell>{row.transaction_type}</TableCell>
-                    </TableRow>
-                  ))}
+                  {vaccines
+                    .sort(
+                      (a, b) =>
+                        new Date(b.transaction_date) -
+                        new Date(a.transaction_date)
+                    )
+                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                    .map((row) => (
+                      <TableRow
+                        key={row.transaction_id}
+                        sx={{
+                          "&:last-child td, &:last-child th": { border: 0 },
+                          backgroundColor:
+                            row.transaction_type === "STOCK IN"
+                              ? "primary.light"
+                              : "inherit",
+                        }}
+                      >
+                        <TableCell component="th" scope="row">
+                          {row.transaction_date}
+                        </TableCell>
+                        <TableCell>{row.transaction_quantity}</TableCell>
+                        <TableCell>{row.batch_number}</TableCell>
+                        <TableCell>{row.expiration_date}</TableCell>
+                        <TableCell>{row.transaction_type}</TableCell>
+                      </TableRow>
+                    ))}
                 </TableBody>
               </Table>
             </TableContainer>
+            <TablePagination
+              rowsPerPageOptions={[5, 10, 25]}
+              component="div"
+              count={vaccines.length}
+              rowsPerPage={rowsPerPage}
+              page={page}
+              onPageChange={handleChangePage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+            />
           </Box>
         </Stack>
       </Container>
