@@ -71,8 +71,9 @@ export default function Theme({ children }) {
     components: {
       MuiDrawer: {
         styleOverrides: {
-          root: {
-            backgroundColor: "#145B50",
+          paper: {
+            backgroundColor: "#145B50", // Change this to your desired color
+            color: "white", // Optional: change text color
           },
         },
       },
