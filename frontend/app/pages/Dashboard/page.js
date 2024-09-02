@@ -4,16 +4,12 @@ import { Box, Container, Typography, Stack, Grid } from "@mui/material";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import DashBoardCard from "@/app/components/DashBoardCard";
 import ReminderCard from "@/app/components/ReminderCard";
-import {
-  Group,
-  NewReleases,
-  Campaign,
-  Send,
-  Face,
-  EventBusy,
-} from "@mui/icons-material";
-import Map from "@/app/components/Map";
+import { Group, Face, EventBusy, NewReleases } from "@mui/icons-material";
+import GeocodingMap from "@/app/components/Geocodingmap";
+
 export default function Dashboard() {
+  const address = "2GJ7+H26, Barangay Dumoy, Davao City, Davao, McArthur Highway, Toril, Davao City, Davao del Sur"; // Example address
+
   return (
     <Box sx={{ display: "flex", marginTop: "50px" }}>
       <SideBar />
@@ -54,17 +50,18 @@ export default function Dashboard() {
           </Grid>
         </Grid>
         <Grid container>
-          <Grid item xs={8}>
-            <Typography variant="h6" color="primary">
+          <Grid item xs={6} marginTop={5} >
+            <Typography variant="h5" color="primary" marginBottom={2}>
               DEFAULTER ANALYSIS
             </Typography>
-            <Map />
+            <GeocodingMap address={address} />
           </Grid>
-          <Grid item xs={4} direction="column">
+          <Grid item xs={4} direction="column" marginLeft={24} marginTop={5}>
+            {/* Appointments and Messages Section */}
             <Grid item spacing={4}>
               <Typography variant="h6" color="primary">
-                Appointments
-                <Box
+              Appointments
+              <Box
                   spacing={2}
                   sx={{
                     maxHeight: "400px", // Adjust the height as needed
@@ -96,7 +93,7 @@ export default function Dashboard() {
                     time="3hr"
                   />
                 </Box>
-              </Typography>
+                </Typography>
             </Grid>
             <Grid item spacing={2}>
               <Typography variant="h6" color="primary">
@@ -134,6 +131,7 @@ export default function Dashboard() {
                   time="3hr"
                 />
               </Box>
+
             </Grid>
           </Grid>
         </Grid>
