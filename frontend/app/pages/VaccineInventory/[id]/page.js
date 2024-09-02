@@ -20,14 +20,22 @@ import {
   FormControl,
   InputLabel,
   TablePagination,
+  IconButton,
 } from "@mui/material";
 import dayjs from "dayjs";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import VaccinesIcon from "@mui/icons-material/Vaccines";
-import { fetchVaccineStock, addVaccineStock } from "@/utils/supabase/api";
+import {
+  fetchVaccineStock,
+  addVaccineStock,
+  updateVaccineStock,
+} from "@/utils/supabase/api";
 import { useState, useEffect } from "react";
+import { CheckCircle, DriveFileRenameOutline } from "@mui/icons-material";
+import EditModal from "@/app/components/Modals/EditModal";
+import GeneralModals from "@/app/components/Modals/Modals";
 
 const Details = ({ params }) => {
   const [vaccines, setVaccines] = useState([]);
@@ -40,14 +48,44 @@ const Details = ({ params }) => {
   const [inventoryID, setInventoryID] = useState(params.id);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [page, setPage] = useState(0);
+  const [openModal, setOpenModal] = useState(false);
+  const [openEditModal, setOpenEditModal] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState(null);
+
+  const handleCloseModal = () => {
+    setOpenModal(false);
+  };
+  const handleEditCloseModal = () => {
+    setOpenEditModal(false);
+  };
+  const handleEdit = (transaction) => {
+    setEditingTransaction({
+      transaction_id: transaction.transaction_id,
+      transaction_date: dayjs(transaction.transaction_date),
+      transaction_type: transaction.transaction_type,
+      transaction_quantity: transaction.transaction_quantity,
+      batch_number: transaction.batch_number,
+      expiration_date: dayjs(transaction.expiration_date),
+    });
+    setOpenEditModal(true);
+  };
 
   //TABLE THINGSSS
-  const handleChangePage = (event, newPage) => {
+  const handleChangePage = (newPage) => {
     setPage(newPage);
   };
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
+  };
+
+  const handleUpdate = async (updatedTransaction) => {
+    // Perform update logic here (e.g., send the updated transaction to the server)
+    updateVaccineStock(updatedTransaction);
+
+    // After updating, refresh the vaccine stock list
+    const updatedVaccines = await fetchVaccineStock(inventoryID);
+    setVaccines(updatedVaccines);
   };
 
   // LOADS THE DATA
@@ -64,6 +102,7 @@ const Details = ({ params }) => {
     loadVaccines();
   }, [params.id]);
 
+  //BUTTON CLICK
   const handleButtonClick = async () => {
     const formattedDate = selectedDate.format("YYYY-MM-DD");
     const exformattedDate = expirationDate.format("YYYY-MM-DD");
@@ -75,9 +114,9 @@ const Details = ({ params }) => {
       expiration_date: exformattedDate,
       inventory_id: inventoryID,
     };
-    console.log("Vaccine stock details:", vaccineStockDetails);
-    const result = await addVaccineStock(vaccineStockDetails);
 
+    const result = await addVaccineStock(vaccineStockDetails);
+    setOpenModal(true);
     if (result) {
       console.log("Vaccine stock added successfully:", result);
       const updatedVaccines = await fetchVaccineStock(inventoryID);
@@ -87,6 +126,7 @@ const Details = ({ params }) => {
     }
   };
 
+  //TEXTFIELDS HANDLER
   const handleTransactionTypeChange = (event) => {
     setTransactionType(event.target.value);
   };
@@ -227,6 +267,7 @@ const Details = ({ params }) => {
                     <TableCell>Batch Number</TableCell>
                     <TableCell>Expiration Date</TableCell>
                     <TableCell>Transaction Type</TableCell>
+                    <TableCell></TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -255,6 +296,14 @@ const Details = ({ params }) => {
                         <TableCell>{row.batch_number}</TableCell>
                         <TableCell>{row.expiration_date}</TableCell>
                         <TableCell>{row.transaction_type}</TableCell>
+                        <TableCell>
+                          {" "}
+                          <IconButton>
+                            <DriveFileRenameOutline
+                              onClick={() => handleEdit(row)}
+                            />
+                          </IconButton>
+                        </TableCell>
                       </TableRow>
                     ))}
                 </TableBody>
@@ -271,6 +320,19 @@ const Details = ({ params }) => {
             />
           </Box>
         </Stack>
+        <GeneralModals
+          open={openModal}
+          onClose={handleCloseModal}
+          title={<CheckCircle color="primary" sx={{ fontSize: 80 }} />}
+          content={<Typography>Successfully added Vaccine Stock</Typography>}
+        />
+        <EditModal
+          open={openEditModal}
+          onClose={handleEditCloseModal}
+          title="Edit Vaccine Stock"
+          transaction={editingTransaction}
+          onUpdate={handleUpdate}
+        />
       </Container>
     </Box>
   );
