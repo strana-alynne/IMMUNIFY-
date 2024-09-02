@@ -12,9 +12,21 @@ import {
   IconButton,
 } from "@mui/material";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { fetchVaccines } from "@/utils/supabase/api";
 export default function Home() {
+  const [vaccines, setVaccines] = useState([]);
+
+  useEffect(() => {
+    async function loadVaccines() {
+      const fetchedVaccines = await fetchVaccines();
+      console.log("Vaccines loaded in component:", fetchedVaccines);
+      setVaccines(fetchedVaccines);
+    }
+    loadVaccines();
+  }, []);
+
   const router = useRouter();
   const handleSubmit = () => {
     router.push("./pages/ChildRecords");
@@ -38,7 +50,7 @@ export default function Home() {
           <img src="/logo-wordmark.png" alt="logo" width="400" />
         </Stack>
         <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
-        <TextField
+          <TextField
             margin="normal"
             required
             fullWidth
@@ -48,7 +60,7 @@ export default function Home() {
             autoComplete="email"
             autoFocus
           />
-           <TextField
+          <TextField
             margin="normal"
             required
             fullWidth
@@ -72,10 +84,10 @@ export default function Home() {
               ),
             }}
           />
-           <Link href="" variant="body2">
+          <Link href="" variant="body2">
             Forgot password?
           </Link>
-        
+
           <Button
             type="submit"
             fullWidth

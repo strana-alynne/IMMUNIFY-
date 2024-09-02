@@ -14,8 +14,10 @@
     "@fontsource/roboto": "^5.0.14",
     "@mui/icons-material": "^5.16.7",
     "@mui/material": "^5.16.7",
+    "@mui/x-date-pickers": "^7.15.0",
     "@supabase/ssr": "^0.5.1",
     "@supabase/supabase-js": "^2.45.3",
+    "dayjs": "^1.11.13",
     "next": "14.2.6",
     "react": "^18",
     "react-dom": "^18"

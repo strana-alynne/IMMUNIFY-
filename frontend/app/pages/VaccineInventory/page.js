@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import SideBar from "@/app/components/SideBar/page";
 import {
   Box,
@@ -17,44 +17,23 @@ import {
 } from "@mui/material";
 import VaccinesIcon from "@mui/icons-material/Vaccines";
 import { useRouter } from "next/navigation";
-
-function createData(name, calories, fat, carbs, protein, date) {
-  return { name, calories, fat, carbs, protein, date };
-}
-
-const rows = [
-  createData(
-    "0001",
-    "BCG (Bacillus-Calmette-Guerin)",
-    12,
-    50,
-    "24 hours",
-    "08/01/2024"
-  ),
-  createData("0002", "Hepatitis B", 12, 50, "24 hours", "08/01/2024"),
-  createData("0003", "Penta: DTwP-HepBHib", 12, 50, "24 hours", "08/01/2024"),
-  createData("0004", "OPV", 12, 50, "24 hours", "08/01/2024"),
-  createData(
-    "0005",
-    "MR (Measles - Rubella Vaccine)",
-    12,
-    50,
-    "24 hours",
-    "08/01/2024"
-  ),
-  createData(
-    "0006",
-    "MMR (Measles - Mumps - Rubella VAccine)",
-    12,
-    50,
-    "24 hours",
-    "08/01/2024"
-  ),
-];
+import { fetchVaccines } from "@/utils/supabase/api";
 
 export default function VaccineInventory() {
+  const [vaccines, setVaccines] = useState([]);
   const router = useRouter();
-  const handleButtonClick = (id) => {
+  useEffect(() => {
+    async function loadVaccines() {
+      const fetchedVaccines = await fetchVaccines();
+      console.log("Vaccines loaded in xxcomponent:", fetchedVaccines);
+      setVaccines(fetchedVaccines);
+    }
+    loadVaccines();
+  }, []);
+
+  const handleButtonClick = (id, name, inventoryid) => {
+    localStorage.setItem("selectedVaccineName", name);
+    localStorage.setItem("inventoryID", inventoryid);
     router.replace(`/pages/VaccineInventory/${id}`);
   };
   return (
@@ -76,33 +55,37 @@ export default function VaccineInventory() {
                   <TableRow>
                     <TableCell>Vaccine ID</TableCell>
                     <TableCell>Name</TableCell>
-                    <TableCell>Quantity</TableCell>
+                    <TableCell>Doses Required</TableCell>
                     <TableCell>Total</TableCell>
-                    <TableCell>Administered Interval</TableCell>
                     <TableCell>Restock Date</TableCell>
                     <TableCell></TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {rows.map((row) => (
+                  {vaccines.map((row) => (
                     <TableRow
-                      key={row.name}
+                      key={row.Vaccine.vaccine_name}
                       sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
                     >
                       <TableCell component="th" scope="row">
-                        {row.name}
+                        {row.Vaccine.vaccine_id}
                       </TableCell>
-                      <TableCell>{row.calories}</TableCell>
-                      <TableCell>{row.fat}</TableCell>
-                      <TableCell>{row.carbs}</TableCell>
-                      <TableCell>{row.protein}</TableCell>
-                      <TableCell>{row.date}</TableCell>
+                      <TableCell>{row.Vaccine.vaccine_name}</TableCell>
+                      <TableCell>{row.Vaccine.doses_required}</TableCell>
+                      <TableCell>{row.vaccine_quantity}</TableCell>
+                      <TableCell>{row.current_update}</TableCell>
                       <TableCell>
                         {" "}
                         <Button
                           variant="text"
                           color="secondary"
-                          onClick={() => handleButtonClick(row.name)}
+                          onClick={() =>
+                            handleButtonClick(
+                              row.Vaccine.vaccine_id,
+                              row.Vaccine.vaccine_name,
+                              row.inventory_id
+                            )
+                          }
                         >
                           View
                         </Button>

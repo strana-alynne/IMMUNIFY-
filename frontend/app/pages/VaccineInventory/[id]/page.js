@@ -15,20 +15,85 @@ import {
   Button,
   Grid,
   TextField,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
 } from "@mui/material";
+import dayjs from "dayjs";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import VaccinesIcon from "@mui/icons-material/Vaccines";
-
-function createData(name, calories, fat) {
-  return { name, calories, fat };
-}
-
-const rows = [
-  createData("08/01/2024", 12, "BCG (Bacillus-Calmette-Guerin)"),
-  createData("08/01/2024", 12, "MMR (Measles - Mumps - Rubella VAccine)"),
-];
+import { fetchVaccineStock, addVaccineStock } from "@/utils/supabase/api";
+import { useState, useEffect } from "react";
 
 const Details = ({ params }) => {
-  const handleButtonClick = (id) => {};
+  const [vaccines, setVaccines] = useState([]);
+  const [vaccineName, setVaccineName] = useState("");
+  const [transactionType, setTransactionType] = useState("");
+  const [selectedDate, setSelectedDate] = useState(dayjs());
+  const [expirationDate, setexpirationDate] = useState(dayjs());
+  const [quantity, setQuantity] = useState("");
+  const [batchNumber, setBatchNumber] = useState("");
+  const [inventoryID, setInventoryID] = useState(params.id);
+
+  useEffect(() => {
+    async function loadVaccines() {
+      const storedVaccineName = localStorage.getItem("selectedVaccineName");
+      const storeInventoryId = localStorage.getItem("inventoryID");
+      const fetchedVaccines = await fetchVaccineStock(storeInventoryId);
+      console.log("Vaccines loaded in component:", fetchedVaccines);
+      setVaccineName(storedVaccineName);
+      setInventoryID(storeInventoryId);
+      setVaccines(fetchedVaccines);
+    }
+    loadVaccines();
+  }, [params.id]);
+
+  const handleButtonClick = async () => {
+    const formattedDate = selectedDate.format("YYYY-MM-DD");
+    const exformattedDate = expirationDate.format("YYYY-MM-DD");
+    const vaccineStockDetails = {
+      transaction_date: formattedDate,
+      transaction_type: transactionType,
+      transaction_quantity: parseInt(quantity, 10),
+      batch_number: batchNumber,
+      expiration_date: exformattedDate,
+      inventory_id: inventoryID,
+    };
+    console.log("Vaccine stock details:", vaccineStockDetails);
+    const result = await addVaccineStock(vaccineStockDetails);
+
+    if (result) {
+      console.log("Vaccine stock added successfully:", result);
+      const updatedVaccines = await fetchVaccineStock(inventoryID);
+      setVaccines(updatedVaccines);
+    } else {
+      console.error("Failed to add vaccine stock.");
+    }
+  };
+
+  const handleTransactionTypeChange = (event) => {
+    setTransactionType(event.target.value);
+  };
+
+  const handleDateChange = (newDate) => {
+    setSelectedDate(newDate);
+  };
+
+  const handleExpirationDateChange = (newDate) => {
+    setexpirationDate(newDate);
+  };
+
+  const handleQuantityChange = (event) => {
+    setQuantity(event.target.value);
+  };
+
+  const handleBatchNumberChange = (event) => {
+    setBatchNumber(event.target.value);
+  };
+
   return (
     <Box sx={{ display: "flex", marginTop: "100px" }}>
       <SideBar />
@@ -42,33 +107,31 @@ const Details = ({ params }) => {
               </Typography>
             </Stack>
             <Typography variant="p" color="secondary">
-              vaccine name: {params.id}
+              vaccine name: <strong>{vaccineName}</strong>
             </Typography>
           </Stack>
 
           <Grid container spacing={2}>
+            {/* DATE */}
             <Grid item xs={2}>
-              <TextField
-                margin="normal"
-                required
-                fullWidth
-                id="date"
-                label="Date"
-                name="date"
-                autoFocus
-              />
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <DatePicker
+                  label="Date"
+                  value={selectedDate}
+                  onChange={handleDateChange}
+                  renderInput={(params) => <TextField {...params} />}
+                  slotProps={{
+                    textField: {
+                      margin: "normal",
+                      fullWidth: true,
+                      required: true,
+                    },
+                  }}
+                />
+              </LocalizationProvider>
             </Grid>
-            <Grid item xs={2}>
-              <TextField
-                margin="normal"
-                required
-                fullWidth
-                id="brand"
-                label="Brand"
-                name="brand"
-                autoFocus
-              />
-            </Grid>
+
+            {/* QUANTITY */}
             <Grid item xs={2}>
               <TextField
                 margin="normal"
@@ -77,41 +140,101 @@ const Details = ({ params }) => {
                 id="quantity"
                 label="Quantity"
                 name="quantity"
-                autoFocus
+                type="number"
+                value={quantity}
+                onChange={handleQuantityChange}
               />
+            </Grid>
+            {/* BATCH NUMBER */}
+            <Grid item xs={2}>
+              <TextField
+                margin="normal"
+                fullWidth
+                id="batchNumber"
+                label="Batch Number"
+                name="batchNumber"
+                value={batchNumber}
+                onChange={handleBatchNumberChange}
+              />
+            </Grid>
+            {/* EXPIRATION DATE */}
+            <Grid item xs={2}>
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <DatePicker
+                  label="Expiration Date"
+                  value={expirationDate}
+                  onChange={handleExpirationDateChange}
+                  renderInput={(params) => <TextField {...params} />}
+                  slotProps={{
+                    textField: {
+                      margin: "normal",
+                      fullWidth: true,
+                      required: true,
+                    },
+                  }}
+                />
+              </LocalizationProvider>
+            </Grid>
+            {/* TRANSACTION TYPE */}
+            <Grid item xs={2}>
+              <FormControl fullWidth margin="normal">
+                <InputLabel id="transaction-type-label">
+                  Transaction Type
+                </InputLabel>
+                <Select
+                  labelId="transaction-type-label"
+                  id="transaction-type"
+                  value={transactionType}
+                  label="Transaction Type"
+                  onChange={handleTransactionTypeChange}
+                >
+                  <MenuItem value="STOCK IN">STOCK IN</MenuItem>
+                  <MenuItem value="STOCK OUT">STOCK OUT</MenuItem>
+                </Select>
+              </FormControl>
             </Grid>
             <Grid item xs={2}>
               <Button
                 variant="contained"
                 color="primary"
-                onClick={() => handleButtonClick(params.id)}
+                onClick={() => handleButtonClick()}
+                sx={{ marginTop: "16px" }}
               >
                 Add to Stock
               </Button>
             </Grid>
           </Grid>
           <Box>
-            {" "}
             <TableContainer component={Paper}>
               <Table sx={{ minWidth: 650 }} aria-label="simple table">
                 <TableHead>
                   <TableRow>
-                    <TableCell>Date Restock</TableCell>
-                    <TableCell>Quantity Added</TableCell>
-                    <TableCell>Brand</TableCell>
+                    <TableCell>Date</TableCell>
+                    <TableCell>Quantity</TableCell>
+                    <TableCell>Batch Number</TableCell>
+                    <TableCell>Expiration Date</TableCell>
+                    <TableCell>Transaction Type</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {rows.map((row) => (
+                  {vaccines.map((row) => (
                     <TableRow
-                      key={row.name}
-                      sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+                      key={row.transaction_id}
+                      sx={{
+                        "&:last-child td, &:last-child th": { border: 0 },
+                        backgroundColor:
+                          row.transaction_type === "STOCK IN"
+                            ? "primary.light"
+                            : "inherit",
+                      }}
                     >
                       <TableCell component="th" scope="row">
-                        {row.name}
+                        {row.transaction_date}
                       </TableCell>
-                      <TableCell>{row.calories}</TableCell>
-                      <TableCell>{row.fat}</TableCell>
+                      <TableCell>{row.transaction_quantity}</TableCell>
+                      <TableCell>{row.batch_number}</TableCell>
+                      <TableCell>{row.expiration_date}</TableCell>
+                      <TableCell>{row.transaction_type}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
