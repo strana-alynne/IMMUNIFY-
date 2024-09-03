@@ -37,9 +37,8 @@ export default function GeneralModals({
           <Typography id="modal-modal-title" variant="h6" component="h2">
             {title}
           </Typography>
-          <Typography id="modal-modal-description" variant="h3" sx={{ mt: 2 }}>
-            {content}
-          </Typography>
+          {content}
+          <Box sx={{ mt: 2 }}>{actions}</Box>
         </Box>
       </Modal>
     </div>

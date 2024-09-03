@@ -15,8 +15,10 @@ import Motherinfo from "./motherinfo";
 import { Check, CheckCircle } from "@mui/icons-material";
 import { addChild } from "@/utils/supabase/api";
 import GeneralModals from "@/app/components/Modals/Modals";
+import { useRouter } from "next/navigation";
 
 export default function AddChild() {
+  const router = useRouter();
   const [motherData, setMotherData] = useState({});
   const [childData, setChildData] = useState({});
   const [purok, setSelectedPurok] = useState("");
@@ -27,12 +29,12 @@ export default function AddChild() {
     setOpenModal(false);
   };
   const handleSave = async () => {
-    await addChild(motherData, childData, purok, growth);
+    //await addChild(motherData, childData, purok, growth);
     setOpenModal(true);
-    setMotherData({});
-    setChildData({});
-    setSelectedPurok({});
-    setGrowthData({});
+  };
+
+  const handleClose = () => {
+    router.push(`./01`);
   };
   return (
     <Box sx={{ display: "flex", marginTop: "50px" }}>
@@ -88,6 +90,11 @@ export default function AddChild() {
         onClose={handleCloseModal}
         title={<CheckCircle color="primary" sx={{ fontSize: 80 }} />}
         content={<Typography>Successfully Registerd</Typography>}
+        actions={
+          <Button variant="contained" onClick={handleClose}>
+            OK
+          </Button>
+        }
       />
     </Box>
   );
