@@ -114,6 +114,15 @@ const purok = [
   "Sto. Rosario",
   "Paderog",
   "Mangrubang",
+  "Dumoy Proper",
+  "Iwha",
+  "Pepsi Village",
+  "Medalla",
+  "Leonor",
+  "Dacoville 1",
+  "Dacoville 2",
+  "Don Lorenzo",
+  "Espino Kalayaan",
 ];
 
 //status filter

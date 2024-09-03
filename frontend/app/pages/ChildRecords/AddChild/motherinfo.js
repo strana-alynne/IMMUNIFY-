@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Grid,
   TextField,
@@ -10,10 +10,64 @@ import {
   Select,
 } from "@mui/material";
 
-export default function Motherinfo() {
-  const [birthType, setBirthType] = useState();
-  const [facility, setFacility] = useState();
+export default function Motherinfo({ setMotherData }) {
+  const [mother_email, setEmail] = useState();
+  const [contact_number, setContactNumber] = useState();
+  const [mfirstname, setMFirstName] = useState();
+  const [mlastname, setMLastname] = useState();
+  const [mother_age, setMAge] = useState();
+  const [delivery_type, setBirthType] = useState();
+  const [facility_type, setFacility] = useState();
+  const [facility_name, setFacilityName] = useState();
   const [attending, setAttending] = useState();
+
+  useEffect(() => {
+    const mother_name = `${mfirstname} ${mlastname}`;
+    setMotherData({
+      mother_name,
+      mother_age,
+      facility_name,
+      facility_type,
+      delivery_type,
+      attending,
+      mother_email,
+      contact_number,
+    });
+  }, [
+    mfirstname,
+    mlastname,
+    mother_age,
+    facility_name,
+    facility_type,
+    delivery_type,
+    mother_email,
+    contact_number,
+    attending,
+  ]);
+
+  const handleEmail = (event) => {
+    setEmail(event.target.value);
+  };
+
+  const handleContactNumber = (event) => {
+    setContactNumber(event.target.value);
+  };
+
+  const handleMFirstName = (event) => {
+    setMFirstName(event.target.value);
+  };
+
+  const handleMLastName = (event) => {
+    setMLastname(event.target.value);
+  };
+
+  const handleMAge = (event) => {
+    setMAge(event.target.value);
+  };
+
+  const handleFacilityName = (event) => {
+    setFacilityName(event.target.value);
+  };
 
   const handleBirthType = (event) => {
     setBirthType(event.target.value);
@@ -41,6 +95,9 @@ export default function Motherinfo() {
           label="e.g. name@email.com"
           name="email"
           autoFocus
+          type="email"
+          value={mother_email}
+          onChange={handleEmail}
         />
       </Grid>
 
@@ -55,9 +112,20 @@ export default function Motherinfo() {
           fullWidth
           id="outlined-size-small"
           label="e.g. 09123456789"
-          name="contactNumber"
+          name="contact_number"
           autoFocus
           type="number"
+          inputProps={{
+            maxLength: 11,
+            pattern: "[0-9]*", // ensures only numbers are input
+          }}
+          onInput={(e) => {
+            if (e.target.value.length > 11) {
+              e.target.value = e.target.value.slice(0, 11);
+            }
+          }}
+          value={contact_number}
+          onChange={handleContactNumber}
         />
       </Grid>
 
@@ -74,6 +142,8 @@ export default function Motherinfo() {
           label="First Name"
           name="firstname"
           autoFocus
+          value={mfirstname}
+          onChange={handleMFirstName}
         />
       </Grid>
 
@@ -90,6 +160,8 @@ export default function Motherinfo() {
           label="Last Name"
           name="lastname"
           autoFocus
+          value={mlastname}
+          onChange={handleMLastName}
         />
       </Grid>
 
@@ -107,6 +179,8 @@ export default function Motherinfo() {
           name="age"
           autoFocus
           type="number"
+          value={mother_age}
+          onChange={handleMAge}
         />
       </Grid>
 
@@ -120,7 +194,7 @@ export default function Motherinfo() {
           <Select
             labelId="gender-label"
             id="gender"
-            value={birthType}
+            value={delivery_type}
             label="Gender"
             onChange={handleBirthType}
           >
@@ -141,8 +215,10 @@ export default function Motherinfo() {
           fullWidth
           id="outlined-size-small"
           label="Name of Facility"
-          name="type-facility"
+          name="type-facility_type"
           autoFocus
+          value={facility_name}
+          onChange={handleFacilityName}
         />
       </Grid>
 
@@ -156,7 +232,7 @@ export default function Motherinfo() {
           <Select
             labelId="gender-label"
             id="gender"
-            value={facility}
+            value={facility_type}
             label="Gender"
             onChange={handleFacility}
           >

@@ -167,3 +167,78 @@ export async function updateVaccineStock(updatedTransaction) {
 
   return data; // return the updated transaction data
 }
+
+// ADD CHILD AND MOTHER RECORDS
+export async function addChild(motherData, childData, purokName, growthData) {
+  try {
+    // Log input data
+    console.log("Received motherData:", motherData);
+    console.log("Received childData:", childData);
+    console.log("Received growthData:", growthData);
+    console.log("Received purokName:", purokName);
+
+    // Basic validation of input data
+    if (!motherData || !childData || !growthData || !purokName) {
+      throw new Error("Missing required data fields");
+    }
+
+    // Get purok ID from the purok name
+    const { data: purok, error: purokError } = await supabase
+      .from("Purok")
+      .select("purok_id")
+      .eq("purok_name", purokName)
+      .single();
+
+    if (purokError) throw purokError;
+    if (!purok) throw new Error(`No purok found with name: ${purokName}`);
+
+    const purokId = purok.purok_id;
+
+    // Insert mother data
+    const { data: mother, error: motherError } = await supabase
+      .from("Mother")
+      .insert([motherData])
+      .select();
+
+    if (motherError) throw motherError;
+    const motherid = mother[0].mother_id;
+
+    // Insert child data
+    const { data: child, error: childError } = await supabase
+      .from("Child")
+      .insert([
+        {
+          ...childData,
+          mother_id: motherid,
+          purok_id: purokId,
+        },
+      ])
+      .select();
+
+    if (childError) throw childError;
+    // Insert growth data
+    const { data: growth, error: growthError } = await supabase
+      .from("Growth")
+      .insert([
+        {
+          ...growthData,
+          child_id: child[0].child_id,
+        },
+      ])
+      .select();
+
+    if (growthError) throw growthError;
+
+    // Return success response with the inserted data
+    console.log(
+      "Insertion successful:",
+      { mother, child, growth },
+      { purokId },
+      { motherid }
+    );
+    return { success: true, mother, child, growth };
+  } catch (error) {
+    console.error("Error inserting data:", error.message);
+    return { success: false, error: error.message };
+  }
+}

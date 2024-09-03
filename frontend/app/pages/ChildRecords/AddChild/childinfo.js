@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Grid,
   TextField,
@@ -9,13 +9,13 @@ import {
   MenuItem,
   Select,
   InputAdornment,
-  OutlinedInput,
   FilledInput,
 } from "@mui/material";
+import dayjs from "dayjs";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-export default function childinfo() {
+export default function childinfo({ setChildData, setPurok, setGrowthData }) {
   const purok = [
     "Farland 1",
     "Farland 2",
@@ -35,10 +35,51 @@ export default function childinfo() {
     "Sto. Rosario",
     "Paderog",
     "Mangrubang",
+    "Dumoy Proper",
+    "Iwha",
+    "Pepsi Village",
+    "Medalla",
+    "Leonor",
+    "Dacoville 1",
+    "Dacoville 2",
+    "Don Lorenzo",
+    "Espino Kalayaan",
   ];
-  const [genderVal, setGenderVal] = useState();
-  const [birthdateVal, setBirthDateVal] = useState();
-  const [purokName, setPurokName] = React.useState([]);
+  const [firstname, setFirstName] = useState("");
+  const [lastname, setLastName] = useState("");
+  const [child_age, setAge] = useState();
+  const [gender, setGenderVal] = useState();
+  const [birthdate, setBirthDateVal] = useState();
+  const [address, setAddress] = useState("");
+  const [purokName, setPurokName] = useState([]);
+  const [height, setHeight] = useState();
+  const [weight, setWeight] = useState();
+
+  useEffect(() => {
+    const child_name = `${firstname} ${lastname}`;
+    setPurok(purokName);
+    setGrowthData({
+      height: height ? parseFloat(height) : null,
+      weight: weight ? parseFloat(weight) : null,
+    });
+    setChildData({
+      child_name,
+      child_age,
+      gender,
+      birthdate: birthdate ? dayjs(birthdate).format("YYYY-MM-DD") : null,
+      address,
+    });
+  }, [
+    firstname,
+    lastname,
+    child_age,
+    gender,
+    birthdate,
+    address,
+    purokName,
+    height,
+    weight,
+  ]);
 
   const handlePurokChange = (event) => {
     const {
@@ -50,12 +91,36 @@ export default function childinfo() {
     );
   };
 
+  const handleFirstName = (event) => {
+    setFirstName(event.target.value);
+  };
+
+  const handleLastname = (event) => {
+    setLastName(event.target.value);
+  };
+
+  const handleAge = (event) => {
+    setAge(event.target.value);
+  };
+  const handleAddress = (event) => {
+    setAddress(event.target.value);
+  };
+
   const handleGender = (event) => {
     setGenderVal(event.target.value);
   };
   const handleBirthDate = (newDate) => {
     setBirthDateVal(newDate);
   };
+
+  const handleWeight = (event) => {
+    setWeight(event.target.value);
+  };
+
+  const handleHeight = (event) => {
+    setHeight(event.target.value);
+  };
+
   return (
     <Grid container spacing={2}>
       {/* FIRST NAME */}
@@ -71,6 +136,8 @@ export default function childinfo() {
           label="First Name"
           name="firstname"
           autoFocus
+          value={firstname}
+          onChange={handleFirstName}
         />
       </Grid>
 
@@ -87,6 +154,8 @@ export default function childinfo() {
           label="Last Name"
           name="lastname"
           autoFocus
+          value={lastname}
+          onChange={handleLastname}
         />
       </Grid>
 
@@ -104,6 +173,8 @@ export default function childinfo() {
           name="age"
           autoFocus
           type="number"
+          value={child_age}
+          onChange={handleAge}
         />
       </Grid>
 
@@ -117,7 +188,7 @@ export default function childinfo() {
           <Select
             labelId="gender-label"
             id="gender"
-            value={genderVal}
+            value={gender}
             label="Gender"
             onChange={handleGender}
           >
@@ -135,7 +206,7 @@ export default function childinfo() {
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           <DatePicker
             label="Birthdate"
-            value={birthdateVal}
+            value={birthdate}
             onChange={handleBirthDate}
             renderInput={(params) => <TextField {...params} />}
             slotProps={{
@@ -162,6 +233,8 @@ export default function childinfo() {
           label="Complete Address"
           name="address"
           autoFocus
+          value={address}
+          onChange={handleAddress}
         />
       </Grid>
 
@@ -200,6 +273,8 @@ export default function childinfo() {
           label="Height"
           name="height"
           autoFocus
+          value={height}
+          onChange={handleHeight}
           endAdornment={<InputAdornment position="end">cm</InputAdornment>}
         />
       </Grid>
@@ -216,6 +291,8 @@ export default function childinfo() {
           label="Weight"
           name="weight"
           autoFocus
+          value={weight}
+          onChange={handleWeight}
           endAdornment={<InputAdornment position="end">kg</InputAdornment>}
         />
       </Grid>

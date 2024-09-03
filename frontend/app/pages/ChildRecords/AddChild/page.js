@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import SideBar from "@/app/components/SideBar/page";
 import {
   Box,
@@ -12,9 +12,28 @@ import {
 import FaceIcon from "@mui/icons-material/Face";
 import Childinfo from "./childinfo";
 import Motherinfo from "./motherinfo";
-import { Check } from "@mui/icons-material";
+import { Check, CheckCircle } from "@mui/icons-material";
+import { addChild } from "@/utils/supabase/api";
+import GeneralModals from "@/app/components/Modals/Modals";
 
 export default function AddChild() {
+  const [motherData, setMotherData] = useState({});
+  const [childData, setChildData] = useState({});
+  const [purok, setSelectedPurok] = useState("");
+  const [growth, setGrowthData] = useState({});
+  const [openModal, setOpenModal] = useState(false);
+
+  const handleCloseModal = () => {
+    setOpenModal(false);
+  };
+  const handleSave = async () => {
+    await addChild(motherData, childData, purok, growth);
+    setOpenModal(true);
+    setMotherData({});
+    setChildData({});
+    setSelectedPurok({});
+    setGrowthData({});
+  };
   return (
     <Box sx={{ display: "flex", marginTop: "50px" }}>
       <SideBar />
@@ -36,24 +55,40 @@ export default function AddChild() {
             <Typography variant="h6" color="primary.darker" sx={{ mb: 4 }}>
               Child's Personal Information
             </Typography>
-            <Childinfo />
+            <Childinfo
+              setChildData={setChildData}
+              setPurok={setSelectedPurok}
+              setGrowthData={setGrowthData}
+            />
           </Paper>
           <Paper sx={{ p: 4 }}>
             <Typography variant="h6" color="primary.darker" sx={{ mb: 4 }}>
               Mother's Personal Information
             </Typography>
-            <Motherinfo />
+            <Motherinfo setMotherData={setMotherData} />
           </Paper>
           <Stack direction="row-reverse" spacing={2}>
-            <Button variant="contained" color="info"  xs={2}>
+            <Button variant="contained" color="info" xs={2}>
               Cancel
             </Button>
-            <Button variant="contained" color="primary" startIcon={<Check />} xs={2}>
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<Check />}
+              xs={2}
+              onClick={handleSave}
+            >
               Save Record
             </Button>
           </Stack>
         </Stack>
       </Container>
+      <GeneralModals
+        open={openModal}
+        onClose={handleCloseModal}
+        title={<CheckCircle color="primary" sx={{ fontSize: 80 }} />}
+        content={<Typography>Successfully Registerd</Typography>}
+      />
     </Box>
   );
 }
