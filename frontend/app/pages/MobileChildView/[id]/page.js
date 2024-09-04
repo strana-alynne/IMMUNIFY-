@@ -10,7 +10,7 @@ import {
   Avatar,
 } from "@mui/material";
 import { useRouter, useParams } from "next/navigation";
-import MobileSideBar from "../MobileSideBar/page"; // Importing MobileSideBar
+import MobileSideBar from "@/app/components/MobileSideBar/page"; // Importing MobileSideBar
 
 export default function ChildDetails() {
   const router = useRouter();
@@ -19,8 +19,26 @@ export default function ChildDetails() {
 
   // Sample child data
   const children = [
-    { id: 1, name: "Sarah Johnson", age: "12 months", bday: "12/24/2023", purok: "Farland", mother: "Maria Johnson", contact: "09564356754", status: "Completed" },
-    { id: 2, name: "John Doe", age: "11 months", bday: "11/15/2023", purok: "Country Homes", mother: "Jane Doe", contact: "09564356754", status: "Partial" },
+    {
+      id: 1,
+      name: "Sarah Johnson",
+      age: "12 months",
+      bday: "12/24/2023",
+      purok: "Farland",
+      mother: "Maria Johnson",
+      contact: "09564356754",
+      status: "Completed",
+    },
+    {
+      id: 2,
+      name: "John Doe",
+      age: "11 months",
+      bday: "11/15/2023",
+      purok: "Country Homes",
+      mother: "Jane Doe",
+      contact: "09564356754",
+      status: "Partial",
+    },
     // More children can be added here
   ];
 
@@ -54,10 +72,19 @@ export default function ChildDetails() {
       <Box sx={{ flexGrow: 1 }}>
         {/* Toggle Sidebar Button */}
         <IconButton onClick={toggleSidebar} sx={{ marginBottom: "16px" }}>
-          <img src="/logo-wordmark.png" alt="IMMUNIFY logo" style={{ width: "50px" }} />
+          <img
+            src="/logo-wordmark.png"
+            alt="IMMUNIFY logo"
+            style={{ width: "50px" }}
+          />
         </IconButton>
 
-        <Typography variant="h4" color="primary" gutterBottom textAlign="center">
+        <Typography
+          variant="h4"
+          color="primary"
+          gutterBottom
+          textAlign="center"
+        >
           Child Details
         </Typography>
 
@@ -71,7 +98,9 @@ export default function ChildDetails() {
               <Typography variant="body2">Purok: {child.purok}</Typography>
               <Typography variant="body2">Mother: {child.mother}</Typography>
               <Typography variant="body2">Contact: {child.contact}</Typography>
-              <Typography variant="body2">Vaccination Status: {child.status}</Typography>
+              <Typography variant="body2">
+                Vaccination Status: {child.status}
+              </Typography>
             </Stack>
           </CardContent>
         </Card>

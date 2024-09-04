@@ -29,7 +29,7 @@ export default function AddChild() {
     setOpenModal(false);
   };
   const handleSave = async () => {
-    //await addChild(motherData, childData, purok, growth);
+    await addChild(motherData, childData, purok, growth);
     setOpenModal(true);
   };
 

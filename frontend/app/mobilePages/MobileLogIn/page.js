@@ -12,27 +12,14 @@ import {
   IconButton,
 } from "@mui/material";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { fetchVaccines } from "@/utils/supabase/api";
+
 export default function Home() {
-  const [vaccines, setVaccines] = useState([]);
-
-  useEffect(() => {
-    async function loadVaccines() {
-      const fetchedVaccines = await fetchVaccines();
-      console.log("Vaccines loaded in component:", fetchedVaccines);
-      setVaccines(fetchedVaccines);
-    }
-    loadVaccines();
-  }, []);
-
   const router = useRouter();
   const handleSubmit = () => {
-    event.preventDefault();
     router.push("./pages/ChildRecords");
   };
-
   const [showPassword, setShowPassword] = useState(false);
 
   const handleClickShowPassword = () => setShowPassword((show) => !show);
@@ -42,16 +29,16 @@ export default function Home() {
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <Paper sx={{ p: 4, width: "90%", maxWidth: "400px" }}>
-        <Stack
-          alignItems="center" // Center contents horizontally
-          justifyContent="center" // Center contents vertically
-        >
-          <Typography variant="h2">WELCOME TO</Typography>
-          <img src="/logo-wordmark.png" alt="logo" width="400" />
+    <main
+      className="flex min-h-screen flex-col items-center justify-center p-4"
+      style={{ width: "100%", maxWidth: "390px" }}
+    >
+      <Paper sx={{ p: 3, width: "100%", maxWidth: "360px" }}>
+        <Stack alignItems="center" justifyContent="center">
+          <Typography variant="h4" align="center">WELCOME TO</Typography>
+          <img src="/logo-wordmark.png" alt="logo" width="200" />
         </Stack>
-        <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
+        <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 2 }}>
           <TextField
             margin="normal"
             required
@@ -86,7 +73,7 @@ export default function Home() {
               ),
             }}
           />
-          <Link href="" variant="body2">
+          <Link href="pages/ForgotPass" variant="body2">
             Forgot password?
           </Link>
 
@@ -101,8 +88,8 @@ export default function Home() {
           </Button>
           <Grid container justifyContent="center">
             <Grid item>
-              <Link href="/pages/SignIn" variant="body2">
-                {"Do not have an account? Sign in"}
+              <Link href="/pages/MobileSignIn" variant="body2">
+                {"Do not have an account? Help Here "}
               </Link>
             </Grid>
           </Grid>
