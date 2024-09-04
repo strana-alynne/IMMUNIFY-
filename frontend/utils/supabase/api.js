@@ -202,7 +202,6 @@ export async function addChild(motherData, childData, purokName, growthData) {
 
     if (motherError) throw motherError;
     const motherid = mother[0].mother_id;
-
     // Insert child data
     const { data: child, error: childError } = await supabase
       .from("Child")
@@ -216,6 +215,7 @@ export async function addChild(motherData, childData, purokName, growthData) {
       .select();
 
     if (childError) throw childError;
+
     // Insert growth data
     const { data: growth, error: growthError } = await supabase
       .from("Growth")
@@ -228,6 +228,8 @@ export async function addChild(motherData, childData, purokName, growthData) {
       .select();
 
     if (growthError) throw growthError;
+
+    localStorage.setItem("child_id", child[0].child_id);
 
     // Return success response with the inserted data
     console.log(

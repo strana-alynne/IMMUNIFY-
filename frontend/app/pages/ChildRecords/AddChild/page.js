@@ -34,7 +34,8 @@ export default function AddChild() {
   };
 
   const handleClose = () => {
-    router.push(`./01`);
+    const childid = localStorage.getItem("child_id");
+    router.push(`./${childid}`);
   };
   return (
     <Box sx={{ display: "flex", marginTop: "50px" }}>
