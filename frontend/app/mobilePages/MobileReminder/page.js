@@ -13,9 +13,10 @@ import {
   Chip,
 } from "@mui/material";
 import { useRouter } from "next/navigation";
-import MobileSideBar from "@/app/components/MobileSideBar/page";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import InfoIcon from "@mui/icons-material/Info";
+import MobileSideBar from "@/app/components/MobileSideBar/page";
+import AppBarMobile from "@/app/components/AppBarMobile";
 
 const reminders = [
   {
@@ -42,8 +43,8 @@ const reminders = [
 ];
 
 export default function ReminderPage() {
+  const [open, setOpen] = React.useState(false);
   const router = useRouter();
-  const [sidebarOpen, setSidebarOpen] = React.useState(false);
 
   const handleRowClick = (id) => {
     router.replace(`/pages/MReminders/${id}`);
@@ -59,6 +60,17 @@ export default function ReminderPage() {
         return "default";
     }
   };
+  const toggleDrawer = (open) => (event) => {
+    if (
+      event &&
+      event.type === "keydown" &&
+      (event.key === "Tab" || event.key === "Shift")
+    ) {
+      return;
+    }
+
+    setOpen(open);
+  };
 
   return (
     <Box
@@ -72,27 +84,13 @@ export default function ReminderPage() {
         boxSizing: "border-box",
       }}
     >
-      <MobileSideBar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-
       <Box
         sx={{
           flexGrow: 1,
-          paddingLeft: sidebarOpen ? "240px" : "0",
-          transition: "padding-left 0.3s",
         }}
       >
-        <img
-          src="/logo-wordmark.png"
-          alt="IMMUNIFY logo"
-          style={{
-            width: "160px",
-            margin: "16px 0",
-            display: "block",
-            marginLeft: "auto",
-            marginRight: "auto",
-          }}
-        />
-
+        <AppBarMobile toggleDrawer={toggleDrawer} />
+        <MobileSideBar open={open} toggleDrawer={toggleDrawer} />
         <Typography
           variant="h4"
           color="primary"

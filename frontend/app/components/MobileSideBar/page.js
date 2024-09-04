@@ -26,6 +26,15 @@ export default function SwipeableTemporaryDrawer({ open, toggleDrawer }) {
       onClick={toggleDrawer(false)}
       onKeyDown={toggleDrawer(false)}
     >
+      <Box>
+        <img
+          src="/logo-wordmark-white.png"
+          alt="IMMUNIFY logo"
+          style={{ width: "200px", margin: "16px 0", marginLeft: "10px" }}
+        />
+      </Box>
+      <Divider />
+
       <List>
         {path.map((text, index) => (
           <React.Fragment key={text.id}>

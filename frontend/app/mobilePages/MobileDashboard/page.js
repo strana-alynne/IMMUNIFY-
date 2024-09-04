@@ -80,8 +80,8 @@ export default function MobileDashboard() {
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
 
-  const handleRowClick = (id) => {
-    router.replace(`/pages/ChildRecords/${id}`);
+  const handleRowClick = () => {
+    router.push(`/mobilePages/MobileDashboard/01`);
   };
 
   const handleEdit = (id) => {

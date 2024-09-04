@@ -16,9 +16,10 @@ import {
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useRouter } from "next/navigation";
-//import MobileSideBar from "../MobileSideBar/page";
 import Calendar from "react-calendar"; // Install 'react-calendar' with `npm install react-calendar`
 import "react-calendar/dist/Calendar.css"; // Import CSS for calendar styling
+import MobileSideBar from "@/app/components/MobileSideBar/page";
+import AppBarMobile from "@/app/components/AppBarMobile";
 
 // Dummy appointment data
 const appointments = [
@@ -52,6 +53,7 @@ export default function AppointmentPage() {
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
   const [selectedDate, setSelectedDate] = React.useState(new Date());
+  const [open, setOpen] = React.useState(false);
 
   const handleRowClick = (id) => {
     router.replace(`/pages/Appointments/${id}`);
@@ -98,6 +100,18 @@ export default function AppointmentPage() {
     }
   };
 
+  const toggleDrawer = (open) => (event) => {
+    if (
+      event &&
+      event.type === "keydown" &&
+      (event.key === "Tab" || event.key === "Shift")
+    ) {
+      return;
+    }
+
+    setOpen(open);
+  };
+
   return (
     <Box
       sx={{
@@ -121,19 +135,8 @@ export default function AppointmentPage() {
           transition: "padding-left 0.3s",
         }}
       >
-        {/* Top Bar */}
-        {/* Logo */}
-        <img
-          src="/logo-wordmark.png"
-          alt="IMMUNIFY logo"
-          style={{
-            width: "160px",
-            margin: "16px 0",
-            display: "block",
-            marginLeft: "auto",
-            marginRight: "auto",
-          }}
-        />
+        <AppBarMobile toggleDrawer={toggleDrawer} />
+        <MobileSideBar open={open} toggleDrawer={toggleDrawer} />
 
         {/* Calendar */}
         <Typography

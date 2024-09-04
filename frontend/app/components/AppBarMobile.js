@@ -20,7 +20,7 @@ export default function AppBarMobile({ toggleDrawer }) {
             sx={{ mr: 2 }}
             onClick={toggleDrawer(true)}
           >
-            <MenuIcon />
+            <MenuIcon color="primary" />
           </IconButton>
           <Box sx={{ flexGrow: 1 }} />
           <img
