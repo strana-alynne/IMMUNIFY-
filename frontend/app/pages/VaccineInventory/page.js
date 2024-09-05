@@ -34,6 +34,7 @@ export default function VaccineInventory() {
   const handleButtonClick = (id, name, inventoryid) => {
     localStorage.setItem("selectedVaccineName", name);
     localStorage.setItem("inventoryID", inventoryid);
+    localStorage.setItem("vaccineID", id);
     router.replace(`/pages/VaccineInventory/${id}`);
   };
   return (

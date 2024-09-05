@@ -90,7 +90,9 @@ export default function AddChild() {
         open={openModal}
         onClose={handleCloseModal}
         title={<CheckCircle color="primary" sx={{ fontSize: 80 }} />}
-        content={<Typography>Successfully Registerd</Typography>}
+        content={
+          <Typography color="primary.darker">Successfully Registerd</Typography>
+        }
         actions={
           <Button variant="contained" onClick={handleClose}>
             OK

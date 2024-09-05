@@ -31,6 +31,7 @@ import {
   fetchVaccineStock,
   addVaccineStock,
   updateVaccineStock,
+  getInventoryTotal,
 } from "@/utils/supabase/api";
 import { useState, useEffect } from "react";
 import { CheckCircle, DriveFileRenameOutline } from "@mui/icons-material";
@@ -51,6 +52,7 @@ const Details = ({ params }) => {
   const [openModal, setOpenModal] = useState(false);
   const [openEditModal, setOpenEditModal] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);
+  const [total, setTotal] = useState();
 
   const handleCloseModal = () => {
     setOpenModal(false);
@@ -93,11 +95,15 @@ const Details = ({ params }) => {
     async function loadVaccines() {
       const storedVaccineName = localStorage.getItem("selectedVaccineName");
       const storeInventoryId = localStorage.getItem("inventoryID");
+      const fetchTotal = localStorage.getItem("vaccineID");
       const fetchedVaccines = await fetchVaccineStock(storeInventoryId);
+      const fetchInvetory = await getInventoryTotal(fetchTotal);
       console.log("Vaccines loaded in component:", fetchedVaccines);
+      console.log("Invetories loaded in component:", fetchInvetory);
       setVaccineName(storedVaccineName);
       setInventoryID(storeInventoryId);
       setVaccines(fetchedVaccines);
+      setTotal(fetchInvetory);
     }
     loadVaccines();
   }, [params.id]);
@@ -306,6 +312,15 @@ const Details = ({ params }) => {
                         </TableCell>
                       </TableRow>
                     ))}
+                  <TableRow sx={{ backgroundColor: "secondary.light" }}>
+                    <TableCell colSpan={4} />
+                    <TableCell colSpan={1}>
+                      <strong>Total</strong>
+                    </TableCell>
+                    <TableCell align="left">
+                      <strong>{total}</strong>
+                    </TableCell>
+                  </TableRow>
                 </TableBody>
               </Table>
             </TableContainer>

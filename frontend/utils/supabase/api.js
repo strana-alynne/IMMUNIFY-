@@ -17,6 +17,21 @@ export async function fetchVaccines() {
   return data || [];
 }
 
+//GET THE INVENTORY TOTAL
+export async function getInventoryTotal(vaccine_id) {
+  const { data, error } = await supabase
+    .from("VaccineInventory")
+    .select("vaccine_quantity")
+    .eq("vaccine_id", vaccine_id);
+
+  if (error) {
+    console.error("Error fetching inventory total:", error.message);
+    return error.message;
+  }
+
+  return data[0].vaccine_quantity;
+}
+
 //DISPLAY STOCK PER VACCINE
 export async function fetchVaccineStock(vaccine_id) {
   const { data, error } = await supabase
@@ -171,13 +186,13 @@ export async function updateVaccineStock(updatedTransaction) {
 // ADD CHILD AND MOTHER RECORDS
 export async function addChild(motherData, childData, purokName, growthData) {
   try {
-    // Log input data
-    console.log("Received motherData:", motherData);
-    console.log("Received childData:", childData);
-    console.log("Received growthData:", growthData);
+    // Log input data for debugging
+    console.log("Received motherData:", JSON.stringify(motherData, null, 2));
+    console.log("Received childData:", JSON.stringify(childData, null, 2));
+    console.log("Received growthData:", JSON.stringify(growthData, null, 2));
     console.log("Received purokName:", purokName);
 
-    // Basic validation of input data
+    // Validate input data
     if (!motherData || !childData || !growthData || !purokName) {
       throw new Error("Missing required data fields");
     }
@@ -189,10 +204,12 @@ export async function addChild(motherData, childData, purokName, growthData) {
       .eq("purok_name", purokName)
       .single();
 
-    if (purokError) throw purokError;
-    if (!purok) throw new Error(`No purok found with name: ${purokName}`);
+    if (purokError)
+      throw new Error(`Error fetching Purok ID: ${purokError.message}`);
+    if (!purok) throw new Error(`No Purok found with name: ${purokName}`);
 
     const purokId = purok.purok_id;
+    console.log("Fetched Purok ID:", purokId);
 
     // Insert mother data
     const { data: mother, error: motherError } = await supabase
@@ -200,21 +217,27 @@ export async function addChild(motherData, childData, purokName, growthData) {
       .insert([motherData])
       .select();
 
-    if (motherError) throw motherError;
-    const motherid = mother[0].mother_id;
+    if (motherError)
+      throw new Error(`Error inserting Mother: ${motherError.message}`);
+    const motherId = mother[0].mother_id;
+    console.log("Inserted Mother ID:", motherId);
+
     // Insert child data
     const { data: child, error: childError } = await supabase
       .from("Child")
       .insert([
         {
           ...childData,
-          mother_id: motherid,
+          mother_id: motherId,
           purok_id: purokId,
         },
       ])
       .select();
 
-    if (childError) throw childError;
+    if (childError)
+      throw new Error(`Error inserting Child: ${childError.message}`);
+    const childId = child[0].child_id;
+    console.log("Inserted Child ID:", childId);
 
     // Insert growth data
     const { data: growth, error: growthError } = await supabase
@@ -222,25 +245,41 @@ export async function addChild(motherData, childData, purokName, growthData) {
       .insert([
         {
           ...growthData,
-          child_id: child[0].child_id,
+          child_id: childId,
         },
       ])
       .select();
 
-    if (growthError) throw growthError;
+    if (growthError)
+      throw new Error(`Error inserting Growth: ${growthError.message}`);
+    console.log("Inserted Growth data:", growth);
 
-    localStorage.setItem("child_id", child[0].child_id);
+    // Store child_id in localStorage
+    localStorage.setItem("child_id", childId);
 
-    // Return success response with the inserted data
-    console.log(
-      "Insertion successful:",
-      { mother, child, growth },
-      { purokId },
-      { motherid }
-    );
+    // Log success and return response
+    console.log("Insertion successful:", { mother, child, growth });
     return { success: true, mother, child, growth };
   } catch (error) {
     console.error("Error inserting data:", error.message);
     return { success: false, error: error.message };
   }
+}
+
+//DISPLAY INDIVIDUAL CHILD RECORDS
+
+export async function fetchChild(child_id) {
+  const { data, error } = await supabase
+    .from("Child")
+    .select(
+      `child_id, child_name, child_age, birthdate, address, gender, Mother(mother_id, mother_name, contact_number, mother_email), Purok(purok_id, purok_name)`
+    )
+    .eq("child_id", child_id);
+
+  if (error) {
+    console.error("Error fetching child:", error.message);
+    return null;
+  }
+
+  return data || [];
 }
