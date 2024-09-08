@@ -24,7 +24,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import MobileSideBar from "@/app/components/MobileSideBar/page";
 import AppBarMobile from "@/app/components/AppBarMobile";
 
-export default function Inbox() {
+export default function InboxPage() {
   const [messages, setMessages] = useState([
     {
       id: 1,
