@@ -11,25 +11,27 @@ import {
   Container,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { useRouter } from "next/navigation";
 
 
 export default function AddNewMessage() {
   const [recipient, setRecipient] = useState("");
   const [subject, setSubject] = useState("");
   const [content, setContent] = useState("");
+  const router = useRouter();
 
 
   const handleSend = () => {
     // Handle sending the message (e.g., save it to the backend)
     console.log("Sending message:", { recipient, subject, content });
-    router.push("mobilePages/MobileInbox"); // Redirect to the inbox page
+    router.push("/mobilePages/MobileInbox"); // Redirect to the inbox page
   };
 
   return (
     <Box>
       <AppBar position="static">
         <Toolbar>
-          <IconButton edge="start" color="inherit" onClick={() => router.push("")}>
+          <IconButton edge="start" color="inherit" onClick={() => router.push("/mobilePages/MobileInbox")}>
             <ArrowBackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ flexGrow: 1 }}>
