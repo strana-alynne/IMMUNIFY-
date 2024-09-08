@@ -23,8 +23,10 @@ import AddIcon from "@mui/icons-material/Add";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import MobileSideBar from "@/app/components/MobileSideBar/page";
 import AppBarMobile from "@/app/components/AppBarMobile";
+import { useRouter } from "next/navigation";
 
 export default function InboxPage() {
+    
   const [messages, setMessages] = useState([
     {
       id: 1,
@@ -65,6 +67,8 @@ export default function InboxPage() {
   const [filter, setFilter] = useState("inbox"); // 'inbox', 'archived', 'deleted'
   const [selectedMessage, setSelectedMessage] = useState(null); // Message clicked to view
   const [replyText, setReplyText] = useState("");
+  const router = useRouter ();
+ 
 
   const handleDelete = (id) => {
     setMessages(
@@ -93,7 +97,6 @@ export default function InboxPage() {
   const handleAddMessage = () => {
         router.push('/mobilePages/MobileAddMess/'); // Redirect to the New Message page
       };
-   
 
   const toggleDrawer = (open) => (event) => {
     if (
