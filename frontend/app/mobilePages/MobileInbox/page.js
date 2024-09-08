@@ -91,7 +91,7 @@ export default function Inbox() {
   };
 
   const handleAddMessage = () => {
-        router.push("/addnewmessage"); // Redirect to the New Message page
+        router.push('/mobilePages/MobileAddMess/'); // Redirect to the New Message page
       };
    
 
