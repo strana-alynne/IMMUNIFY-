@@ -1,46 +1,36 @@
 "use client";
-import React from "react";
-import SideBar from "@/app/components/SideBar/page";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Container,
-  Typography,
   Stack,
-  TableContainer,
-  TableCell,
-  TableHead,
-  TableRow,
-  Table,
-  TableBody,
-  Paper,
-  IconButton,
+  Typography,
   Chip,
-  Grid,
   Button,
   TextField,
+  Grid,
+  IconButton,
+  InputAdornment,
+  FormControl,
   InputLabel,
   MenuItem,
-  FormControl,
-  ListItemText,
+  Select,
   Checkbox,
+  ListItemText,
   OutlinedInput,
-  InputAdornment,
 } from "@mui/material";
-import Select, { SelectChangeEvent } from "@mui/material/Select";
-import FaceIcon from "@mui/icons-material/Face";
-import DeleteIcon from "@mui/icons-material/Delete";
+import { DataGrid } from "@mui/x-data-grid";
+import { fetchAllChildren } from "@/utils/supabase/api";
+import { AddCircle, Face, Face2 } from "@mui/icons-material";
 import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
 import SearchIcon from "@mui/icons-material/Search";
 import { useRouter } from "next/navigation";
-import { AddCircle } from "@mui/icons-material";
-//responsible for getting the data from the array
-function createData(name, age, bday, purok, mother, status, id) {
-  return { name, age, bday, purok, mother, status, id };
-}
+import SideBar from "@/app/components/SideBar/page";
 //Chip Color
 const getChipColor = (status) => {
   switch (status) {
-    case "Completed":
+    case "Complete":
       return {
         backgroundColor: "primary.light",
         color: "primary.dark",
@@ -52,7 +42,7 @@ const getChipColor = (status) => {
         color: "secondary.dark",
         fontWeight: "bold",
       };
-    case "Missed Schedule":
+    case "Missed":
       return {
         backgroundColor: "error.light",
         color: "error.dark",
@@ -62,37 +52,6 @@ const getChipColor = (status) => {
       return "default"; // fallback color
   }
 };
-
-// Data Table
-const rows = [
-  createData(
-    "Sarah Johnsons",
-    "12 months",
-    "12/24/2023",
-    "farland",
-    "Maria Johnsons",
-    "Completed",
-    1
-  ),
-  createData(
-    "Sarah Johnsons",
-    "12 months",
-    "12/24/2023",
-    "farland",
-    "Maria Johnsons",
-    "Partial",
-    2
-  ),
-  createData(
-    "Sarah Johnsons",
-    "12 months",
-    "12/24/2023",
-    "farland",
-    "Maria Johnsons",
-    "Missed Schedule",
-    3
-  ),
-];
 
 // purok filter
 const purok = [
@@ -126,7 +85,7 @@ const purok = [
 ];
 
 //status filter
-const statusArr = ["Completed", "Partial", "Missed Schedule"];
+const statusArr = ["Completed", "Partial", "Missed"];
 const ITEM_HEIGHT = 48;
 const ITEM_PADDING_TOP = 8;
 const MenuProps = {
@@ -140,55 +99,162 @@ const MenuProps = {
 
 export default function ChildRecords() {
   const router = useRouter();
-  const [purokName, setPurokName] = React.useState([]);
-  const [statusName, setStatusName] = React.useState([]);
+  const [purokName, setPurokName] = useState([]);
+  const [statusName, setStatusName] = useState([]);
+  const [child, setChild] = useState([]);
+  const [pageSize, setPageSize] = useState(5); // Page size for pagination
+  const [page, setPage] = useState(0);
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const handleRowClick = (id) => {
-    router.replace(`/pages/ChildRecords/${id}`);
-  };
   const handleAdd = () => {
     router.replace(`/pages/ChildRecords/AddChild`);
   };
 
-  const handlePurokChange = (event) => {
-    const {
-      target: { value },
-    } = event;
-    setPurokName(
-      // On autofill we get a stringified value.
-      typeof value === "string" ? value.split(",") : value
-    );
+  useEffect(() => {
+    async function loadChild() {
+      try {
+        const fetchedChildren = await fetchAllChildren();
+        console.log("Fetched Children:", fetchedChildren);
+        setChild(fetchedChildren);
+
+        // Filter based on search term and selected purok
+        const filteredChildren = fetchedChildren.filter((child) => {
+          const matchesSearchTerm =
+            child.child_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            child.Purok?.purok_name
+              ?.toLowerCase()
+              .includes(searchTerm.toLowerCase()) ||
+            child.Mother?.mother_name
+              .toLowerCase()
+              .includes(searchTerm.toLowerCase());
+
+          // Filter by Purok if any are selected
+          const matchesPurok =
+            purokName.length === 0 ||
+            purokName.includes(child.Purok?.purok_name);
+
+          // Filter by Status if any are selected
+          const matchesStatus =
+            statusName.length === 0 || statusName.includes(child.overallStatus);
+
+          return matchesSearchTerm && matchesPurok && matchesStatus;
+        });
+
+        setChild(filteredChildren);
+      } catch (error) {
+        console.error("Error fetching children:", error);
+      }
+    }
+    loadChild();
+  }, [searchTerm, purokName, statusName]);
+
+  const handleRowClick = (params) => {
+    localStorage.setItem("childStatus", params.row.overallStatus);
+    // Navigate to details page with row ID
+    router.push(`/pages/ChildRecords/${params.id}`);
   };
-  const handleStatusChange = (event) => {
-    const {
-      target: { value },
-    } = event;
-    setStatusName(
-      // On autofill we get a stringified value.
-      typeof value === "string" ? value.split(",") : value
-    );
-  };
+
+  // Define the columns for DataGrid
+  const columns = [
+    {
+      field: "name",
+      headerName: "Name",
+      width: 250,
+      renderCell: (params) => (
+        <>
+          {params.row.gender === "Female" ? (
+            <Face2 color="secondary" style={{ marginRight: "8px" }} />
+          ) : (
+            <Face color="primary" style={{ marginRight: "8px" }} />
+          )}
+          {params.row.child_name}
+        </>
+      ),
+    },
+    {
+      field: "age",
+      headerName: "Age",
+      width: 100,
+      renderCell: (params) => <>{params.row.child_age} months</>,
+    },
+    {
+      field: "bday",
+      headerName: "Birth Date",
+      width: 150,
+      renderCell: (params) => <>{params.row.birthdate}</>,
+    },
+    {
+      field: "purok",
+      headerName: "Purok",
+      width: 150,
+      renderCell: (params) => (
+        <>
+          {params.row.Purok?.purok_name || "N/A"}{" "}
+          {/* Fallback to "N/A" if undefined */}
+        </>
+      ),
+    },
+    {
+      field: "mother",
+      headerName: "Mother's Name",
+      width: 250,
+      renderCell: (params) => <>{params.row.Mother.mother_name}</>,
+    },
+    {
+      field: "status",
+      headerName: "Status",
+      width: 150,
+      renderCell: (params) => (
+        <Chip
+          label={params.row.overallStatus}
+          sx={getChipColor(params.row.overallStatus)}
+        />
+      ),
+    },
+    {
+      field: "actions",
+      headerName: "Action",
+      width: 150,
+      renderCell: (params) => (
+        <>
+          <IconButton
+            aria-label="edit"
+            color="primary"
+            onClick={() => handleEdit(params.row.id)}
+          >
+            <EditIcon />
+          </IconButton>
+          <IconButton
+            aria-label="delete"
+            color="error"
+            onClick={() => handleDelete(params.row.id)}
+          >
+            <DeleteIcon />
+          </IconButton>
+        </>
+      ),
+    },
+  ];
+
   return (
     <Box sx={{ display: "flex", marginTop: "50px" }}>
       <SideBar />
       <Container fixed>
         <Stack spacing={4}>
           <Stack direction="row" spacing={0.5}>
-            <FaceIcon sx={{ fontSize: 40 }} color="primary" />
             <Typography variant="h2" color="primary">
               Child Records
             </Typography>
           </Stack>
+
           <Grid container alignItems="start" spacing={2}>
             {/* SEARCH TEXTFIELD */}
             <Grid item xs={4}>
               <TextField
                 size="medium"
                 fullWidth
-                id="outlined-size-small"
                 label="Search..."
-                name="seacrh"
-                autoFocus
+                onChange={(e) => setSearchTerm(e.target.value)}
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
@@ -202,18 +268,13 @@ export default function ChildRecords() {
             {/* DROPDOWN BY PUROK */}
             <Grid item xs={4}>
               <FormControl fullWidth>
-                <InputLabel id="demo-multiple-checkbox-label">
-                  Filter by Purok
-                </InputLabel>
+                <InputLabel>Filter by Purok</InputLabel>
                 <Select
-                  labelId="demo-multiple-checkbox-label"
-                  id="demo-multiple-checkbox"
                   multiple
                   value={purokName}
-                  onChange={handlePurokChange}
+                  onChange={(e) => setPurokName(e.target.value)}
                   input={<OutlinedInput label="Filter by Purok" />}
                   renderValue={(selected) => selected.join(", ")}
-                  MenuProps={MenuProps}
                 >
                   {purok.map((name) => (
                     <MenuItem key={name} value={name}>
@@ -228,18 +289,13 @@ export default function ChildRecords() {
             {/* DROPDOWN BY STATUS */}
             <Grid item xs={2}>
               <FormControl fullWidth>
-                <InputLabel id="demo-multiple-checkbox-label">
-                  Filter by Purok
-                </InputLabel>
+                <InputLabel>Filter by Status</InputLabel>
                 <Select
-                  labelId="demo-multiple-checkbox-label"
-                  id="demo-multiple-checkbox"
                   multiple
                   value={statusName}
-                  onChange={handleStatusChange}
-                  input={<OutlinedInput label="Filter by Purok" />}
+                  onChange={(e) => setStatusName(e.target.value)}
+                  input={<OutlinedInput label="Filter by Status" />}
                   renderValue={(selected) => selected.join(", ")}
-                  MenuProps={MenuProps}
                 >
                   {statusArr.map((name) => (
                     <MenuItem key={name} value={name}>
@@ -264,61 +320,21 @@ export default function ChildRecords() {
             </Grid>
           </Grid>
 
-          {/* THIS IS THE TABLE */}
-          <Box>
-            {" "}
-            <TableContainer component={Paper}>
-              <Table sx={{ minWidth: 650 }} aria-label="simple table">
-                <TableHead>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: "bold" }}>Name</TableCell>
-                    <TableCell sx={{ fontWeight: "bold" }}>Age</TableCell>
-                    <TableCell sx={{ fontWeight: "bold" }}>BirthDate</TableCell>
-                    <TableCell sx={{ fontWeight: "bold" }}>Purok</TableCell>
-                    <TableCell sx={{ fontWeight: "bold" }}>
-                      Mother's Name
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: "bold" }}>Status</TableCell>
-                    <TableCell sx={{ fontWeight: "bold" }}>Action</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {rows.map((row) => (
-                    <TableRow
-                      key={row.id}
-                      sx={{
-                        "&:last-child td, &:last-child th": { border: 0 },
-                        cursor: "pointer",
-                      }}
-                      onClick={() => handleRowClick(row.id)}
-                    >
-                      <TableCell component="th" scope="row">
-                        {row.name}
-                      </TableCell>
-                      <TableCell>{row.age}</TableCell>
-                      <TableCell>{row.bday}</TableCell>
-                      <TableCell>{row.purok}</TableCell>
-                      <TableCell>{row.mother}</TableCell>
-                      <TableCell>
-                        <Chip
-                          label={row.status}
-                          sx={getChipColor(row.status)}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        {" "}
-                        <IconButton aria-label="delete" color="primary">
-                          <EditIcon />
-                        </IconButton>
-                        <IconButton aria-label="delete" color="error">
-                          <DeleteIcon />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+          {/* DATA GRID TABLE */}
+          <Box sx={{ height: 500, width: "100%" }}>
+            <DataGrid
+              rows={child}
+              columns={columns}
+              pageSize={pageSize}
+              rowsPerPageOptions={[5, 10, 25]}
+              pagination
+              page={page}
+              onPageChange={(newPage) => setPage(newPage)}
+              onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
+              getRowId={(row) => row.child_id} // Ensure each row has a unique id
+              disableSelectionOnClick
+              onRowClick={handleRowClick}
+            />
           </Box>
         </Stack>
       </Container>

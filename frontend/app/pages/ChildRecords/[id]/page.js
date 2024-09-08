@@ -9,6 +9,7 @@ import {
   Chip,
   Paper,
   Button,
+  IconButton,
 } from "@mui/material";
 import {
   Face as FaceIcon,
@@ -16,22 +17,58 @@ import {
   Edit,
   DeleteForever,
   Face3,
+  Face,
+  ArrowBack,
 } from "@mui/icons-material";
 import ChildCard from "./card";
 import { fetchChild } from "@/utils/supabase/api";
+import { useRouter } from "next/navigation";
 
 const ChildId = ({ params }) => {
   const [childData, setChildData] = useState([]);
+  const [childStatus, setChildStatus] = useState([]);
+  const router = useRouter();
+
+  const getChipColor = (status) => {
+    switch (status) {
+      case "Completed":
+        return {
+          backgroundColor: "primary.light",
+          color: "primary.dark",
+          fontWeight: "bold",
+        }; // You can use hex codes or predefined MUI colors here
+      case "Partial":
+        return {
+          backgroundColor: "secondary.light",
+          color: "secondary.dark",
+          fontWeight: "bold",
+        };
+      case "Missed":
+        return {
+          backgroundColor: "error.light",
+          color: "error.dark",
+          fontWeight: "bold",
+        };
+      default:
+        return "default"; // fallback color
+    }
+  };
 
   useEffect(() => {
+    const childStatus = localStorage.getItem("childStatus");
     const fetchData = async () => {
       const data = await fetchChild(params.id);
       setChildData(data || []);
       console.log(data);
+      setChildStatus(childStatus);
     };
 
     fetchData();
   }, [params.id]);
+
+  const handleBack = () => {
+    router.replace(`/pages/ChildRecords`);
+  };
 
   return (
     <Box sx={{ display: "flex", marginTop: "50px" }}>
@@ -40,13 +77,20 @@ const ChildId = ({ params }) => {
         <Stack spacing={4}>
           <Stack direction="column">
             <Stack direction="row" spacing={0.5}>
+              <IconButton>
+                <ArrowBack
+                  sx={{ fontSize: 40 }}
+                  color="primary"
+                  onClick={handleBack}
+                />
+              </IconButton>
               <FaceIcon sx={{ fontSize: 40 }} color="primary" />
               <Typography variant="h2" color="primary">
                 Child Records
               </Typography>
             </Stack>
             <Typography variant="p" color="secondary">
-              {params.id}
+              Child ID: <strong>{params.id}</strong>
             </Typography>
           </Stack>
 
@@ -65,7 +109,7 @@ const ChildId = ({ params }) => {
               startIcon={<Edit />}
               xs={2}
             >
-              Save Record
+              Edit Record
             </Button>
           </Stack>
           {/* INFORMATION */}
@@ -78,7 +122,7 @@ const ChildId = ({ params }) => {
                   {row.gender === "Female" ? (
                     <Face2 sx={{ fontSize: 100 }} color="secondary" />
                   ) : (
-                    <Face3 sx={{ fontSize: 100 }} color="primary" />
+                    <Face sx={{ fontSize: 100 }} color="primary" />
                   )}
                   <Stack spacing={0.5}>
                     <Typography variant="h5">{row.child_name}</Typography>
@@ -127,14 +171,7 @@ const ChildId = ({ params }) => {
                   <Typography variant="h6_regular">
                     Immunization Status
                   </Typography>
-                  <Chip
-                    label="Completed"
-                    sx={{
-                      backgroundColor: "primary.light",
-                      color: "primary.dark",
-                      fontWeight: "bold",
-                    }}
-                  />
+                  <Chip label={childStatus} sx={getChipColor(childStatus)} />
                 </Stack>
               </Stack>
             </Paper>

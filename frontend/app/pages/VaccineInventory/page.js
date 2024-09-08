@@ -25,7 +25,6 @@ export default function VaccineInventory() {
   useEffect(() => {
     async function loadVaccines() {
       const fetchedVaccines = await fetchVaccines();
-      console.log("Vaccines loaded in xxcomponent:", fetchedVaccines);
       setVaccines(fetchedVaccines);
     }
     loadVaccines();

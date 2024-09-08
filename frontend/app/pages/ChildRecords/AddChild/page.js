@@ -8,11 +8,12 @@ import {
   Stack,
   Typography,
   Button,
+  IconButton,
 } from "@mui/material";
 import FaceIcon from "@mui/icons-material/Face";
 import Childinfo from "./childinfo";
 import Motherinfo from "./motherinfo";
-import { Check, CheckCircle } from "@mui/icons-material";
+import { ArrowBack, Check, CheckCircle } from "@mui/icons-material";
 import { addChild } from "@/utils/supabase/api";
 import GeneralModals from "@/app/components/Modals/Modals";
 import { useRouter } from "next/navigation";
@@ -37,6 +38,10 @@ export default function AddChild() {
     const childid = localStorage.getItem("child_id");
     router.push(`./${childid}`);
   };
+
+  const handleBack = () => {
+    router.replace(`/pages/ChildRecords`);
+  };
   return (
     <Box sx={{ display: "flex", marginTop: "50px" }}>
       <SideBar />
@@ -44,6 +49,13 @@ export default function AddChild() {
         <Stack spacing={4}>
           <Stack direction="column">
             <Stack direction="row" spacing={0.5}>
+              <IconButton>
+                <ArrowBack
+                  sx={{ fontSize: 40 }}
+                  color="primary"
+                  onClick={handleBack}
+                />
+              </IconButton>
               <FaceIcon sx={{ fontSize: 40 }} color="primary" />
               <Typography variant="h2" color="primary">
                 Child Records

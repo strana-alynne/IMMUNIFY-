@@ -267,7 +267,6 @@ export async function addChild(motherData, childData, purokName, growthData) {
 }
 
 //DISPLAY INDIVIDUAL CHILD RECORDS
-
 export async function fetchChild(child_id) {
   const { data, error } = await supabase
     .from("Child")
@@ -278,8 +277,110 @@ export async function fetchChild(child_id) {
 
   if (error) {
     console.error("Error fetching child:", error.message);
-    return null;
+    return error.message;
   }
 
   return data || [];
+}
+
+//DISPLAY ALL CHILD RECORDS
+// export async function fetchAllChildren() {
+//   const { data, error } = await supabase.from("Child").select(
+//     `child_id, child_name, child_age, birthdate, address, gender,
+//       Mother(mother_id, mother_name, contact_number, mother_email),
+//       Purok(purok_id, purok_name),
+//       Schedule(child_id, immunization_status)`
+//   );
+
+//   if (error) {
+//     console.error("Error fetching children:", error.message);
+//     return error.message;
+//   }
+
+//   return data || [];
+// }
+export async function fetchAllChildren() {
+  const { data, error } = await supabase
+    .from("Child")
+    .select(
+      `
+      child_id,
+      child_name,
+      child_age,
+      birthdate,
+      gender,
+      Purok(purok_name),
+      Mother(mother_name),
+      Schedule!left (
+        sched_id,
+        scheduled_date,
+        ImmunizationRecords!left (
+          record_id,
+          date_administered,
+          completion_status
+        )
+      )
+    `
+    )
+    .order("child_name");
+
+  if (error) {
+    console.error("Error fetching children data:", error);
+    return [];
+  }
+
+  // Process the data to determine overall status
+  const processedData = data.map((child) => {
+    let overallStatus = "No Records";
+
+    if (child.Schedule && child.Schedule.length > 0) {
+      let allCompleted = true;
+      let hasMissed = false;
+      let hasScheduled = false;
+
+      child.Schedule.forEach((schedule) => {
+        const currentDate = new Date();
+        const scheduleDate = new Date(schedule.scheduled_date);
+
+        if (
+          !schedule.ImmunizationRecords ||
+          schedule.ImmunizationRecords.length === 0
+        ) {
+          if (scheduleDate < currentDate) {
+            hasMissed = true;
+          } else {
+            hasScheduled = true;
+          }
+          allCompleted = false;
+        } else {
+          schedule.ImmunizationRecords.forEach((record) => {
+            if (record.completion_status !== "Completed") {
+              allCompleted = false;
+              if (
+                record.completion_status === "Missed" ||
+                (scheduleDate < currentDate && !record.date_administered)
+              ) {
+                hasMissed = true;
+              } else if (scheduleDate > currentDate) {
+                hasScheduled = true;
+              }
+            }
+          });
+        }
+      });
+
+      if (hasMissed) {
+        overallStatus = "Missed";
+      } else if (allCompleted) {
+        overallStatus = "Complete";
+      } else if (hasScheduled) {
+        overallStatus = "Partially Complete";
+      }
+    }
+
+    return { ...child, overallStatus };
+  });
+
+  console.log("Processed data:", processedData);
+  return processedData;
 }
