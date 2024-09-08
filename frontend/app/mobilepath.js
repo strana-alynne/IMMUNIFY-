@@ -27,6 +27,13 @@ const mobilepath = () => [
     component: <ReminderPage />,
     path: "/mobilePages/MobileReminder",
   },
+    {
+    id: 4,
+    label: "Inbox",
+    img: <InboxRounded />,
+    component: <InboxPage />,
+    path: "/mobilePages/MobileInbox",
+  },
 ];
 
 export default mobilepath;
