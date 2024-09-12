@@ -17,7 +17,7 @@ import { ArrowBack, Check, CheckCircle } from "@mui/icons-material";
 import { addChild } from "@/utils/supabase/api";
 import GeneralModals from "@/app/components/Modals/Modals";
 import { useRouter } from "next/navigation";
-
+import geocodeAddress from "@/utils/supabase/api"; // Use the correct import for default export
 
 export default function AddChild() {
   const router = useRouter();
@@ -26,13 +26,22 @@ export default function AddChild() {
   const [purok, setSelectedPurok] = useState("");
   const [growth, setGrowthData] = useState({});
   const [openModal, setOpenModal] = useState(false);
+  const [scheduleData, setScheduleData] = useState({});
 
   const handleCloseModal = () => {
     setOpenModal(false);
   };
   const handleSave = async () => {
-    await addChild(motherData, childData, purok, growth);
-    setOpenModal(true);
+    // await addChild(motherData, childData, purok, growth);
+    // const childid = localStorage.getItem("child_id");
+    // await addRecord(childid, scheduleData);
+    console.log("click");
+    await geocodeAddress(
+      "Blk 6, Lot 4, Philbanking Village, Barangay Dumoy, Davao City"
+    );
+    console.log("geocode");
+
+    //setOpenModal(true);
   };
 
   const handleClose = () => {
@@ -75,6 +84,7 @@ export default function AddChild() {
               setChildData={setChildData}
               setPurok={setSelectedPurok}
               setGrowthData={setGrowthData}
+              setScheduleData={setScheduleData}
             />
           </Paper>
           <Paper sx={{ p: 4 }}>

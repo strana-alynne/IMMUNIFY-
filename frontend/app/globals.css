@@ -29,15 +29,3 @@ body {
 .css-80x64y-MuiPaper-root-MuiDrawer-paper{
   background-color: #145B50;
 }
-
-.custom-disabled-textfield.Mui-disabled .MuiInputBase-input {
-  color: #228c22 !important;
-}
-
-.custom-disabled-textfield.Mui-disabled .MuiFormHelperText-root {
-  color: #228c22 !important;
-}
-
-.custom-disabled-textfield.Mui-disabled .MuiOutlinedInput-notchedOutline {
-  border-color: #228c22 !important;
-}

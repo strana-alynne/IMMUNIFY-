@@ -18,8 +18,13 @@ import dayjs from "dayjs";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import { geocodeAddress } from "@/utils/dbscan";
-export default function childinfo({ setChildData, setPurok, setGrowthData }) {
+import geocodeAddress from "@/utils/supabase/api";
+export default function childinfo({
+  setChildData,
+  setPurok,
+  setGrowthData,
+  setScheduleData,
+}) {
   const purok = [
     "Farland 1",
     "Farland 2",
@@ -66,24 +71,38 @@ export default function childinfo({ setChildData, setPurok, setGrowthData }) {
   useEffect(() => {
     const handleGeocode = async () => {
       try {
-        const data = await geocodeAddress(address); // Call the geocodeAddress function
+        const data = await geocodeAddress(address);
+        console.log(`This fucking data: ${data}`); // Call the geocodeAddress function
         setLatitude(data.latitude); // Set latitude from geocoding response
         setLongitude(data.longitude); // Set longitude from geocoding response
       } catch (error) {
         console.error("Error during geocoding:", error);
       }
     };
-
     // Call handleGeocode when the address changes
     if (address) {
       handleGeocode();
     }
-
+    console.log(latitude, longitude);
     const child_name = `${firstname} ${lastname}`;
+    const bcg_vaccine_info =
+      selectedRadio === "option1"
+        ? { vaccineId: "V001", date: dayjs(birthdate).format("YYYY-MM-DD") }
+        : { vaccineId: "V001", date: null };
+
+    const hepatitis_b_vaccine_info =
+      selectedRadio2 === "option1"
+        ? { vaccineId: "V002", date: dayjs(birthdate).format("YYYY-MM-DD") }
+        : { vaccineId: "V002", date: null };
+
     setPurok(purokName);
     setGrowthData({
       height: height ? parseFloat(height) : null,
       weight: weight ? parseFloat(weight) : null,
+    });
+    setScheduleData({
+      bcg: bcg_vaccine_info,
+      hepatitis_b: hepatitis_b_vaccine_info,
     });
     setChildData({
       child_name,
@@ -106,6 +125,8 @@ export default function childinfo({ setChildData, setPurok, setGrowthData }) {
     weight,
     latitude,
     longitude,
+    selectedRadio,
+    selectedRadio2,
   ]);
 
   const handlePurokChange = (event) => {
