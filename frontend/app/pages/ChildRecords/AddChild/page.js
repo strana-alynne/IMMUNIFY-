@@ -18,6 +18,7 @@ import { addChild } from "@/utils/supabase/api";
 import GeneralModals from "@/app/components/Modals/Modals";
 import { useRouter } from "next/navigation";
 
+
 export default function AddChild() {
   const router = useRouter();
   const [motherData, setMotherData] = useState({});

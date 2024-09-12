@@ -5,7 +5,7 @@ import DashboardIcon from "@mui/icons-material/Dashboard";
 import DashBoardCard from "@/app/components/DashBoardCard";
 import ReminderCard from "@/app/components/ReminderCard";
 import { Group, Face, EventBusy, NewReleases } from "@mui/icons-material";
-import GeocodingMap from "@/app/components/Geocodingmap";
+import GeocodingMap from "@/app/components/GeocodingMap";
 
 export default function Dashboard() {
   const address = "2GJ7+H26, Barangay Dumoy, Davao City, Davao, McArthur Highway, Toril, Davao City, Davao del Sur"; // Example address

@@ -10,11 +10,15 @@ import {
   Select,
   InputAdornment,
   FilledInput,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
 } from "@mui/material";
 import dayjs from "dayjs";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { geocodeAddress } from "@/utils/dbscan";
 export default function childinfo({ setChildData, setPurok, setGrowthData }) {
   const purok = [
     "Farland 1",
@@ -54,8 +58,27 @@ export default function childinfo({ setChildData, setPurok, setGrowthData }) {
   const [purokName, setPurokName] = useState([]);
   const [height, setHeight] = useState();
   const [weight, setWeight] = useState();
+  const [latitude, setLatitude] = useState(null); // Latitude state
+  const [longitude, setLongitude] = useState(null); // Longitude state
+  const [selectedRadio, setSelectedRadio] = useState("option1");
+  const [selectedRadio2, setSelectedRadio2] = useState("option1");
 
   useEffect(() => {
+    const handleGeocode = async () => {
+      try {
+        const data = await geocodeAddress(address); // Call the geocodeAddress function
+        setLatitude(data.latitude); // Set latitude from geocoding response
+        setLongitude(data.longitude); // Set longitude from geocoding response
+      } catch (error) {
+        console.error("Error during geocoding:", error);
+      }
+    };
+
+    // Call handleGeocode when the address changes
+    if (address) {
+      handleGeocode();
+    }
+
     const child_name = `${firstname} ${lastname}`;
     setPurok(purokName);
     setGrowthData({
@@ -68,6 +91,8 @@ export default function childinfo({ setChildData, setPurok, setGrowthData }) {
       gender,
       birthdate: birthdate ? dayjs(birthdate).format("YYYY-MM-DD") : null,
       address,
+      latitude,
+      longitude,
     });
   }, [
     firstname,
@@ -79,6 +104,8 @@ export default function childinfo({ setChildData, setPurok, setGrowthData }) {
     purokName,
     height,
     weight,
+    latitude,
+    longitude,
   ]);
 
   const handlePurokChange = (event) => {
@@ -119,6 +146,14 @@ export default function childinfo({ setChildData, setPurok, setGrowthData }) {
 
   const handleHeight = (event) => {
     setHeight(event.target.value);
+  };
+
+  const handleRadioChangeBCG = (event) => {
+    setSelectedRadio(event.target.value);
+  };
+
+  const handleRadioChangeHB = (event) => {
+    setSelectedRadio2(event.target.value);
   };
 
   return (
@@ -295,6 +330,55 @@ export default function childinfo({ setChildData, setPurok, setGrowthData }) {
           onChange={handleWeight}
           endAdornment={<InputAdornment position="end">kg</InputAdornment>}
         />
+      </Grid>
+      <Grid item sx={{ mt: 2 }}>
+        <FormControl component="fieldset">
+          <Typography variant="p" color="darker">
+            Has the baby already received the <strong>BCG vaccine</strong>? *
+          </Typography>
+          <RadioGroup
+            aria-label="options"
+            name="radio-buttons-group"
+            value={selectedRadio}
+            onChange={handleRadioChangeBCG}
+          >
+            <FormControlLabel
+              value="option1"
+              control={<Radio />}
+              label="Yes, BCG vaccine received"
+            />
+            <FormControlLabel
+              value="option2"
+              control={<Radio />}
+              label="No, BCG vaccine not yet received"
+            />
+          </RadioGroup>
+        </FormControl>
+      </Grid>
+      <Grid item sx={{ mt: 2 }}>
+        <FormControl component="fieldset">
+          <Typography variant="p" color="darker">
+            Has the baby already received the{" "}
+            <strong>Hepatitis B Vaccine</strong>? *
+          </Typography>
+          <RadioGroup
+            aria-label="options"
+            name="radio-buttons-group"
+            value={selectedRadio2}
+            onChange={handleRadioChangeHB}
+          >
+            <FormControlLabel
+              value="option1"
+              control={<Radio />}
+              label="Yes, Hepatitis B vaccine received"
+            />
+            <FormControlLabel
+              value="option2"
+              control={<Radio />}
+              label="No, Hepatitis B vanccine not yet receieved"
+            />
+          </RadioGroup>
+        </FormControl>
       </Grid>
     </Grid>
   );

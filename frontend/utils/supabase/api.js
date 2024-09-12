@@ -271,7 +271,12 @@ export async function fetchChild(child_id) {
   const { data, error } = await supabase
     .from("Child")
     .select(
-      `child_id, child_name, child_age, birthdate, address, gender, Mother(mother_id, mother_name, contact_number, mother_email), Purok(purok_id, purok_name)`
+      `child_id, child_name, child_age, birthdate, address, gender,
+      Mother(mother_id, mother_name, contact_number, mother_email),
+      Purok(purok_id, purok_name),
+      Schedule(sched_id, scheduled_date, vaccine_id,
+      ImmunizationRecords(record_id, date_administered, completion_status)
+      )`
     )
     .eq("child_id", child_id);
 
@@ -284,21 +289,6 @@ export async function fetchChild(child_id) {
 }
 
 //DISPLAY ALL CHILD RECORDS
-// export async function fetchAllChildren() {
-//   const { data, error } = await supabase.from("Child").select(
-//     `child_id, child_name, child_age, birthdate, address, gender,
-//       Mother(mother_id, mother_name, contact_number, mother_email),
-//       Purok(purok_id, purok_name),
-//       Schedule(child_id, immunization_status)`
-//   );
-
-//   if (error) {
-//     console.error("Error fetching children:", error.message);
-//     return error.message;
-//   }
-
-//   return data || [];
-// }
 export async function fetchAllChildren() {
   const { data, error } = await supabase
     .from("Child")
@@ -384,3 +374,64 @@ export async function fetchAllChildren() {
   console.log("Processed data:", processedData);
   return processedData;
 }
+
+//Fetching Latitude and Longitude
+export default async function handler(req, res) {
+  // Fetch the coordinates and immunization statuses
+  const { data, error } = await supabase
+    .from("Child")
+    .select("latitude, longitude");
+
+  if (error) {
+    return res.status(500).json({ error: error.message });
+  }
+
+  const coordinates = data.map((child) => [child.latitude, child.longitude]);
+  const statuses = data.map((child) => child.immunization_status);
+
+  // Send coordinates and statuses to FastAPI for DBSCAN clustering
+  const response = await fetch("http://localhost:8000/cluster", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ coordinates, statuses }),
+  });
+
+  const result = await response.json();
+  res.status(200).json(result);
+}
+
+//FETCH IMMUNIZATION RECORDS
+export const updateImmunizationRecord = async (childId, vaccineData) => {
+  // Update the schedules table
+  const scheduleUpdates = vaccineData
+    .map((vaccine) => ({
+      child_id: childId,
+      vaccine_id: vaccine.vaccineID,
+      scheduled_date: vaccine.scheduledDate,
+    }))
+    .filter((item) => item.scheduled_date !== null);
+
+  const { error: scheduleError } = await supabase
+    .from("schedules")
+    .upsert(scheduleUpdates, { onConflict: ["child_id", "vaccine_id"] });
+
+  if (scheduleError) throw scheduleError;
+
+  // Update the immunization_records table
+  const immunizationUpdates = vaccineData
+    .map((vaccine) => ({
+      child_id: childId,
+      vaccine_id: vaccine.vaccineID,
+      date_administered: vaccine.administeredDate,
+      completion_status: vaccine.status,
+    }))
+    .filter((item) => item.date_administered !== null);
+
+  const { error: immunizationError } = await supabase
+    .from("immunization_records")
+    .upsert(immunizationUpdates, { onConflict: ["child_id", "vaccine_id"] });
+
+  if (immunizationError) throw immunizationError;
+
+  return { message: "Vaccine data updated successfully" };
+};

@@ -4,19 +4,14 @@ import {
   Box,
   Container,
   Typography,
-  Stack,
-  Paper,
-  IconButton,
+  Stack, IconButton,
   Chip,
   Grid,
   Avatar,
   Card,
   CardContent,
-  CardActions,
-  Button,
+  CardActions
 } from "@mui/material";
-import MenuIcon from "@mui/icons-material/Menu";
-import FaceIcon from "@mui/icons-material/Face";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AppBarMobile from "@/app/components/AppBarMobile";

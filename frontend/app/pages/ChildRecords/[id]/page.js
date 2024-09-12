@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import SideBar from "@/app/components/SideBar/page";
 import {
   Box,
@@ -10,28 +10,41 @@ import {
   Paper,
   Button,
   IconButton,
+  TextField,
+  InputLabel,
+  Select,
+  FormControl,
+  MenuItem,
+  InputAdornment,
+  Grid,
+  Snackbar,
 } from "@mui/material";
 import {
   Face as FaceIcon,
   Face2,
   Edit,
   DeleteForever,
-  Face3,
   Face,
   ArrowBack,
+  Check,
 } from "@mui/icons-material";
 import ChildCard from "./card";
 import { fetchChild } from "@/utils/supabase/api";
 import { useRouter } from "next/navigation";
+import dayjs from "dayjs";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 
 const ChildId = ({ params }) => {
   const [childData, setChildData] = useState([]);
   const [childStatus, setChildStatus] = useState([]);
+  const [schedules, setSchedules] = useState([]);
   const router = useRouter();
 
   const getChipColor = (status) => {
     switch (status) {
-      case "Completed":
+      case "Complete":
         return {
           backgroundColor: "primary.light",
           color: "primary.dark",
@@ -60,6 +73,20 @@ const ChildId = ({ params }) => {
       const data = await fetchChild(params.id);
       setChildData(data || []);
       console.log(data);
+
+      if (data && data.length > 0) {
+        const schedules = data[0].Schedule.map((schedule) => ({
+          scheduled_date: schedule.scheduled_date,
+          vaccine_id: schedule.vaccine_id,
+          immunization_records: schedule.ImmunizationRecords.map((record) => ({
+            date_administered: record.date_administered,
+            completion_status: record.completion_status,
+          })),
+        }));
+
+        setSchedules(schedules);
+        console.log(schedules); // Set the extracted schedule data into state
+      }
       setChildStatus(childStatus);
     };
 
@@ -177,7 +204,78 @@ const ChildId = ({ params }) => {
             </Paper>
           ))}
           {/* IMMUNIZATION CARD */}
-          <ChildCard />
+
+          <Grid container spacing={2}>
+            <Grid item xs={3}>
+              <FormControl fullWidth margin="normal">
+                <InputLabel id="vaccine-name-label">Vaccine</InputLabel>
+                <Select
+                  labelId="vaccine-name-label"
+                  id="vaccine-name"
+                  // value={transactionType}
+                  // onChange={handleTransactionTypeChange}
+                  label="Vaccine"
+                >
+                  <MenuItem value="V001">
+                    BCG (Bacillus-Calmette-Guerin)
+                  </MenuItem>
+                  <MenuItem value="V002">Hepatitis B</MenuItem>
+                  <MenuItem value="V003">Penta: DTwP-HepBHib</MenuItem>
+                  <MenuItem value="V004">
+                    PCV (Pnuemococcal Conjugate Vaccine)
+                  </MenuItem>
+                  <MenuItem value="V005">OPV</MenuItem>
+                  <MenuItem value="V006">IPV (Inactive Polio Vaccine)</MenuItem>
+                  <MenuItem value="V007">
+                    MMR (Measles - Mumps - Rubella Vaccine)
+                  </MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={3}>
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <DatePicker
+                  label="Date Administered"
+                  // value={expirationDate}
+                  // onChange={handleExpirationDateChange}
+                  renderInput={(params) => <TextField {...params} />}
+                  slotProps={{
+                    textField: {
+                      margin: "normal",
+                      fullWidth: true,
+                      required: true,
+                    },
+                  }}
+                />
+              </LocalizationProvider>
+            </Grid>
+            <Grid item xs={3}>
+              <FormControl fullWidth margin="normal">
+                <InputLabel id="vaccine-name-label">Dose</InputLabel>
+                <Select
+                  labelId="vaccine-name-label"
+                  id="vaccine-name"
+                  label="Dose"
+                >
+                  <MenuItem value="1st"> 1st Dose </MenuItem>
+                  <MenuItem value="2nd"> 2nd Dose </MenuItem>
+                  <MenuItem value="3rd"> 3rd Dose </MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={2}>
+              {" "}
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<Check />}
+                xs={2}
+              >
+                Save Record
+              </Button>
+            </Grid>
+          </Grid>
+          <ChildCard schedule={schedules} />
         </Stack>
       </Container>
     </Box>
