@@ -14,10 +14,10 @@ import FaceIcon from "@mui/icons-material/Face";
 import Childinfo from "./childinfo";
 import Motherinfo from "./motherinfo";
 import { ArrowBack, Check, CheckCircle } from "@mui/icons-material";
-import { addChild } from "@/utils/supabase/api";
+import { addChild, addRecord } from "@/utils/supabase/api";
 import GeneralModals from "@/app/components/Modals/Modals";
 import { useRouter } from "next/navigation";
-import geocodeAddress from "@/utils/supabase/api"; // Use the correct import for default export
+import { geocodeAddress, handleSchedules } from "@/utils/supabase/api"; // Use the correct import for default export
 
 export default function AddChild() {
   const router = useRouter();
@@ -27,20 +27,17 @@ export default function AddChild() {
   const [growth, setGrowthData] = useState({});
   const [openModal, setOpenModal] = useState(false);
   const [scheduleData, setScheduleData] = useState({});
+  const [address, setAddress] = useState("");
 
   const handleCloseModal = () => {
     setOpenModal(false);
   };
   const handleSave = async () => {
-    // await addChild(motherData, childData, purok, growth);
-    // const childid = localStorage.getItem("child_id");
-    // await addRecord(childid, scheduleData);
-    console.log("click");
-    await geocodeAddress(
-      "Blk 6, Lot 4, Philbanking Village, Barangay Dumoy, Davao City"
-    );
-    console.log("geocode");
-
+    const getAddress = await geocodeAddress(address);
+    await addChild(motherData, childData, purok, growth, getAddress);
+    const childid = localStorage.getItem("child_id");
+    console.log(`passed: ${scheduleData}`);
+    await handleSchedules(scheduleData, childid);
     //setOpenModal(true);
   };
 
@@ -85,6 +82,7 @@ export default function AddChild() {
               setPurok={setSelectedPurok}
               setGrowthData={setGrowthData}
               setScheduleData={setScheduleData}
+              setNewAddress={setAddress}
             />
           </Paper>
           <Paper sx={{ p: 4 }}>

@@ -24,6 +24,7 @@ export default function childinfo({
   setPurok,
   setGrowthData,
   setScheduleData,
+  setNewAddress,
 }) {
   const purok = [
     "Farland 1",
@@ -63,27 +64,10 @@ export default function childinfo({
   const [purokName, setPurokName] = useState([]);
   const [height, setHeight] = useState();
   const [weight, setWeight] = useState();
-  const [latitude, setLatitude] = useState(null); // Latitude state
-  const [longitude, setLongitude] = useState(null); // Longitude state
   const [selectedRadio, setSelectedRadio] = useState("option1");
   const [selectedRadio2, setSelectedRadio2] = useState("option1");
 
   useEffect(() => {
-    const handleGeocode = async () => {
-      try {
-        const data = await geocodeAddress(address);
-        console.log(`This fucking data: ${data}`); // Call the geocodeAddress function
-        setLatitude(data.latitude); // Set latitude from geocoding response
-        setLongitude(data.longitude); // Set longitude from geocoding response
-      } catch (error) {
-        console.error("Error during geocoding:", error);
-      }
-    };
-    // Call handleGeocode when the address changes
-    if (address) {
-      handleGeocode();
-    }
-    console.log(latitude, longitude);
     const child_name = `${firstname} ${lastname}`;
     const bcg_vaccine_info =
       selectedRadio === "option1"
@@ -104,14 +88,13 @@ export default function childinfo({
       bcg: bcg_vaccine_info,
       hepatitis_b: hepatitis_b_vaccine_info,
     });
+    setNewAddress(address);
     setChildData({
       child_name,
       child_age,
       gender,
       birthdate: birthdate ? dayjs(birthdate).format("YYYY-MM-DD") : null,
       address,
-      latitude,
-      longitude,
     });
   }, [
     firstname,
@@ -123,8 +106,6 @@ export default function childinfo({
     purokName,
     height,
     weight,
-    latitude,
-    longitude,
     selectedRadio,
     selectedRadio2,
   ]);

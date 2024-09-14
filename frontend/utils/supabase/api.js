@@ -102,66 +102,6 @@ export async function addVaccineStock(addDetails) {
   return data; // return the inserted transaction data
 }
 
-//ADD INITIAL VACCINE
-export async function addRecord(childId, scheduleData) {
-  try {
-    console.log(
-      "Received scheduleData:",
-      JSON.stringify(scheduleData, null, 2)
-    );
-
-    // Validate input data
-    if (!childId || !scheduleData) {
-      throw new Error("Missing required data fields");
-    }
-
-    // Insert schedule data
-    const scheduleInserts = Object.entries(scheduleData).map(
-      ([vaccineData]) => ({
-        child_id: childId,
-        vaccine_id: vaccineData.vaccineId,
-        scheduled_date: vaccineData.scheduledDate,
-      })
-    );
-
-    const { data: schedules, error: scheduleError } = await supabase
-      .from("Schedule")
-      .insert(scheduleInserts)
-      .select();
-
-    if (scheduleError)
-      throw new Error(`Error inserting Schedules: ${scheduleError.message}`);
-    console.log("Inserted Schedule data:", schedules);
-
-    // Insert immunization records based on schedules
-    const immunizationInserts = schedules.map((schedule) => ({
-      sched_id: schedule.sched_id,
-      status: schedule.scheduled_date ? "Administered" : "Scheduled",
-      administered_date: schedule.scheduled_date || null,
-    }));
-
-    const { data: immunizations, error: immunizationError } = await supabase
-      .from("ImmunizationRecords")
-      .insert(immunizationInserts)
-      .select();
-
-    if (immunizationError)
-      throw new Error(
-        `Error inserting Immunizations: ${immunizationError.message}`
-      );
-    console.log("Inserted Immunization data:", immunizations);
-
-    // Log success and return response
-    console.log("Insertion successful:", { schedules, immunizations });
-    return { success: true, schedules, immunizations };
-  } catch (error) {
-    console.error(
-      "Error inserting schedule and immunization data:",
-      error.message
-    );
-    return { success: false, error: error.message };
-  }
-}
 // UPDATE VACCINE STOCK AND ADJUST INVENTORY QUANTITY
 export async function updateVaccineStock(updatedTransaction) {
   // Update the VaccineTransaction record with the new details
@@ -244,7 +184,13 @@ export async function updateVaccineStock(updatedTransaction) {
 }
 
 // ADD CHILD AND MOTHER RECORDS
-export async function addChild(motherData, childData, purokName, growthData) {
+export async function addChild(
+  motherData,
+  childData,
+  purokName,
+  growthData,
+  address
+) {
   try {
     // Log input data for debugging
     console.log("Received motherData:", JSON.stringify(motherData, null, 2));
@@ -253,7 +199,7 @@ export async function addChild(motherData, childData, purokName, growthData) {
     console.log("Received purokName:", purokName);
 
     // Validate input data
-    if (!motherData || !childData || !growthData || !purokName) {
+    if (!motherData || !childData || !growthData || !purokName || !address) {
       throw new Error("Missing required data fields");
     }
 
@@ -288,6 +234,7 @@ export async function addChild(motherData, childData, purokName, growthData) {
       .insert([
         {
           ...childData,
+          ...address,
           mother_id: motherId,
           purok_id: purokId,
         },
@@ -471,16 +418,15 @@ export const updateImmunizationRecord = async (childId, vaccineData) => {
 };
 
 //Fetching Latitude and Longitude
-// Correct the function for client-side use
-export default async function geocodeAddress(address) {
+export async function geocodeAddress(address) {
   try {
     // Send the address to FastAPI for geocoding
     const response = await fetch(
-      "increasing-hildagarde-immunify-074537b5.koyeb.app/",
+      "https://immunify-dbscan.onrender.com/address",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ address }), // Sending the address to FastAPI
+        body: JSON.stringify({ address: address }), // Sending the address to FastAPI
       }
     );
 
@@ -489,9 +435,96 @@ export default async function geocodeAddress(address) {
     }
 
     const result = await response.json();
+    console.log(result);
     return result; // Expecting coordinates or result from FastAPI
   } catch (error) {
     console.error("Error in geocoding:", error.message);
     return { error: error.message };
   }
+}
+
+//Initial Schedule
+export async function initialSchedule(sched) {
+  const { data, error } = await supabase
+    .from("Schedule")
+    .insert([
+      {
+        scheduled_date: sched.scheduled_date,
+        child_id: sched.child_id,
+        vaccine_id: sched.vaccine_id,
+      },
+    ])
+    .select("sched_id, scheduled_date");
+
+  if (error) {
+    console.error("Error inserting schedule:", error);
+    return { error };
+  }
+
+  return { sched_id: data[0]?.sched_id, scheduledDate: data[0].scheduled_date }; // Return the inserted data
+}
+
+//Add initial immunization record
+export async function addImmunizationRecord(
+  scheduleId,
+  date,
+  status = "Completed"
+) {
+  const { data, error } = await supabase
+    .from("ImmunizationRecords")
+    .insert([
+      {
+        sched_id: scheduleId,
+        completion_status: status,
+        date_administered: date,
+      },
+    ])
+    .select();
+
+  if (error) {
+    console.error("Error inserting immunization record:", error);
+    return { error };
+  }
+
+  return { data: data[0] };
+}
+
+export async function handleSchedules(schedules, childId) {
+  for (const [key, schedule] of Object.entries(schedules)) {
+    const { vaccineId, date } = schedule;
+
+    // Call initialSchedule for each schedule
+    const result = await initialSchedule({
+      scheduled_date: date,
+      vaccine_id: vaccineId,
+      child_id: childId, // Ensure childId is passed if needed
+    });
+    // Debugging to see the result
+    console.log(`Result for ${key}:`, result);
+    const immunizationResult = await addImmunizationRecord(
+      result.sched_id,
+      result.scheduledDate
+    );
+    console.log(`Immunization result for ${key}:`, immunizationResult);
+
+    // Check if there's an error or data
+    if (result.error) {
+      console.error(`Error inserting schedule for ${key}:`, result.error);
+    } else if (result.data) {
+      console.log(`Schedule inserted successfully for ${key}:`, result.data);
+    } else {
+      console.log(`Unexpected result for ${key}:`, result);
+    }
+  }
+}
+
+export function logSchedule({ scheduled_date, vaccine_id, child_id }) {
+  console.log("Logging schedule:", {
+    scheduled_date,
+    vaccine_id,
+    child_id,
+  });
+
+  // Simulate successful logging
+  return { data: { scheduled_date, vaccine_id, child_id } };
 }
