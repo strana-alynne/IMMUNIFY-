@@ -493,6 +493,12 @@ export async function handleSchedules(schedules, childId) {
   for (const [key, schedule] of Object.entries(schedules)) {
     const { vaccineId, date } = schedule;
 
+    if (date === null) {
+      console.log(
+        `Null date for ${key}. Skipping schedule and immunization record.`
+      );
+      continue;
+    }
     // Call initialSchedule for each schedule
     const result = await initialSchedule({
       scheduled_date: date,
