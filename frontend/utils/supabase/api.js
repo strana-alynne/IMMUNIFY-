@@ -2,6 +2,7 @@ import { createClient } from "@/utils/supabase/client";
 
 const supabase = createClient();
 
+//-----INVENTORY-------
 //DISPLAY VACCINES IN VACCINE INVENTORY
 export async function fetchVaccines() {
   const { data, error } = await supabase
@@ -183,6 +184,8 @@ export async function updateVaccineStock(updatedTransaction) {
   return data; // return the updated transaction data
 }
 
+//-----CHILD RECORDS-------
+
 // ADD CHILD AND MOTHER RECORDS
 export async function addChild(
   motherData,
@@ -239,7 +242,7 @@ export async function addChild(
           purok_id: purokId,
         },
       ])
-      .select();
+      .select("child_id");
 
     if (childError)
       throw new Error(`Error inserting Child: ${childError.message}`);
@@ -377,7 +380,6 @@ export async function fetchAllChildren() {
     return { ...child, overallStatus };
   });
 
-  console.log("Processed data:", processedData);
   return processedData;
 }
 
@@ -443,7 +445,7 @@ export async function geocodeAddress(address) {
   }
 }
 
-//Initial Schedule
+// ADD INITIAL SCHEDULE
 export async function initialSchedule(sched) {
   const { data, error } = await supabase
     .from("Schedule")
@@ -464,7 +466,7 @@ export async function initialSchedule(sched) {
   return { sched_id: data[0]?.sched_id, scheduledDate: data[0].scheduled_date }; // Return the inserted data
 }
 
-//Add initial immunization record
+//ADD INITAL IMMUNIZATION RECORDS
 export async function addImmunizationRecord(
   scheduleId,
   date,
@@ -489,48 +491,100 @@ export async function addImmunizationRecord(
   return { data: data[0] };
 }
 
+//HANDLE SCHEDULES
 export async function handleSchedules(schedules, childId) {
+  // Set to track next vaccines that need to be scheduled
+  const nextVaccinesToSchedule = new Set();
+  // Set to track all scheduled vaccines (including initial and next)
+  const scheduledVaccines = new Set();
+
+  // Process each initial vaccine
   for (const [key, schedule] of Object.entries(schedules)) {
     const { vaccineId, date } = schedule;
 
     if (date === null) {
-      console.log(
-        `Null date for ${key}. Skipping schedule and immunization record.`
-      );
+      console.log(`Null date for ${key}. Skipping schedule.`);
       continue;
     }
-    // Call initialSchedule for each schedule
-    const result = await initialSchedule({
-      scheduled_date: date,
-      vaccine_id: vaccineId,
-      child_id: childId, // Ensure childId is passed if needed
-    });
-    // Debugging to see the result
-    console.log(`Result for ${key}:`, result);
-    const immunizationResult = await addImmunizationRecord(
-      result.sched_id,
-      result.scheduledDate
-    );
-    console.log(`Immunization result for ${key}:`, immunizationResult);
 
-    // Check if there's an error or data
-    if (result.error) {
-      console.error(`Error inserting schedule for ${key}:`, result.error);
-    } else if (result.data) {
-      console.log(`Schedule inserted successfully for ${key}:`, result.data);
-    } else {
-      console.log(`Unexpected result for ${key}:`, result);
+    // Check if this vaccine has already been scheduled
+    if (!scheduledVaccines.has(vaccineId)) {
+      // Insert the current schedule (e.g., BCG, Hepatitis B)
+      const result = await initialSchedule({
+        scheduled_date: date,
+        vaccine_id: vaccineId,
+        child_id: childId,
+      });
+
+      console.log(`Result for ${key}:`, result);
+
+      if (result.error) {
+        console.error(`Error inserting schedule for ${key}:`, result.error);
+        continue;
+      }
+
+      // Add this vaccine to the set of scheduled vaccines
+      scheduledVaccines.add(vaccineId);
+
+      // Determine next vaccines based on the current vaccine
+      const nextVaccines = getNextVaccines(key);
+
+      console.log(`Next vaccines for ${key}:`, nextVaccines);
+      // Add next vaccines to the set if they haven't been added already
+      nextVaccines.forEach((nextVaccine) => {
+        if (!scheduledVaccines.has(nextVaccine.vaccineId)) {
+          nextVaccinesToSchedule.add(nextVaccine);
+        }
+      });
+    }
+  }
+
+  // Schedule the next vaccines just once
+  for (const nextVaccine of nextVaccinesToSchedule) {
+    // Check again if this vaccine has already been scheduled
+    if (!scheduledVaccines.has(nextVaccine.vaccineId)) {
+      const nextResult = await initialSchedule({
+        scheduled_date: addOneMonth(new Date()), // Adjust the date as needed
+        vaccine_id: nextVaccine.vaccineId,
+        child_id: childId,
+      });
+
+      console.log(`Next schedule result for ${nextVaccine.name}:`, nextResult);
+
+      if (nextResult.error) {
+        console.error(
+          `Error inserting next schedule for ${nextVaccine.name}:`,
+          nextResult.error
+        );
+      } else {
+        // Add this vaccine to the set of scheduled vaccines
+        scheduledVaccines.add(nextVaccine.vaccineId);
+      }
     }
   }
 }
+// Helper function to get the next vaccines based on the current vaccine
+function getNextVaccines(currentVaccine) {
+  const nextVaccinesMap = {
+    bcg: [
+      { vaccineId: "V003", name: "Penta" },
+      { vaccineId: "V004", name: "PCV" },
+      { vaccineId: "V005", name: "IPV" },
+    ],
+    hepatitis_b: [
+      { vaccineId: "V003", name: "Penta" },
+      { vaccineId: "V004", name: "PCV" },
+      { vaccineId: "V005", name: "IPV" },
+    ],
+    // Add mappings for other vaccines if needed
+  };
 
-export function logSchedule({ scheduled_date, vaccine_id, child_id }) {
-  console.log("Logging schedule:", {
-    scheduled_date,
-    vaccine_id,
-    child_id,
-  });
+  return nextVaccinesMap[currentVaccine] || [];
+}
 
-  // Simulate successful logging
-  return { data: { scheduled_date, vaccine_id, child_id } };
+// Helper function to add one month to the current date
+function addOneMonth(date) {
+  const newDate = new Date(date);
+  newDate.setMonth(newDate.getMonth() + 1);
+  return newDate.toISOString().split("T")[0]; // Return formatted date as YYYY-MM-DD
 }

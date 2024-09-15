@@ -50,7 +50,7 @@ const ChildId = ({ params }) => {
           color: "primary.dark",
           fontWeight: "bold",
         }; // You can use hex codes or predefined MUI colors here
-      case "Partial":
+      case "Partial Complete":
         return {
           backgroundColor: "secondary.light",
           color: "secondary.dark",
@@ -204,7 +204,6 @@ const ChildId = ({ params }) => {
             </Paper>
           ))}
           {/* IMMUNIZATION CARD */}
-
           <Grid container spacing={2}>
             <Grid item xs={3}>
               <FormControl fullWidth margin="normal">

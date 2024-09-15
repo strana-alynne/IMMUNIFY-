@@ -36,7 +36,6 @@ export default function AddChild() {
     const getAddress = await geocodeAddress(address);
     await addChild(motherData, childData, purok, growth, getAddress);
     const childid = localStorage.getItem("child_id");
-    console.log(`passed: ${scheduleData}`);
     await handleSchedules(scheduleData, childid);
     //setOpenModal(true);
   };

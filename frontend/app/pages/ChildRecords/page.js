@@ -114,7 +114,6 @@ export default function ChildRecords() {
     async function loadChild() {
       try {
         const fetchedChildren = await fetchAllChildren();
-        console.log("Fetched Children:", fetchedChildren);
         setChild(fetchedChildren);
 
         // Filter based on search term and selected purok
@@ -334,6 +333,12 @@ export default function ChildRecords() {
               getRowId={(row) => row.child_id} // Ensure each row has a unique id
               disableSelectionOnClick
               onRowClick={handleRowClick}
+              sx={{
+                "& .MuiDataGrid-row:hover": {
+                  cursor: "pointer", // Change cursor on row hover
+                  backgroundColor: "#f5f5f5", // Optional: Add hover background effect
+                },
+              }}
             />
           </Box>
         </Stack>
