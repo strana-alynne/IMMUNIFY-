@@ -26,7 +26,6 @@ import {
   Face,
   ArrowBack,
   Check,
-  ConnectingAirportsOutlined,
 } from "@mui/icons-material";
 import ChildCard from "./card";
 import dayjs from "dayjs";
@@ -39,7 +38,7 @@ import { useRouter } from "next/navigation";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import { gridColumnsTotalWidthSelector } from "@mui/x-data-grid";
+import schedModal from "@/app/components/Modals/schedModal";
 
 const ChildId = ({ params }) => {
   const [childData, setChildData] = useState([]);
@@ -101,6 +100,7 @@ const ChildId = ({ params }) => {
           vaccine_id: schedule.Vaccine.vaccine_id,
           vaccine_name: schedule.Vaccine.vaccine_name,
           immunization_records: schedule.ImmunizationRecords.map((record) => ({
+            record_id: record.record_id,
             date_administered: record.date_administered,
             completion_status: record.completion_status,
           })),
@@ -399,7 +399,6 @@ const ChildId = ({ params }) => {
               </Button>
             </Grid>
           </Grid>
-
           <ChildCard schedule={schedules} />
         </Stack>
       </Container>

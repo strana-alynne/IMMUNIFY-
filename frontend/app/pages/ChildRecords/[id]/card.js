@@ -1,3 +1,4 @@
+"use client";
 import React, { useState, useEffect } from "react";
 import {
   TableContainer,
@@ -11,6 +12,9 @@ import {
   Chip,
 } from "@mui/material";
 import { parseISO, format } from "date-fns";
+import SchedModal from "@/app/components/Modals/schedModal";
+import { updateRecords } from "@/utils/supabase/api";
+import dayjs from "dayjs";
 
 // Define the vaccines and their schedule columns
 const vaccineCells = [
@@ -45,7 +49,7 @@ const columnHeaders = [
 // Helper function to format the date
 const formatDate = (date) => {
   if (!date) return "";
-  return format(date, "dd/MM/yyyy");
+  return format(date, "MM/dd/yyyy");
 };
 
 // Helper function to get the color based on completion status
@@ -81,27 +85,32 @@ const getChipColor = (status) => {
 
 export default function ChildCard({ schedule }) {
   const [vaccineData, setVaccineData] = useState([]);
+  const [openEditModal, setOpenEditModal] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState(null);
+  const [title, setTitle] = useState("");
+  const [age, setAge] = useState("");
+  const handleEditCloseModal = () => {
+    setOpenEditModal(false);
+  };
+
   useEffect(() => {
     if (schedule && schedule.length) {
       const processedData = vaccineCells.map((vaccine) => {
-        // Create an array for doses with null values based on columnHeaders length
         const recordArr = Array(columnHeaders.length).fill(null);
 
-        // Filter out schedules for this specific vaccine
         const vaccineSchedules = schedule.filter(
           (item) => item.vaccine_id === vaccine.id
         );
 
-        // Keep track of the next available column for each vaccine
         let nextAvailableColumn = 0;
 
-        // Iterate over the filtered schedule to fill the corresponding columns
         vaccineSchedules.forEach((item) => {
           const immunizationRecords = item.immunization_records || [];
-          // Iterate over each immunization record for the vaccine and update the recordArr
+
           immunizationRecords.forEach((record) => {
             const date = record.date_administered;
-            // Find the next available column within the vaccine's assigned columns
+            const recordId = record.record_id;
+
             while (
               nextAvailableColumn < recordArr.length &&
               (!vaccine.columns.includes(nextAvailableColumn) ||
@@ -110,79 +119,117 @@ export default function ChildCard({ schedule }) {
               nextAvailableColumn++;
             }
 
-            // If we have a column available, add the immunization record
             if (nextAvailableColumn < recordArr.length) {
               recordArr[nextAvailableColumn] = {
+                recordId,
                 date,
                 status: record.completion_status || "Scheduled",
               };
-              nextAvailableColumn++; // Move to the next column for the next record
+              nextAvailableColumn++;
             }
           });
         });
 
         return {
           ...vaccine,
-          recordArr, // Return the vaccine with the corresponding filled recordArr
+          recordArr,
         };
       });
 
-      // Update state with the processed data
       setVaccineData(processedData);
+      console.log("Processed Data:", processedData); // Log the processed data
     }
   }, [schedule]);
 
+  const handleUpdate = async (updateRecord) => {
+    await updateRecords(updateRecord);
+  };
+
+  const handleCellClick = (dose, vaccineName, age) => {
+    if (dose) {
+      setEditingTransaction({
+        date_administered: dayjs(dose.date),
+        record_id: dose.recordId,
+      });
+      setTitle(`${vaccineName}`);
+      setAge(`${age}`);
+      setOpenEditModal(true);
+    }
+  };
+
   return (
-    <TableContainer component={Paper}>
-      <Table sx={{ minWidth: 650 }} aria-label="vaccine table">
-        <TableHead>
-          <TableRow>
-            <TableCell sx={{ fontWeight: "bold" }}>Vaccine</TableCell>
-            {columnHeaders.map((header, index) => (
-              <TableCell key={index} align="center" sx={{ fontWeight: "bold" }}>
-                {header}
-              </TableCell>
-            ))}
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {vaccineData.map((row) => (
-            <TableRow key={row.id}>
-              <TableCell sx={{ backgroundColor: "primary.light" }}>
-                {row.name}
-              </TableCell>
-              {row.recordArr.map((dose, index) => (
+    <>
+      <TableContainer component={Paper}>
+        <Table sx={{ minWidth: 650 }} aria-label="vaccine table">
+          <TableHead>
+            <TableRow>
+              <TableCell sx={{ fontWeight: "bold" }}>Vaccine</TableCell>
+              {columnHeaders.map((header, index) => (
                 <TableCell
                   key={index}
                   align="center"
-                  sx={{
-                    border: "1px solid #cccccc",
-                    backgroundColor: row.columns.includes(index)
-                      ? "white" // Set background to white for assigned columns
-                      : "#f0f0f0", // Default background for non-assigned columns
-                    padding: 1,
-                  }}
+                  sx={{ fontWeight: "bold" }}
                 >
-                  {row.columns.includes(index) && dose ? (
-                    <>
-                      <Chip
-                        label={formatDate(dose.date)}
-                        sx={getChipColor(dose.status)}
-                      />
-                      <Typography
-                        variant="caption"
-                        sx={{ color: getChipColor(dose.status).color }}
-                      >
-                        {dose.status}
-                      </Typography>
-                    </>
-                  ) : null}
+                  {header}
                 </TableCell>
               ))}
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
+          </TableHead>
+          <TableBody>
+            {vaccineData.map((row) => (
+              <TableRow key={row.id}>
+                <TableCell sx={{ backgroundColor: "primary.light" }}>
+                  {row.name}
+                </TableCell>
+                {row.recordArr.map((dose, index) => (
+                  <TableCell
+                    key={index}
+                    align="center"
+                    sx={{
+                      border: "1px solid #cccccc",
+                      backgroundColor: row.columns.includes(index)
+                        ? "white"
+                        : "#f0f0f0",
+                      padding: 1,
+                      cursor:
+                        row.columns.includes(index) && dose
+                          ? "pointer"
+                          : "default",
+                    }}
+                    onClick={() =>
+                      row.columns.includes(index) &&
+                      handleCellClick(dose, row.name, columnHeaders[index])
+                    }
+                  >
+                    {row.columns.includes(index) && dose ? (
+                      <>
+                        <Chip
+                          label={formatDate(dose.date)}
+                          sx={getChipColor(dose.status)}
+                        />
+                        <Typography
+                          variant="caption"
+                          sx={{ color: getChipColor(dose.status).color }}
+                        >
+                          {dose.status}
+                        </Typography>
+                      </>
+                    ) : null}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+      <SchedModal
+        open={openEditModal}
+        onClose={handleEditCloseModal}
+        title={title}
+        age={age}
+        transaction={editingTransaction}
+        onUpdate={handleUpdate}
+      />
+    </>
   );
 }
