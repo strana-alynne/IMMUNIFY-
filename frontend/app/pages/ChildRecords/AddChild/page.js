@@ -37,7 +37,7 @@ export default function AddChild() {
     await addChild(motherData, childData, purok, growth, getAddress);
     const childid = localStorage.getItem("child_id");
     await handleSchedules(scheduleData, childid);
-    //setOpenModal(true);
+    setOpenModal(true);
   };
 
   const handleClose = () => {

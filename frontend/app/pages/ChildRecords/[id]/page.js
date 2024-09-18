@@ -15,9 +15,8 @@ import {
   Select,
   FormControl,
   MenuItem,
-  InputAdornment,
   Grid,
-  Snackbar,
+  CircularProgress,
 } from "@mui/material";
 import {
   Face as FaceIcon,
@@ -27,75 +26,219 @@ import {
   Face,
   ArrowBack,
   Check,
+  ConnectingAirportsOutlined,
 } from "@mui/icons-material";
 import ChildCard from "./card";
-import { fetchChild } from "@/utils/supabase/api";
-import { useRouter } from "next/navigation";
 import dayjs from "dayjs";
+import {
+  fetchChild,
+  newImmunizationRecord,
+  createNewSchedule,
+} from "@/utils/supabase/api";
+import { useRouter } from "next/navigation";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { gridColumnsTotalWidthSelector } from "@mui/x-data-grid";
 
 const ChildId = ({ params }) => {
   const [childData, setChildData] = useState([]);
-  const [childStatus, setChildStatus] = useState([]);
+  const [childStatus, setChildStatus] = useState("Missed");
   const [schedules, setSchedules] = useState([]);
+  const [selectedSchedule, setSelectedSchedule] = useState("");
+  const [dateAdministered, setDateAdministered] = useState(dayjs());
+  const [dropdownOptions, setDropdownOptions] = useState([]);
+  const [childAge, setChildAge] = useState(0);
   const router = useRouter();
 
+  // Calculate age in weeks based on birthdate
+  const calculateAgeInWeeks = (birthdate) => {
+    const birth = new Date(birthdate);
+    const now = new Date();
+    const diffTime = Math.abs(now - birth);
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 7)); // Convert to weeks
+  };
+
+  const vaccineSchedule = [
+    { id: "V001", name: "BCG", ages: [0] },
+    { id: "V002", name: "Hepatitis B", ages: [0] },
+    { id: "V003", name: "Penta", ages: [6, 10, 14] },
+    { id: "V005", name: "OPV", ages: [14, 36] },
+    { id: "V004", name: "PCV", ages: [6, 10, 14] },
+    { id: "V006", name: "IPV", ages: [6, 10, 14] },
+    { id: "V007", name: "MMR", ages: [36, 48] },
+  ];
+
+  // Style logic for the chip depending on the child status
   const getChipColor = (status) => {
-    switch (status) {
-      case "Complete":
-        return {
-          backgroundColor: "primary.light",
-          color: "primary.dark",
-          fontWeight: "bold",
-        }; // You can use hex codes or predefined MUI colors here
-      case "Partial Complete":
-        return {
-          backgroundColor: "secondary.light",
-          color: "secondary.dark",
-          fontWeight: "bold",
-        };
-      case "Missed":
-        return {
-          backgroundColor: "error.light",
-          color: "error.dark",
-          fontWeight: "bold",
-        };
-      default:
-        return "default"; // fallback color
-    }
+    const colors = {
+      Complete: {
+        backgroundColor: "primary.light",
+        color: "primary.dark",
+        fontWeight: "bold",
+      },
+      "Partially Complete": {
+        backgroundColor: "secondary.light",
+        color: "secondary.dark",
+        fontWeight: "bold",
+      },
+      Missed: {
+        backgroundColor: "error.light",
+        color: "error.dark",
+        fontWeight: "bold",
+      },
+    };
+    return colors[status] || {};
   };
 
   useEffect(() => {
-    const childStatus = localStorage.getItem("childStatus");
     const fetchData = async () => {
       const data = await fetchChild(params.id);
       setChildData(data || []);
-      console.log(data);
-
       if (data && data.length > 0) {
-        const schedules = data[0].Schedule.map((schedule) => ({
+        const fetchedSchedules = data[0].Schedule.map((schedule) => ({
+          sched_id: schedule.sched_id,
           scheduled_date: schedule.scheduled_date,
-          vaccine_id: schedule.vaccine_id,
+          vaccine_id: schedule.Vaccine.vaccine_id,
+          vaccine_name: schedule.Vaccine.vaccine_name,
           immunization_records: schedule.ImmunizationRecords.map((record) => ({
             date_administered: record.date_administered,
             completion_status: record.completion_status,
           })),
         }));
 
-        setSchedules(schedules);
-        console.log(schedules); // Set the extracted schedule data into state
+        setSchedules(fetchedSchedules);
+        const filteredOptions = fetchedSchedules.filter(
+          (s) => s.immunization_records.length === 0
+        );
+        console.log("Dropdown contents:", filteredOptions);
+
+        setDropdownOptions(
+          fetchedSchedules.filter((s) => s.immunization_records.length === 0)
+        );
+        console.log("this is fucking dropdown", dropdownOptions);
+        setChildAge(calculateAgeInWeeks(data[0].birthdate));
+        updateChildStatus(fetchedSchedules);
       }
-      setChildStatus(childStatus);
     };
 
     fetchData();
   }, [params.id]);
 
+  // Update child's immunization status based on records
+  const updateChildStatus = (schedules) => {
+    const totalSchedules = schedules.length;
+    const completedSchedules = schedules.filter((schedule) =>
+      schedule.immunization_records.some(
+        (record) => record.completion_status === "Completed"
+      )
+    ).length;
+
+    if (completedSchedules === totalSchedules) {
+      setChildStatus("Complete");
+    } else if (completedSchedules > 0) {
+      setChildStatus("Partially Complete");
+    } else {
+      setChildStatus("Missed");
+    }
+  };
+
   const handleBack = () => {
     router.replace(`/pages/ChildRecords`);
   };
+
+  const handleSaveRecord = async () => {
+    if (!selectedSchedule || !dateAdministered) {
+      alert("Please fill out all fields before saving.");
+      return;
+    }
+
+    try {
+      const selectedScheduleData = dropdownOptions.find(
+        (s) => s.sched_id === selectedSchedule
+      );
+      if (!selectedScheduleData) {
+        throw new Error("No matching schedule found for the selected vaccine.");
+      }
+
+      const newRecord = {
+        sched_id: selectedSchedule,
+        date_administered: dateAdministered.toISOString(),
+        completion_status: "Completed",
+      };
+
+      await newImmunizationRecord(newRecord);
+      alert("Record saved successfully!");
+
+      // Create new schedule for next dose if available
+      const vaccine = vaccineSchedule.find(
+        (v) => v.id === selectedScheduleData.vaccine_id
+      );
+      console.log("piste check na sad", vaccine);
+      const remainingDoses = vaccine.ages.filter((age) => age > childAge);
+      if (remainingDoses.length > 0) {
+        const nextDoseAge = remainingDoses[0];
+        const newSchedule = await createNewSchedule(
+          params.id,
+          vaccine.id,
+          nextDoseAge
+        );
+
+        console.log("newSchedule", newSchedule);
+        console.log("plllsss", remainingDoses);
+        setSchedules((prevSchedules) => [...prevSchedules, newSchedule]);
+        setDropdownOptions((prevOptions) => [
+          ...prevOptions.filter(
+            (schedule) => schedule.sched_id !== selectedSchedule
+          ),
+          newSchedule,
+        ]);
+      } else {
+        // Remove the current schedule from dropdownOptions
+        setDropdownOptions((prevOptions) =>
+          prevOptions.filter(
+            (schedule) => schedule.sched_id !== selectedSchedule
+          )
+        );
+      }
+      console.log("pistee dropdown", dropdownOptions);
+
+      const data = await fetchChild(params.id);
+      setChildData(data || []);
+      if (data && data.length > 0) {
+        const fetchedSchedules = data[0].Schedule.map((schedule) => ({
+          sched_id: schedule.sched_id,
+          scheduled_date: schedule.scheduled_date,
+          vaccine_id: schedule.Vaccine.vaccine_id,
+          vaccine_name: schedule.Vaccine.vaccine_name,
+          overallStatus: schedule.overallStatus,
+          immunization_records: schedule.ImmunizationRecords.map((record) => ({
+            date_administered: record.date_administered,
+            completion_status: record.completion_status,
+          })),
+        }));
+        setSchedules(fetchedSchedules);
+        setDropdownOptions(
+          fetchedSchedules.filter((s) => s.immunization_records.length === 0)
+        );
+        updateChildStatus(fetchedSchedules);
+      }
+
+      // Reset form fields
+      setSelectedSchedule("");
+      setDateAdministered(dayjs());
+    } catch (error) {
+      console.error("Error saving record:", error.message);
+    }
+  };
+
+  if (!childData.length) {
+    return (
+      <div>
+        <CircularProgress />
+      </div>
+    );
+  }
 
   return (
     <Box sx={{ display: "flex", marginTop: "50px" }}>
@@ -104,12 +247,8 @@ const ChildId = ({ params }) => {
         <Stack spacing={4}>
           <Stack direction="column">
             <Stack direction="row" spacing={0.5}>
-              <IconButton>
-                <ArrowBack
-                  sx={{ fontSize: 40 }}
-                  color="primary"
-                  onClick={handleBack}
-                />
+              <IconButton onClick={handleBack}>
+                <ArrowBack sx={{ fontSize: 40 }} color="primary" />
               </IconButton>
               <FaceIcon sx={{ fontSize: 40 }} color="primary" />
               <Typography variant="h2" color="primary">
@@ -139,12 +278,10 @@ const ChildId = ({ params }) => {
               Edit Record
             </Button>
           </Stack>
-          {/* INFORMATION */}
 
           {childData.map((row) => (
-            <Paper sx={{ p: 4 }}>
+            <Paper sx={{ p: 4 }} key={row.child_id}>
               <Stack direction="row" spacing={8}>
-                {/* CHILD DETAILS */}
                 <Stack direction="row" spacing={2}>
                   {row.gender === "Female" ? (
                     <Face2 sx={{ fontSize: 100 }} color="secondary" />
@@ -169,12 +306,6 @@ const ChildId = ({ params }) => {
                         <Typography variant="p">
                           <strong>Address: </strong> {row.address}
                         </Typography>
-                        <Typography variant="p">
-                          <strong>Weight: </strong> 7 kg
-                        </Typography>
-                        <Typography variant="p">
-                          <strong>Height: </strong> 64.4 inches
-                        </Typography>
                       </Stack>
                       <Stack>
                         <Typography variant="p">
@@ -186,14 +317,13 @@ const ChildId = ({ params }) => {
                           {row.Mother.contact_number}
                         </Typography>
                         <Typography variant="p">
-                          <strong>Email Address: </strong>
+                          <strong>Email Address: </strong>{" "}
                           {row.Mother.mother_email}
                         </Typography>
                       </Stack>
                     </Stack>
                   </Stack>
                 </Stack>
-                {/* IMMUNIZATION STATUS */}
                 <Stack sx={{ textAlign: "start" }}>
                   <Typography variant="h6_regular">
                     Immunization Status
@@ -203,31 +333,25 @@ const ChildId = ({ params }) => {
               </Stack>
             </Paper>
           ))}
-          {/* IMMUNIZATION CARD */}
+
           <Grid container spacing={2}>
             <Grid item xs={3}>
               <FormControl fullWidth margin="normal">
-                <InputLabel id="vaccine-name-label">Vaccine</InputLabel>
+                <InputLabel id="schedule-label">Vaccine Schedule</InputLabel>
                 <Select
-                  labelId="vaccine-name-label"
-                  id="vaccine-name"
-                  // value={transactionType}
-                  // onChange={handleTransactionTypeChange}
-                  label="Vaccine"
+                  labelId="schedule-label"
+                  id="schedule"
+                  value={selectedSchedule}
+                  onChange={(e) => setSelectedSchedule(e.target.value)}
+                  label="Vaccine Schedule"
                 >
-                  <MenuItem value="V001">
-                    BCG (Bacillus-Calmette-Guerin)
-                  </MenuItem>
-                  <MenuItem value="V002">Hepatitis B</MenuItem>
-                  <MenuItem value="V003">Penta: DTwP-HepBHib</MenuItem>
-                  <MenuItem value="V004">
-                    PCV (Pnuemococcal Conjugate Vaccine)
-                  </MenuItem>
-                  <MenuItem value="V005">OPV</MenuItem>
-                  <MenuItem value="V006">IPV (Inactive Polio Vaccine)</MenuItem>
-                  <MenuItem value="V007">
-                    MMR (Measles - Mumps - Rubella Vaccine)
-                  </MenuItem>
+                  {dropdownOptions.map((schedule) => (
+                    <MenuItem key={schedule.sched_id} value={schedule.sched_id}>
+                      {`${schedule.vaccine_name} - ${dayjs(
+                        schedule.scheduled_date
+                      ).format("MMM D, YYYY")}`}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Grid>
@@ -235,8 +359,8 @@ const ChildId = ({ params }) => {
               <LocalizationProvider dateAdapter={AdapterDayjs}>
                 <DatePicker
                   label="Date Administered"
-                  // value={expirationDate}
-                  // onChange={handleExpirationDateChange}
+                  value={dateAdministered}
+                  onChange={(newDate) => setDateAdministered(newDate)}
                   renderInput={(params) => <TextField {...params} />}
                   slotProps={{
                     textField: {
@@ -248,32 +372,19 @@ const ChildId = ({ params }) => {
                 />
               </LocalizationProvider>
             </Grid>
-            <Grid item xs={3}>
-              <FormControl fullWidth margin="normal">
-                <InputLabel id="vaccine-name-label">Dose</InputLabel>
-                <Select
-                  labelId="vaccine-name-label"
-                  id="vaccine-name"
-                  label="Dose"
-                >
-                  <MenuItem value="1st"> 1st Dose </MenuItem>
-                  <MenuItem value="2nd"> 2nd Dose </MenuItem>
-                  <MenuItem value="3rd"> 3rd Dose </MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
             <Grid item xs={2}>
-              {" "}
               <Button
                 variant="contained"
                 color="primary"
                 startIcon={<Check />}
-                xs={2}
+                onClick={handleSaveRecord}
+                sx={{ mt: 2 }}
               >
                 Save Record
               </Button>
             </Grid>
           </Grid>
+
           <ChildCard schedule={schedules} />
         </Stack>
       </Container>

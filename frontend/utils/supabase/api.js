@@ -283,7 +283,7 @@ export async function fetchChild(child_id) {
       `child_id, child_name, child_age, birthdate, address, gender,
       Mother(mother_id, mother_name, contact_number, mother_email),
       Purok(purok_id, purok_name),
-      Schedule(sched_id, scheduled_date, vaccine_id,
+      Schedule(sched_id, scheduled_date, Vaccine(vaccine_id, vaccine_name),
       ImmunizationRecords(record_id, date_administered, completion_status)
       )`
     )
@@ -294,7 +294,69 @@ export async function fetchChild(child_id) {
     return error.message;
   }
 
-  return data || [];
+  if (!data || data.length === 0) {
+    console.warn("No data found for child_id:", child_id);
+    return [];
+  }
+
+  const processedData = data.map((child) => {
+    let overallStatus = "No Records";
+
+    // Check if Schedule exists and is an array
+    if (
+      child.Schedule &&
+      Array.isArray(child.Schedule) &&
+      child.Schedule.length > 0
+    ) {
+      let allCompleted = true;
+      let hasMissed = false;
+      let hasScheduled = false;
+
+      child.Schedule.forEach((schedule) => {
+        const currentDate = new Date();
+        const scheduleDate = new Date(schedule.scheduled_date);
+
+        // Check if schedule and ImmunizationRecords exist
+        if (
+          !schedule.ImmunizationRecords ||
+          schedule.ImmunizationRecords.length === 0
+        ) {
+          if (scheduleDate < currentDate) {
+            hasMissed = true;
+          } else {
+            hasScheduled = true;
+          }
+          allCompleted = false;
+        } else {
+          schedule.ImmunizationRecords.forEach((record) => {
+            if (record.completion_status !== "Completed") {
+              allCompleted = false;
+              if (
+                record.completion_status === "Missed" ||
+                (scheduleDate < currentDate && !record.date_administered)
+              ) {
+                hasMissed = true;
+              } else if (scheduleDate > currentDate) {
+                hasScheduled = true;
+              }
+            }
+          });
+        }
+      });
+
+      if (hasMissed) {
+        overallStatus = "Missed";
+      } else if (allCompleted) {
+        overallStatus = "Complete";
+      } else if (hasScheduled) {
+        overallStatus = "Partially Complete";
+      }
+    }
+
+    return { ...child, overallStatus };
+  });
+
+  return processedData;
 }
 
 //DISPLAY ALL CHILD RECORDS
@@ -328,10 +390,10 @@ export async function fetchAllChildren() {
     return [];
   }
 
-  // Process the data to determine overall status
   const processedData = data.map((child) => {
     let overallStatus = "No Records";
 
+    // Process the data to determine overall status
     if (child.Schedule && child.Schedule.length > 0) {
       let allCompleted = true;
       let hasMissed = false;
@@ -500,7 +562,7 @@ export async function handleSchedules(schedules, childId) {
 
   // Process each initial vaccine
   for (const [key, schedule] of Object.entries(schedules)) {
-    const { vaccineId, date } = schedule;
+    const { vaccineId, date, createImmunizationRecord } = schedule;
 
     if (date === null) {
       console.log(`Null date for ${key}. Skipping schedule.`);
@@ -522,10 +584,20 @@ export async function handleSchedules(schedules, childId) {
         console.error(`Error inserting schedule for ${key}:`, result.error);
         continue;
       }
+      if (createImmunizationRecord) {
+        const immunizationResult = await addImmunizationRecord(
+          result.sched_id,
+          result.scheduledDate
+        );
+        console.log(
+          `Immunization record created for ${key}:`,
+          immunizationResult
+        );
+      } else {
+        console.log(`Skipping immunization record creation for ${key}`);
+      }
 
-      // Add this vaccine to the set of scheduled vaccines
       scheduledVaccines.add(vaccineId);
-
       // Determine next vaccines based on the current vaccine
       const nextVaccines = getNextVaccines(key);
 
@@ -544,7 +616,7 @@ export async function handleSchedules(schedules, childId) {
     // Check again if this vaccine has already been scheduled
     if (!scheduledVaccines.has(nextVaccine.vaccineId)) {
       const nextResult = await initialSchedule({
-        scheduled_date: addOneMonth(new Date()), // Adjust the date as needed
+        scheduled_date: addOneMonth(new Date(), 1.5), // Adjust the date as needed
         vaccine_id: nextVaccine.vaccineId,
         child_id: childId,
       });
@@ -563,18 +635,19 @@ export async function handleSchedules(schedules, childId) {
     }
   }
 }
-// Helper function to get the next vaccines based on the current vaccine
+
+//GET THE VACCINE ID
 function getNextVaccines(currentVaccine) {
   const nextVaccinesMap = {
     bcg: [
       { vaccineId: "V003", name: "Penta" },
-      { vaccineId: "V004", name: "PCV" },
-      { vaccineId: "V005", name: "IPV" },
+      { vaccineId: "V005", name: "PCV" },
+      { vaccineId: "V006", name: "IPV" },
     ],
     hepatitis_b: [
       { vaccineId: "V003", name: "Penta" },
-      { vaccineId: "V004", name: "PCV" },
-      { vaccineId: "V005", name: "IPV" },
+      { vaccineId: "V005", name: "PCV" },
+      { vaccineId: "V006", name: "IPV" },
     ],
     // Add mappings for other vaccines if needed
   };
@@ -582,9 +655,62 @@ function getNextVaccines(currentVaccine) {
   return nextVaccinesMap[currentVaccine] || [];
 }
 
-// Helper function to add one month to the current date
+// GET THE MONTH FOR THE NEXT VACCINE
 function addOneMonth(date) {
   const newDate = new Date(date);
   newDate.setMonth(newDate.getMonth() + 1);
   return newDate.toISOString().split("T")[0]; // Return formatted date as YYYY-MM-DD
 }
+
+export async function newImmunizationRecord(record) {
+  const { data, error } = await supabase
+    .from("ImmunizationRecords")
+    .insert(record)
+    .select();
+
+  if (error) {
+    console.error("Error adding immunization record:", error);
+    throw error;
+  }
+
+  console.log("this is fucking", data);
+  return data;
+}
+
+export function determineCompletionStatus(scheduledDate, dateAdministered) {
+  const scheduled = new Date(scheduledDate);
+  const administered = new Date(dateAdministered);
+
+  if (administered < scheduled) {
+    return "Partially Complete";
+  } else if (administered.toDateString() === scheduled.toDateString()) {
+    return "Completed";
+  } else {
+    return "Missed";
+  }
+}
+
+export const createNewSchedule = async (childId, vaccineId, ageInWeeks) => {
+  const { data: childData, error: childError } = await supabase
+    .from("Child")
+    .select("birthdate")
+    .eq("child_id", childId);
+
+  if (childError) throw childError;
+  const birthdate = new Date(childData[0].birthdate);
+  const scheduledDate = new Date(
+    birthdate.getTime() + ageInWeeks * 7 * 24 * 60 * 60 * 1000
+  );
+
+  const { data, error } = await supabase
+    .from("Schedule")
+    .insert({
+      child_id: childId,
+      vaccine_id: vaccineId,
+      scheduled_date: scheduledDate.toISOString(),
+    })
+    .select();
+
+  if (error) throw ("piste", error.message);
+  return data;
+};

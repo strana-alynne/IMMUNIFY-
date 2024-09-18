@@ -36,7 +36,7 @@ const getChipColor = (status) => {
         color: "primary.dark",
         fontWeight: "bold",
       }; // You can use hex codes or predefined MUI colors here
-    case "Partial":
+    case "Partially Complete":
       return {
         backgroundColor: "secondary.light",
         color: "secondary.dark",

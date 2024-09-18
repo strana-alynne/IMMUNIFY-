@@ -18,7 +18,6 @@ import dayjs from "dayjs";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import geocodeAddress from "@/utils/supabase/api";
 export default function childinfo({
   setChildData,
   setPurok,
@@ -69,15 +68,20 @@ export default function childinfo({
 
   useEffect(() => {
     const child_name = `${firstname} ${lastname}`;
-    const bcg_vaccine_info =
-      selectedRadio === "option1"
-        ? { vaccineId: "V001", date: dayjs(birthdate).format("YYYY-MM-DD") }
-        : { vaccineId: "V001", date: null };
+    const formattedBirthdate = birthdate
+      ? dayjs(birthdate).format("YYYY-MM-DD")
+      : null;
+    const bcg_vaccine_info = {
+      vaccineId: "V001",
+      date: formattedBirthdate,
+      createImmunizationRecord: selectedRadio === "option1",
+    };
 
-    const hepatitis_b_vaccine_info =
-      selectedRadio2 === "option1"
-        ? { vaccineId: "V002", date: dayjs(birthdate).format("YYYY-MM-DD") }
-        : { vaccineId: "V002", date: null };
+    const hepatitis_b_vaccine_info = {
+      vaccineId: "V002",
+      date: formattedBirthdate,
+      createImmunizationRecord: selectedRadio2 === "option1",
+    };
 
     setPurok(purokName);
     setGrowthData({

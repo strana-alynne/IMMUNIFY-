@@ -12,13 +12,14 @@ import {
 } from "@mui/material";
 import { parseISO, format } from "date-fns";
 
+// Define the vaccines and their schedule columns
 const vaccineSchedule = [
   { id: "V001", name: "BCG (Bacillus-Calmette-Guerin)", columns: [0] },
   { id: "V002", name: "Hepatitis B", columns: [0] },
   { id: "V003", name: "Penta: DTwP-HepBHib", columns: [1, 2, 3] },
   {
     id: "V004",
-    name: "PCV (Pnuemococcal Conjugate Vaccine)",
+    name: "PCV (Pneumococcal Conjugate Vaccine)",
     columns: [1, 2, 3],
   },
   { id: "V005", name: "OPV", columns: [3, 4] },
@@ -30,6 +31,7 @@ const vaccineSchedule = [
   },
 ];
 
+// Define the table headers (time periods)
 const columnHeaders = [
   "24hr",
   "6 weeks",
@@ -40,99 +42,87 @@ const columnHeaders = [
   "15 months",
 ];
 
+// Helper function to format the date
+const formatDate = (date) => {
+  if (!date) return "";
+  return format(date, "dd/MM/yyyy");
+};
+
+// Helper function to get the color based on completion status
+const getChipColor = (status) => {
+  switch (status) {
+    case "Completed":
+      return {
+        backgroundColor: "primary.dark",
+        color: "white",
+        fontWeight: "bold",
+      };
+    case "Partial":
+      return {
+        backgroundColor: "secondary.light",
+        color: "secondary.dark",
+        fontWeight: "bold",
+      };
+    case "Missed":
+      return {
+        backgroundColor: "error.light",
+        color: "error.dark",
+        fontWeight: "bold",
+      };
+    case "Scheduled":
+    default:
+      return {
+        backgroundColor: "default",
+        color: "text.secondary",
+        fontWeight: "bold",
+      };
+  }
+};
+
 export default function ChildCard({ schedule }) {
   const [vaccineData, setVaccineData] = useState([]);
 
   useEffect(() => {
-    const processScheduleData = () => {
-      const scheduleMap = new Map(
-        schedule.map((item) => [item.vaccine_id, item])
-      );
-      const updatedVaccineData = vaccineSchedule.map((vaccine) => {
+    if (schedule && schedule.length) {
+      const processedData = vaccineSchedule.map((vaccine) => {
+        // Create an array for doses with null values based on columnHeaders length
         const doses = Array(columnHeaders.length).fill(null);
-        const scheduleItem = scheduleMap.get(vaccine.id);
 
-        if (scheduleItem) {
-          vaccine.columns.forEach((columnIndex) => {
-            if (
-              scheduleItem.immunization_records &&
-              scheduleItem.immunization_records.length > 0
-            ) {
-              doses[columnIndex] = scheduleItem.immunization_records.map(
-                (record) => {
-                  return {
-                    date: record.date_administered
-                      ? parseISO(record.date_administered)
-                      : scheduleItem.scheduled_date,
-                    status: record.completion_status,
-                  };
-                }
-              );
-            } else if (scheduleItem.scheduled_date) {
-              doses[columnIndex] = [
-                {
-                  date: parseISO(scheduleItem.scheduled_date),
-                  status: scheduleItem.immunization_records?.completion_status,
-                },
-              ];
-            }
+        // Filter schedule records by matching vaccine_id
+        const vaccineSchedules = schedule.filter(
+          (item) => item.vaccine_id === vaccine.id
+        );
+
+        // Iterate over the filtered schedule to fill the corresponding columns
+        vaccineSchedules.forEach((item) => {
+          const immunizationRecords = item.immunization_records || [];
+
+          immunizationRecords.forEach((record) => {
+            const date = record.date_administered
+              ? parseISO(record.date_administered)
+              : parseISO(item.scheduled_date);
+
+            vaccine.columns.forEach((columnIndex) => {
+              if (columnIndex < doses.length) {
+                doses[columnIndex] = {
+                  date,
+                  status: record.completion_status || "Scheduled",
+                };
+              }
+            });
           });
-        }
-        return { ...vaccine, doses };
+        });
+
+        return {
+          ...vaccine,
+          doses,
+        };
       });
-      setVaccineData(updatedVaccineData);
-    };
 
-    processScheduleData();
+      setVaccineData(processedData);
+      console.log("Processed Data:", processedData); // Log the processed data
+    }
   }, [schedule]);
-
-  const formatDate = (date) => {
-    if (!date) return "";
-    return format(date, "dd/MM/yyyy");
-  };
-
-  const getChipColor = (status) => {
-    switch (status) {
-      case "Completed":
-        return {
-          backgroundColor: "primary.dark",
-          color: "white",
-          fontWeight: "bold",
-        }; // You can use hex codes or predefined MUI colors here
-      case "Partial":
-        return {
-          backgroundColor: "secondary.light",
-          color: "secondary.dark",
-          fontWeight: "bold",
-        };
-      case "Missed":
-        return {
-          backgroundColor: "error.light",
-          color: "error.dark",
-          fontWeight: "bold",
-        };
-      default:
-        return "default"; // fallback color
-    }
-  };
-  const getHelperText = (status) => {
-    switch (status) {
-      case "Completed":
-        return {
-          color: "primary.dark",
-        }; // You can use hex codes or predefined MUI colors here
-      case "Partial":
-        return {
-          color: "secondary.dark",
-        };
-      case "Missed":
-        return {
-          color: "error.dark",
-        };
-      default:
-        return "default"; // fallback color
-    }
-  };
 
   return (
     <TableContainer component={Paper}>
@@ -160,28 +150,23 @@ export default function ChildCard({ schedule }) {
                   sx={{
                     border: "1px solid #cccccc",
                     backgroundColor: row.columns.includes(index)
-                      ? "inherit"
-                      : "#f0f0f0",
+                      ? "white" // Set background to white for assigned columns
+                      : "#f0f0f0", // Default background for non-assigned columns
                     padding: 1,
                   }}
                 >
                   {row.columns.includes(index) && dose ? (
                     <>
-                      {dose.map((record, recordIndex) => (
-                        <div>
-                          <Chip
-                            key={recordIndex}
-                            label={formatDate(record.date)}
-                            sx={getChipColor(record.status)}
-                          />
-                          <Typography
-                            variant="caption"
-                            sx={getHelperText(record.status)}
-                          >
-                            {record.status}
-                          </Typography>
-                        </div>
-                      ))}
+                      <Chip
+                        label={formatDate(dose.date)}
+                        sx={getChipColor(dose.status)}
+                      />
+                      <Typography
+                        variant="caption"
+                        sx={{ color: getChipColor(dose.status).color }}
+                      >
+                        {dose.status}
+                      </Typography>
                     </>
                   ) : null}
                 </TableCell>
