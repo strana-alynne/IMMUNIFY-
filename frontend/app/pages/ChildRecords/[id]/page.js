@@ -63,8 +63,8 @@ const ChildId = ({ params }) => {
     { id: "V001", name: "BCG", ages: [0] },
     { id: "V002", name: "Hepatitis B", ages: [0] },
     { id: "V003", name: "Penta", ages: [6, 10, 14] },
-    { id: "V005", name: "OPV", ages: [14, 36] },
-    { id: "V004", name: "PCV", ages: [6, 10, 14] },
+    { id: "V004", name: "OPV", ages: [14, 36] },
+    { id: "V005", name: "PCV", ages: [6, 10, 14] },
     { id: "V006", name: "IPV", ages: [6, 10, 14] },
     { id: "V007", name: "MMR", ages: [36, 48] },
   ];
@@ -108,6 +108,7 @@ const ChildId = ({ params }) => {
         }));
 
         setSchedules(fetchedSchedules);
+        console.log("fufufufuck:", fetchedSchedules);
         const filteredOptions = fetchedSchedules.filter(
           (s) => s.immunization_records.length === 0
         );

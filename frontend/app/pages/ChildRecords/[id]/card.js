@@ -13,7 +13,7 @@ import {
 import { parseISO, format } from "date-fns";
 
 // Define the vaccines and their schedule columns
-const vaccineSchedule = [
+const vaccineCells = [
   { id: "V001", name: "BCG (Bacillus-Calmette-Guerin)", columns: [0] },
   { id: "V002", name: "Hepatitis B", columns: [0] },
   { id: "V003", name: "Penta: DTwP-HepBHib", columns: [1, 2, 3] },
@@ -80,45 +80,71 @@ const getChipColor = (status) => {
 };
 
 export default function ChildCard({ schedule }) {
+  console.log("original schedule", schedule);
   const [vaccineData, setVaccineData] = useState([]);
-
   useEffect(() => {
     if (schedule && schedule.length) {
-      const processedData = vaccineSchedule.map((vaccine) => {
+      const processedData = vaccineCells.map((vaccine) => {
         // Create an array for doses with null values based on columnHeaders length
-        const doses = Array(columnHeaders.length).fill(null);
+        const recordArr = Array(columnHeaders.length).fill(null);
 
-        // Filter schedule records by matching vaccine_id
+        // Filter out schedules for this specific vaccine
         const vaccineSchedules = schedule.filter(
           (item) => item.vaccine_id === vaccine.id
         );
+
+        // Keep track of the next available column for each vaccine
+        let nextAvailableColumn = 0;
 
         // Iterate over the filtered schedule to fill the corresponding columns
         vaccineSchedules.forEach((item) => {
           const immunizationRecords = item.immunization_records || [];
 
-          immunizationRecords.forEach((record) => {
-            const date = record.date_administered
-              ? parseISO(record.date_administered)
-              : parseISO(item.scheduled_date);
+          console.log(
+            "immunization Records",
+            immunizationRecords,
+            "data",
+            item.vaccine_name,
+            "length: ",
+            immunizationRecords.length
+          );
 
-            vaccine.columns.forEach((columnIndex) => {
-              if (columnIndex < doses.length) {
-                doses[columnIndex] = {
-                  date,
-                  status: record.completion_status || "Scheduled",
-                };
-              }
-            });
+          // Iterate over each immunization record for the vaccine and update the recordArr
+          immunizationRecords.forEach((record) => {
+            const date = record.date_administered;
+            console.log(date);
+
+            // Find the next available column within the vaccine's assigned columns
+            while (
+              nextAvailableColumn < recordArr.length &&
+              (!vaccine.columns.includes(nextAvailableColumn) ||
+                recordArr[nextAvailableColumn] !== null)
+            ) {
+              nextAvailableColumn++;
+            }
+
+            // If we have a column available, add the immunization record
+            if (nextAvailableColumn < recordArr.length) {
+              recordArr[nextAvailableColumn] = {
+                date,
+                status: record.completion_status || "Scheduled",
+              };
+              console.log(
+                `Updated recordArr[${nextAvailableColumn}]: `,
+                recordArr[nextAvailableColumn]
+              );
+              nextAvailableColumn++; // Move to the next column for the next record
+            }
           });
         });
 
         return {
           ...vaccine,
-          doses,
+          recordArr, // Return the vaccine with the corresponding filled recordArr
         };
       });
 
+      // Update state with the processed data
       setVaccineData(processedData);
       console.log("Processed Data:", processedData); // Log the processed data
     }
@@ -143,7 +169,7 @@ export default function ChildCard({ schedule }) {
               <TableCell sx={{ backgroundColor: "primary.light" }}>
                 {row.name}
               </TableCell>
-              {row.doses.map((dose, index) => (
+              {row.recordArr.map((dose, index) => (
                 <TableCell
                   key={index}
                   align="center"
