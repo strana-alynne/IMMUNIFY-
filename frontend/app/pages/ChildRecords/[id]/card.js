@@ -18,11 +18,11 @@ const vaccineCells = [
   { id: "V002", name: "Hepatitis B", columns: [0] },
   { id: "V003", name: "Penta: DTwP-HepBHib", columns: [1, 2, 3] },
   {
-    id: "V004",
+    id: "V005",
     name: "PCV (Pneumococcal Conjugate Vaccine)",
     columns: [1, 2, 3],
   },
-  { id: "V005", name: "OPV", columns: [3, 4] },
+  { id: "V004", name: "OPV", columns: [3, 4] },
   { id: "V006", name: "IPV (Inactive Polio Vaccine)", columns: [1, 2, 3] },
   {
     id: "V007",
