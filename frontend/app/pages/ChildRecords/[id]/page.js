@@ -60,15 +60,14 @@ const ChildId = ({ params }) => {
   };
 
   const vaccineSchedule = [
-    { id: "V001", name: "BCG", ages: [0] },
-    { id: "V002", name: "Hepatitis B", ages: [0] },
-    { id: "V003", name: "Penta", ages: [6, 10, 14] },
-    { id: "V004", name: "OPV", ages: [14, 36] },
-    { id: "V005", name: "PCV", ages: [6, 10, 14] },
-    { id: "V006", name: "IPV", ages: [6, 10, 14] },
-    { id: "V007", name: "MMR", ages: [36, 48] },
+    { id: "V001", name: "BCG", nextDose: null, totalDoses: 1 },
+    { id: "V002", name: "Hepatitis B", nextDose: null, totalDoses: 1 },
+    { id: "V003", name: "Penta", nextDose: 4 * 7, totalDoses: 3 },
+    { id: "V004", name: "OPV", nextDose: 22 * 7, totalDoses: 2 },
+    { id: "V005", name: "PCV", nextDose: 4 * 7, totalDoses: 3 },
+    { id: "V006", name: "IPV", nextDose: 4 * 7, totalDoses: 3 },
+    { id: "V007", name: "MMR", nextDose: 12 * 4 * 7, totalDoses: 2 },
   ];
-
   // Style logic for the chip depending on the child status
   const getChipColor = (status) => {
     const colors = {
@@ -171,22 +170,37 @@ const ChildId = ({ params }) => {
       await newImmunizationRecord(newRecord);
       alert("Record saved successfully!");
 
-      // Create new schedule for next dose if available
+      // Find the vaccine in the vaccineSchedule
       const vaccine = vaccineSchedule.find(
         (v) => v.id === selectedScheduleData.vaccine_id
       );
-      console.log("piste check na sad", vaccine);
-      const remainingDoses = vaccine.ages.filter((age) => age > childAge);
-      if (remainingDoses.length > 0) {
-        const nextDoseAge = remainingDoses[0];
+
+      console.log("bullshit vaccine", vaccine);
+
+      // Count how many doses of this vaccine have been administered
+      const administeredDoses = schedules.filter(
+        (s) => s.vaccine_id === vaccine.id && s.immunization_records.length > 0
+      ).length;
+
+      console.log("administered doses", administeredDoses);
+
+      if (
+        vaccine &&
+        vaccine.nextDose &&
+        administeredDoses + 1 < vaccine.totalDoses
+      ) {
+        const nextScheduledDate = dayjs(dateAdministered)
+          .add(vaccine.nextDose, "day")
+          .toISOString();
+
+        console.log("nextSchedul:", nextScheduledDate);
         const newSchedule = await createNewSchedule(
           params.id,
           vaccine.id,
-          nextDoseAge
+          nextScheduledDate
         );
 
         console.log("newSchedule", newSchedule);
-        console.log("plllsss", remainingDoses);
         setSchedules((prevSchedules) => [...prevSchedules, newSchedule]);
         setDropdownOptions((prevOptions) => [
           ...prevOptions.filter(
@@ -202,8 +216,8 @@ const ChildId = ({ params }) => {
           )
         );
       }
-      console.log("pistee dropdown", dropdownOptions);
 
+      // Refresh child data and update states
       const data = await fetchChild(params.id);
       setChildData(data || []);
       if (data && data.length > 0) {

@@ -80,7 +80,6 @@ const getChipColor = (status) => {
 };
 
 export default function ChildCard({ schedule }) {
-  console.log("original schedule", schedule);
   const [vaccineData, setVaccineData] = useState([]);
   useEffect(() => {
     if (schedule && schedule.length) {
@@ -99,21 +98,9 @@ export default function ChildCard({ schedule }) {
         // Iterate over the filtered schedule to fill the corresponding columns
         vaccineSchedules.forEach((item) => {
           const immunizationRecords = item.immunization_records || [];
-
-          console.log(
-            "immunization Records",
-            immunizationRecords,
-            "data",
-            item.vaccine_name,
-            "length: ",
-            immunizationRecords.length
-          );
-
           // Iterate over each immunization record for the vaccine and update the recordArr
           immunizationRecords.forEach((record) => {
             const date = record.date_administered;
-            console.log(date);
-
             // Find the next available column within the vaccine's assigned columns
             while (
               nextAvailableColumn < recordArr.length &&
@@ -129,10 +116,6 @@ export default function ChildCard({ schedule }) {
                 date,
                 status: record.completion_status || "Scheduled",
               };
-              console.log(
-                `Updated recordArr[${nextAvailableColumn}]: `,
-                recordArr[nextAvailableColumn]
-              );
               nextAvailableColumn++; // Move to the next column for the next record
             }
           });
@@ -146,7 +129,6 @@ export default function ChildCard({ schedule }) {
 
       // Update state with the processed data
       setVaccineData(processedData);
-      console.log("Processed Data:", processedData); // Log the processed data
     }
   }, [schedule]);
 

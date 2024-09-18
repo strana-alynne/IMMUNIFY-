@@ -555,12 +555,10 @@ export async function addImmunizationRecord(
 
 //HANDLE SCHEDULES
 export async function handleSchedules(schedules, childId) {
-  // Set to track next vaccines that need to be scheduled
   const nextVaccinesToSchedule = new Set();
-  // Set to track all scheduled vaccines (including initial and next)
   const scheduledVaccines = new Set();
+  console.log("Initial scheduled vaccines:", scheduledVaccines);
 
-  // Process each initial vaccine
   for (const [key, schedule] of Object.entries(schedules)) {
     const { vaccineId, date, createImmunizationRecord } = schedule;
 
@@ -569,9 +567,7 @@ export async function handleSchedules(schedules, childId) {
       continue;
     }
 
-    // Check if this vaccine has already been scheduled
     if (!scheduledVaccines.has(vaccineId)) {
-      // Insert the current schedule (e.g., BCG, Hepatitis B)
       const result = await initialSchedule({
         scheduled_date: date,
         vaccine_id: vaccineId,
@@ -584,6 +580,7 @@ export async function handleSchedules(schedules, childId) {
         console.error(`Error inserting schedule for ${key}:`, result.error);
         continue;
       }
+
       if (createImmunizationRecord) {
         const immunizationResult = await addImmunizationRecord(
           result.sched_id,
@@ -598,11 +595,9 @@ export async function handleSchedules(schedules, childId) {
       }
 
       scheduledVaccines.add(vaccineId);
-      // Determine next vaccines based on the current vaccine
-      const nextVaccines = getNextVaccines(key);
 
+      const nextVaccines = getNextVaccines(key);
       console.log(`Next vaccines for ${key}:`, nextVaccines);
-      // Add next vaccines to the set if they haven't been added already
       nextVaccines.forEach((nextVaccine) => {
         if (!scheduledVaccines.has(nextVaccine.vaccineId)) {
           nextVaccinesToSchedule.add(nextVaccine);
@@ -611,12 +606,15 @@ export async function handleSchedules(schedules, childId) {
     }
   }
 
-  // Schedule the next vaccines just once
   for (const nextVaccine of nextVaccinesToSchedule) {
-    // Check again if this vaccine has already been scheduled
     if (!scheduledVaccines.has(nextVaccine.vaccineId)) {
+      const scheduleDate =
+        nextVaccine.vaccineId != "V004" && nextVaccine.vaccineId != "V007"
+          ? addOneMonth(new Date(), 1.5)
+          : addFourMonth(new Date(), 1.5);
+
       const nextResult = await initialSchedule({
-        scheduled_date: addOneMonth(new Date(), 1.5), // Adjust the date as needed
+        scheduled_date: scheduleDate,
         vaccine_id: nextVaccine.vaccineId,
         child_id: childId,
       });
@@ -629,7 +627,6 @@ export async function handleSchedules(schedules, childId) {
           nextResult.error
         );
       } else {
-        // Add this vaccine to the set of scheduled vaccines
         scheduledVaccines.add(nextVaccine.vaccineId);
       }
     }
@@ -641,13 +638,17 @@ function getNextVaccines(currentVaccine) {
   const nextVaccinesMap = {
     bcg: [
       { vaccineId: "V003", name: "Penta" },
+      { vaccineId: "V004", name: "OPV" },
       { vaccineId: "V005", name: "PCV" },
       { vaccineId: "V006", name: "IPV" },
+      { vaccineId: "V007", name: "MMR" },
     ],
     hepatitis_b: [
       { vaccineId: "V003", name: "Penta" },
+      { vaccineId: "V004", name: "OPV" },
       { vaccineId: "V005", name: "PCV" },
       { vaccineId: "V006", name: "IPV" },
+      { vaccineId: "V007", name: "MMR" },
     ],
     // Add mappings for other vaccines if needed
   };
@@ -659,6 +660,11 @@ function getNextVaccines(currentVaccine) {
 function addOneMonth(date) {
   const newDate = new Date(date);
   newDate.setMonth(newDate.getMonth() + 1);
+  return newDate.toISOString().split("T")[0]; // Return formatted date as YYYY-MM-DD
+}
+function addFourMonth(date) {
+  const newDate = new Date(date);
+  newDate.setMonth(newDate.getMonth() + 4);
   return newDate.toISOString().split("T")[0]; // Return formatted date as YYYY-MM-DD
 }
 
@@ -690,27 +696,17 @@ export function determineCompletionStatus(scheduledDate, dateAdministered) {
   }
 }
 
-export const createNewSchedule = async (childId, vaccineId, ageInWeeks) => {
-  const { data: childData, error: childError } = await supabase
-    .from("Child")
-    .select("birthdate")
-    .eq("child_id", childId);
-
-  if (childError) throw childError;
-  const birthdate = new Date(childData[0].birthdate);
-  const scheduledDate = new Date(
-    birthdate.getTime() + ageInWeeks * 7 * 24 * 60 * 60 * 1000
-  );
-
+export const createNewSchedule = async (childId, vaccineId, scheduledDate) => {
   const { data, error } = await supabase
     .from("Schedule")
     .insert({
       child_id: childId,
       vaccine_id: vaccineId,
-      scheduled_date: scheduledDate.toISOString(),
+      scheduled_date: scheduledDate,
     })
     .select();
 
-  if (error) throw ("piste", error.message);
+  console.log("newSchedule from API", data);
+  if (error) throw new Error(error.message);
   return data;
 };
