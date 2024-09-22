@@ -481,32 +481,6 @@ export const updateImmunizationRecord = async (childId, vaccineData) => {
   return { message: "Vaccine data updated successfully" };
 };
 
-//Fetching Latitude and Longitude
-export async function geocodeAddress(address) {
-  try {
-    // Send the address to FastAPI for geocoding
-    const response = await fetch(
-      "https://immunify-dbscan.onrender.com/address",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ address: address }), // Sending the address to FastAPI
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error("FastAPI request failed");
-    }
-
-    const result = await response.json();
-    console.log(result);
-    return result; // Expecting coordinates or result from FastAPI
-  } catch (error) {
-    console.error("Error in geocoding:", error.message);
-    return { error: error.message };
-  }
-}
-
 // ADD INITIAL SCHEDULE
 export async function initialSchedule(sched) {
   const { data, error } = await supabase
@@ -730,3 +704,32 @@ export async function updateRecords(updateRecord) {
   }
   return data;
 }
+
+//-----FAST API -------
+
+//Fetching Latitude and Longitude
+export async function geocodeAddress(address) {
+  try {
+    // Send the address to FastAPI for geocoding
+    const response = await fetch(
+      "https://immunify-dbscan.onrender.com/address",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ address: address }), // Sending the address to FastAPI
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("FastAPI request failed");
+    }
+
+    const result = await response.json();
+    console.log(result);
+    return result; // Expecting coordinates or result from FastAPI
+  } catch (error) {
+    console.error("Error in geocoding:", error.message);
+    return { error: error.message };
+  }
+}
+
