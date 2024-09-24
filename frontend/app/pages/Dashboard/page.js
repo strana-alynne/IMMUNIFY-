@@ -5,10 +5,11 @@ import DashboardIcon from "@mui/icons-material/Dashboard";
 import DashBoardCard from "@/app/components/DashBoardCard";
 import ReminderCard from "@/app/components/ReminderCard";
 import { Group, Face, EventBusy, NewReleases } from "@mui/icons-material";
-import GeocodingMap from "@/app/components/GeocodingMap";
+import Map from "@/app/components/Map";
 
 export default function Dashboard() {
-  const address = "2GJ7+H26, Barangay Dumoy, Davao City, Davao, McArthur Highway, Toril, Davao City, Davao del Sur"; // Example address
+  const address =
+    "2GJ7+H26, Barangay Dumoy, Davao City, Davao, McArthur Highway, Toril, Davao City, Davao del Sur"; // Example address
 
   return (
     <Box sx={{ display: "flex", marginTop: "50px" }}>
@@ -50,18 +51,18 @@ export default function Dashboard() {
           </Grid>
         </Grid>
         <Grid container>
-          <Grid item xs={6} marginTop={5} >
+          <Grid item xs={6} marginTop={5}>
             <Typography variant="h5" color="primary" marginBottom={2}>
               DEFAULTER ANALYSIS
             </Typography>
-            <GeocodingMap address={address} />
+            <Map />
           </Grid>
           <Grid item xs={4} direction="column" marginLeft={24} marginTop={5}>
             {/* Appointments and Messages Section */}
             <Grid item spacing={4}>
               <Typography variant="h6" color="primary">
-              Appointments
-              <Box
+                Appointments
+                <Box
                   spacing={2}
                   sx={{
                     maxHeight: "400px", // Adjust the height as needed
@@ -93,7 +94,7 @@ export default function Dashboard() {
                     time="3hr"
                   />
                 </Box>
-                </Typography>
+              </Typography>
             </Grid>
             <Grid item spacing={2}>
               <Typography variant="h6" color="primary">
@@ -131,7 +132,6 @@ export default function Dashboard() {
                   time="3hr"
                 />
               </Box>
-
             </Grid>
           </Grid>
         </Grid>
