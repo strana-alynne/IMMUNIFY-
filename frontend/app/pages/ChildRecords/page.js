@@ -23,7 +23,6 @@ import { DataGrid } from "@mui/x-data-grid";
 import { fetchAllChildren } from "@/utils/supabase/api";
 import { AddCircle, Face, Face2 } from "@mui/icons-material";
 import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
 import SearchIcon from "@mui/icons-material/Search";
 import { useRouter } from "next/navigation";
 import SideBar from "@/app/components/SideBar/page";
@@ -223,13 +222,6 @@ export default function ChildRecords() {
             onClick={() => handleEdit(params.row.id)}
           >
             <EditIcon />
-          </IconButton>
-          <IconButton
-            aria-label="delete"
-            color="error"
-            onClick={() => handleDelete(params.row.id)}
-          >
-            <DeleteIcon />
           </IconButton>
         </>
       ),

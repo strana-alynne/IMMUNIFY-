@@ -7,6 +7,8 @@ export default function GeneralModals({
   title,
   content,
   actions,
+  color,
+  icon,
 }) {
   const style = {
     position: "absolute",
@@ -34,11 +36,19 @@ export default function GeneralModals({
         aria-describedby="modal-modal-description"
       >
         <Box sx={style}>
-          <Typography id="modal-modal-title" variant="h6" component="h2">
+          <Typography
+            id="modal-modal-title"
+            variant="h6"
+            component="h2"
+            color={color}
+          >
+            <div>{icon}</div>
             {title}
           </Typography>
-          {content}
-          <Box sx={{ mt: 2 }}>{actions}</Box>
+          <Typography color="black">{content}</Typography>
+          <Box sx={{ mt: 2 }} color="info">
+            {actions}
+          </Box>
         </Box>
       </Modal>
     </div>

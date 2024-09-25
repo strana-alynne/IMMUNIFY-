@@ -73,6 +73,7 @@ export default function SchedModal({
           variant="p"
           component="h2"
           color="black"
+          fontSize="large"
         >
           Vacceine Name: {title}
         </Typography>

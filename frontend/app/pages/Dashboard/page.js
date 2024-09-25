@@ -6,6 +6,7 @@ import DashBoardCard from "@/app/components/DashBoardCard";
 import ReminderCard from "@/app/components/ReminderCard";
 import { Group, Face, EventBusy, NewReleases } from "@mui/icons-material";
 import Map from "@/app/components/Map";
+import VaccineAlert from "@/app/components/VaccineAlert";
 
 export default function Dashboard() {
   const address =
@@ -23,6 +24,9 @@ export default function Dashboard() {
             </Typography>
           </Stack>
         </Stack>
+        <div style={{ paddingBottom: 20 }}>
+          <VaccineAlert />
+        </div>
         {/* Population Cards */}
         <Grid container spacing={4}>
           <Grid item xs={4}>

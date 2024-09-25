@@ -34,14 +34,15 @@ export async function getInventoryTotal(vaccine_id) {
   return data[0].vaccine_quantity;
 }
 
-//DISPLAY STOCK PER VACCINE
-export async function fetchVaccineStock(vaccine_id) {
+//DISPLAY STOCK OF SELECTED VACCINE
+export async function fetchVaccineStock(inventory_id) {
   const { data, error } = await supabase
     .from("VaccineTransaction")
     .select(
       `transaction_id, transaction_date, transaction_type, transaction_quantity, batch_number, expiration_date, inventory_id)`
     )
-    .eq("inventory_id", vaccine_id);
+    .eq("inventory_id", inventory_id);
+
   if (error) {
     console.error("Error fetching vaccines:", error.message);
     return [];
@@ -102,6 +103,21 @@ export async function addVaccineStock(addDetails) {
   }
 
   return data; // return the inserted transaction data
+}
+
+//GET INVENTORY ID
+export async function getInventoryId(vaccine_id) {
+  const { data, error } = await supabase
+    .from("VaccineInventory")
+    .select(`inventory_id`)
+    .eq("vaccine_id", vaccine_id);
+
+  if (error) {
+    console.error("Error fetching vaccines:", error.message);
+    return [];
+  }
+
+  return data[0].inventory_id;
 }
 
 // UPDATE VACCINE STOCK AND ADJUST INVENTORY QUANTITY
@@ -192,15 +208,13 @@ export async function checkVaccineStock(vaccine_id, quantity) {
     .select("vaccine_quantity")
     .eq("vaccine_id", vaccine_id)
     .select();
-
-  console.log("vaccine id", vaccine_id);
-  console.log("vacInventory", data);
   if (error) {
     console.error("Error fetching inventory total:", error.message);
     return false;
   }
 
-  if (data.vaccine_quantity >= quantity) {
+  console.log("qtty", data, data[0].vaccine_quantity);
+  if (data[0].vaccine_quantity >= quantity) {
     return true;
   } else {
     return false;
