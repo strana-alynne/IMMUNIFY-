@@ -54,7 +54,6 @@ const ChildId = ({ params }) => {
   const [dateAdministered, setDateAdministered] = useState(dayjs());
   const [dropdownOptions, setDropdownOptions] = useState([]);
   const [childAge, setChildAge] = useState(0);
-  const [availableStock, setAvailableStock] = useState(true);
   const router = useRouter();
   const [openModal, setOpenModal] = useState(false);
   const [modalContent, setModalContent] = useState("");
@@ -121,7 +120,6 @@ const ChildId = ({ params }) => {
         }));
 
         setSchedules(fetchedSchedules);
-        console.log("fufufufuck:", fetchedSchedules);
         const filteredOptions = fetchedSchedules.filter(
           (s) => s.immunization_records.length === 0
         );
@@ -130,7 +128,6 @@ const ChildId = ({ params }) => {
         setDropdownOptions(
           fetchedSchedules.filter((s) => s.immunization_records.length === 0)
         );
-        console.log("this is fucking dropdown", dropdownOptions);
         setChildAge(calculateAgeInWeeks(data[0].birthdate));
         updateChildStatus(fetchedSchedules);
       }
@@ -178,7 +175,6 @@ const ChildId = ({ params }) => {
       const getVacId = selectedScheduleData.vaccine_id;
       const inventory_id = await getInventoryId(getVacId);
       const stock = await checkVaccineStock(getVacId, 1);
-      setAvailableStock(stock);
       console.log("stok", stock);
 
       const vaccineStockDetails = {
@@ -188,7 +184,7 @@ const ChildId = ({ params }) => {
         inventory_id: inventory_id,
       };
 
-      if (availableStock == true) {
+      if (stock === true) {
         if (!selectedScheduleData) {
           throw new Error(
             "No matching schedule found for the selected vaccine."

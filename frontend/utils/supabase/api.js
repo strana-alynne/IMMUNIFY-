@@ -690,8 +690,6 @@ export async function newImmunizationRecord(record) {
     console.error("Error adding immunization record:", error);
     throw error;
   }
-
-  console.log("this is fucking", data);
   return data;
 }
 
