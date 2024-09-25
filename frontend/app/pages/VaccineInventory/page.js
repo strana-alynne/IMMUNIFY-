@@ -18,6 +18,7 @@ import {
 import VaccinesIcon from "@mui/icons-material/Vaccines";
 import { useRouter } from "next/navigation";
 import { fetchVaccines } from "@/utils/supabase/api";
+import VaccineAlert from "@/app/components/VaccineAlert";
 
 export default function VaccineInventory() {
   const [vaccines, setVaccines] = useState([]);
@@ -47,6 +48,7 @@ export default function VaccineInventory() {
               Vaccine Inventory
             </Typography>
           </Stack>
+          <VaccineAlert />
           <Box>
             {" "}
             <TableContainer component={Paper}>

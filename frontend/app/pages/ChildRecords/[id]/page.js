@@ -33,12 +33,14 @@ import {
   fetchChild,
   newImmunizationRecord,
   createNewSchedule,
+  checkVaccineStock,
 } from "@/utils/supabase/api";
 import { useRouter } from "next/navigation";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import schedModal from "@/app/components/Modals/schedModal";
+import VaccineAlert from "@/app/components/VaccineAlert";
 
 const ChildId = ({ params }) => {
   const [childData, setChildData] = useState([]);
@@ -48,6 +50,7 @@ const ChildId = ({ params }) => {
   const [dateAdministered, setDateAdministered] = useState(dayjs());
   const [dropdownOptions, setDropdownOptions] = useState([]);
   const [childAge, setChildAge] = useState(0);
+  const [availableStock, setAvailableStock] = useState(true);
   const router = useRouter();
 
   // Calculate age in weeks based on birthdate
@@ -89,6 +92,7 @@ const ChildId = ({ params }) => {
     return colors[status] || {};
   };
 
+  //CHILD DATE
   useEffect(() => {
     const fetchData = async () => {
       const data = await fetchChild(params.id);
@@ -125,6 +129,7 @@ const ChildId = ({ params }) => {
     fetchData();
   }, [params.id]);
 
+  //VACCINES QUANTITY
   // Update child's immunization status based on records
   const updateChildStatus = (schedules) => {
     const totalSchedules = schedules.length;
@@ -157,91 +162,91 @@ const ChildId = ({ params }) => {
       const selectedScheduleData = dropdownOptions.find(
         (s) => s.sched_id === selectedSchedule
       );
-      if (!selectedScheduleData) {
-        throw new Error("No matching schedule found for the selected vaccine.");
-      }
 
-      const newRecord = {
-        sched_id: selectedSchedule,
-        date_administered: dateAdministered.toISOString(),
-        completion_status: "Completed",
-      };
+      const getVacId = selectedScheduleData.vaccine_id;
+      const stock = await checkVaccineStock(getVacId, 1);
+      setAvailableStock(stock);
 
-      await newImmunizationRecord(newRecord);
-      alert("Record saved successfully!");
-
-      // Find the vaccine in the vaccineSchedule
-      const vaccine = vaccineSchedule.find(
-        (v) => v.id === selectedScheduleData.vaccine_id
-      );
-
-      console.log("bullshit vaccine", vaccine);
-
-      // Count how many doses of this vaccine have been administered
-      const administeredDoses = schedules.filter(
-        (s) => s.vaccine_id === vaccine.id && s.immunization_records.length > 0
-      ).length;
-
-      console.log("administered doses", administeredDoses);
-
-      if (
-        vaccine &&
-        vaccine.nextDose &&
-        administeredDoses + 1 < vaccine.totalDoses
-      ) {
-        const nextScheduledDate = dayjs(dateAdministered)
-          .add(vaccine.nextDose, "day")
-          .toISOString();
-
-        console.log("nextSchedul:", nextScheduledDate);
-        const newSchedule = await createNewSchedule(
-          params.id,
-          vaccine.id,
-          nextScheduledDate
-        );
-
-        console.log("newSchedule", newSchedule);
-        setSchedules((prevSchedules) => [...prevSchedules, newSchedule]);
-        setDropdownOptions((prevOptions) => [
-          ...prevOptions.filter(
-            (schedule) => schedule.sched_id !== selectedSchedule
-          ),
-          newSchedule,
-        ]);
+      if (availableStock) {
+        // if (!selectedScheduleData) {
+        //   throw new Error("No matching schedule found for the selected vaccine.");
+        // }
+        // const newRecord = {
+        //   sched_id: selectedSchedule,
+        //   date_administered: dateAdministered.toISOString(),
+        //   completion_status: "Completed",
+        // };
+        // await newImmunizationRecord(newRecord);
+        // alert("Record saved successfully!");
+        // // Find the vaccine in the vaccineSchedule
+        // const vaccine = vaccineSchedule.find(
+        //   (v) => v.id === selectedScheduleData.vaccine_id
+        // );
+        // console.log("bullshit vaccine", vaccine);
+        // // Count how many doses of this vaccine have been administered
+        // const administeredDoses = schedules.filter(
+        //   (s) => s.vaccine_id === vaccine.id && s.immunization_records.length > 0
+        // ).length;
+        // console.log("administered doses", administeredDoses);
+        // if (
+        //   vaccine &&
+        //   vaccine.nextDose &&
+        //   administeredDoses + 1 < vaccine.totalDoses
+        // ) {
+        //   const nextScheduledDate = dayjs(dateAdministered)
+        //     .add(vaccine.nextDose, "day")
+        //     .toISOString();
+        //   console.log("nextSchedul:", nextScheduledDate);
+        //   const newSchedule = await createNewSchedule(
+        //     params.id,
+        //     vaccine.id,
+        //     nextScheduledDate
+        //   );
+        //   console.log("newSchedule", newSchedule);
+        //   setSchedules((prevSchedules) => [...prevSchedules, newSchedule]);
+        //   setDropdownOptions((prevOptions) => [
+        //     ...prevOptions.filter(
+        //       (schedule) => schedule.sched_id !== selectedSchedule
+        //     ),
+        //     newSchedule,
+        //   ]);
+        // } else {
+        //   // Remove the current schedule from dropdownOptions
+        //   setDropdownOptions((prevOptions) =>
+        //     prevOptions.filter(
+        //       (schedule) => schedule.sched_id !== selectedSchedule
+        //     )
+        //   );
+        // }
+        // // Refresh child data and update states
+        // const data = await fetchChild(params.id);
+        // setChildData(data || []);
+        // if (data && data.length > 0) {
+        //   const fetchedSchedules = data[0].Schedule.map((schedule) => ({
+        //     sched_id: schedule.sched_id,
+        //     scheduled_date: schedule.scheduled_date,
+        //     vaccine_id: schedule.Vaccine.vaccine_id,
+        //     vaccine_name: schedule.Vaccine.vaccine_name,
+        //     overallStatus: schedule.overallStatus,
+        //     immunization_records: schedule.ImmunizationRecords.map((record) => ({
+        //       date_administered: record.date_administered,
+        //       completion_status: record.completion_status,
+        //     })),
+        //   }));
+        //   setSchedules(fetchedSchedules);
+        //   setDropdownOptions(
+        //     fetchedSchedules.filter((s) => s.immunization_records.length === 0)
+        //   );
+        //   updateChildStatus(fetchedSchedules);
+        // }
+        // Reset form fields
+        // setSelectedSchedule("");
+        // setDateAdministered(dayjs());
       } else {
-        // Remove the current schedule from dropdownOptions
-        setDropdownOptions((prevOptions) =>
-          prevOptions.filter(
-            (schedule) => schedule.sched_id !== selectedSchedule
-          )
+        alert(
+          "Insufficient vaccine stock. Please check your vaccine inventory."
         );
       }
-
-      // Refresh child data and update states
-      const data = await fetchChild(params.id);
-      setChildData(data || []);
-      if (data && data.length > 0) {
-        const fetchedSchedules = data[0].Schedule.map((schedule) => ({
-          sched_id: schedule.sched_id,
-          scheduled_date: schedule.scheduled_date,
-          vaccine_id: schedule.Vaccine.vaccine_id,
-          vaccine_name: schedule.Vaccine.vaccine_name,
-          overallStatus: schedule.overallStatus,
-          immunization_records: schedule.ImmunizationRecords.map((record) => ({
-            date_administered: record.date_administered,
-            completion_status: record.completion_status,
-          })),
-        }));
-        setSchedules(fetchedSchedules);
-        setDropdownOptions(
-          fetchedSchedules.filter((s) => s.immunization_records.length === 0)
-        );
-        updateChildStatus(fetchedSchedules);
-      }
-
-      // Reset form fields
-      setSelectedSchedule("");
-      setDateAdministered(dayjs());
     } catch (error) {
       console.error("Error saving record:", error.message);
     }
@@ -348,7 +353,7 @@ const ChildId = ({ params }) => {
               </Stack>
             </Paper>
           ))}
-
+          <VaccineAlert />
           <Grid container spacing={2}>
             <Grid item xs={3}>
               <FormControl fullWidth margin="normal">

@@ -27,6 +27,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import SearchIcon from "@mui/icons-material/Search";
 import { useRouter } from "next/navigation";
 import SideBar from "@/app/components/SideBar/page";
+import VaccineAlert from "@/app/components/VaccineAlert";
 //Chip Color
 const getChipColor = (status) => {
   switch (status) {
@@ -245,7 +246,7 @@ export default function ChildRecords() {
               Child Records
             </Typography>
           </Stack>
-
+          <VaccineAlert />
           <Grid container alignItems="start" spacing={2}>
             {/* SEARCH TEXTFIELD */}
             <Grid item xs={4}>

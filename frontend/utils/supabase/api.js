@@ -185,6 +185,28 @@ export async function updateVaccineStock(updatedTransaction) {
   return data; // return the updated transaction data
 }
 
+// CHECK VACCINE STOCK
+export async function checkVaccineStock(vaccine_id, quantity) {
+  const { data, error } = await supabase
+    .from("VaccineInventory")
+    .select("vaccine_quantity")
+    .eq("vaccine_id", vaccine_id)
+    .select();
+
+  console.log("vaccine id", vaccine_id);
+  console.log("vacInventory", data);
+  if (error) {
+    console.error("Error fetching inventory total:", error.message);
+    return false;
+  }
+
+  if (data.vaccine_quantity >= quantity) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
 //========================== CHILD RECORDS =================================
 
 // ADD CHILD AND MOTHER RECORDS

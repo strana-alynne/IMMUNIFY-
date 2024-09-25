@@ -34,10 +34,14 @@ import {
   getInventoryTotal,
 } from "@/utils/supabase/api";
 import { useState, useEffect } from "react";
-import { CheckCircle, DriveFileRenameOutline } from "@mui/icons-material";
+import {
+  ArrowBack,
+  CheckCircle,
+  DriveFileRenameOutline,
+} from "@mui/icons-material";
 import EditModal from "@/app/components/Modals/EditModal";
 import GeneralModals from "@/app/components/Modals/Modals";
-
+import { useRouter } from "next/navigation";
 const Details = ({ params }) => {
   const [vaccines, setVaccines] = useState([]);
   const [vaccineName, setVaccineName] = useState("");
@@ -53,6 +57,7 @@ const Details = ({ params }) => {
   const [openEditModal, setOpenEditModal] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);
   const [total, setTotal] = useState();
+  const router = useRouter();
 
   const handleCloseModal = () => {
     setOpenModal(false);
@@ -153,6 +158,10 @@ const Details = ({ params }) => {
     setBatchNumber(event.target.value);
   };
 
+  const handleBack = () => {
+    router.replace(`/pages/VaccineInventory`);
+  };
+
   return (
     <Box sx={{ display: "flex", marginTop: "100px" }}>
       <SideBar />
@@ -160,6 +169,9 @@ const Details = ({ params }) => {
         <Stack spacing={4}>
           <Stack direction={"column"}>
             <Stack direction="row" spacing={0.5}>
+              <IconButton onClick={handleBack}>
+                <ArrowBack sx={{ fontSize: 40 }} color="primary" />
+              </IconButton>
               <VaccinesIcon sx={{ fontSize: 40 }} color="primary" />
               <Typography variant="h2" color="primary">
                 Vaccine Inventory

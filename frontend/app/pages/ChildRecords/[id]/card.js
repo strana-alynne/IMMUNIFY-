@@ -105,11 +105,11 @@ export default function ChildCard({ schedule }) {
         let nextAvailableColumn = 0;
 
         vaccineSchedules.forEach((item) => {
-          const immunizationRecords = item.immunization_records || [];
-
-          immunizationRecords.forEach((record) => {
-            const date = record.date_administered;
-            const recordId = record.record_id;
+          const immunizationRecords =
+            item.immunization_records || item.scheduled_date;
+          if (immunizationRecords.length === 0) {
+            // If there are no immunization records, display the schedule date
+            const scheduleDate = item.scheduled_date; // Assuming schedule has a scheduled_date
 
             while (
               nextAvailableColumn < recordArr.length &&
@@ -121,13 +121,35 @@ export default function ChildCard({ schedule }) {
 
             if (nextAvailableColumn < recordArr.length) {
               recordArr[nextAvailableColumn] = {
-                recordId,
-                date,
-                status: record.completion_status || "Scheduled",
+                date: scheduleDate,
+                status: "Scheduled", // or another status to show that it's scheduled but not administered yet
               };
               nextAvailableColumn++;
             }
-          });
+          } else {
+            // Process the immunization records as usual
+            immunizationRecords.forEach((record) => {
+              const date = record.date_administered;
+              const recordId = record.record_id;
+
+              while (
+                nextAvailableColumn < recordArr.length &&
+                (!vaccine.columns.includes(nextAvailableColumn) ||
+                  recordArr[nextAvailableColumn] !== null)
+              ) {
+                nextAvailableColumn++;
+              }
+
+              if (nextAvailableColumn < recordArr.length) {
+                recordArr[nextAvailableColumn] = {
+                  recordId,
+                  date,
+                  status: record.completion_status || "Scheduled",
+                };
+                nextAvailableColumn++;
+              }
+            });
+          }
         });
 
         return {
@@ -192,12 +214,15 @@ export default function ChildCard({ schedule }) {
                         : "#f0f0f0",
                       padding: 1,
                       cursor:
-                        row.columns.includes(index) && dose
+                        row.columns.includes(index) &&
+                        dose &&
+                        dose.status !== "Scheduled"
                           ? "pointer"
                           : "default",
                     }}
                     onClick={() =>
                       row.columns.includes(index) &&
+                      dose.status !== "Scheduled" &&
                       handleCellClick(dose, row.name, columnHeaders[index])
                     }
                   >
