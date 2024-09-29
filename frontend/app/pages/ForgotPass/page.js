@@ -24,13 +24,23 @@ export default function ForgotPassword() {
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
+    <main className="flex min-h-screen flex-col items-center justify-center p-2 sm:p-4 md:p-8">
       <Paper sx={{ p: 4, width: "90%", maxWidth: "400px" }}>
         <Stack alignItems="center" justifyContent="center">
-          <Typography variant="h4" sx={{ mb: 2 }}>
+          <Typography
+            variant="h4"
+            sx={{
+              mb: 2,
+              textAlign: "center",
+              fontSize: {
+                xs: 24, // Font size for extra-small screens
+                sm: 40, // Font size for small screens and up
+              },
+            }}
+          >
             Forgot Your Password?
           </Typography>
-          <Typography variant="body1" sx={{ mb: 2, textAlign: "center" }}>
+          <Typography variant="body" sx={{ mb: 2, textAlign: "left" }}>
             Enter your email address below and we'll send you a link to reset
             your password.
           </Typography>
