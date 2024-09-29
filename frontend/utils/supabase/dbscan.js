@@ -83,8 +83,6 @@ export async function fecthChildrenData() {
 //PASS TO THE DBSCAN
 
 export async function DBSCAN(data) {
-  console.log("Data being sent to DBSCAN:", JSON.stringify(data, null, 2));
-
   try {
     const response = await fetch("http://127.0.0.1:8000/dbscan", {
       method: "POST",

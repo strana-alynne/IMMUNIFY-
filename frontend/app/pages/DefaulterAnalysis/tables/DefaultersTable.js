@@ -1,3 +1,4 @@
+import React from "react";
 import {
   Box,
   TableContainer,
@@ -7,26 +8,34 @@ import {
   Table,
   Paper,
   TableBody,
+  useTheme,
+  useMediaQuery,
 } from "@mui/material";
-import React from "react";
 
 function createData(purok, immunized, defaulter) {
   return { purok, immunized, defaulter };
 }
 
 const rows = [
-  createData("Dacoville", 159, 6.0),
-  createData("Dumoy", 237, 9.0),
-  createData("Farland", 262, 16.0),
+  createData("Dacoville", 159, 6),
+  createData("Dumoy", 237, 9),
+  createData("Farland", 262, 16),
   createData("Pepsi", 305, 3),
-  createData("Farland", 356, 16.0),
+  createData("Farland", 356, 16),
 ];
 
 export default function DefaultersTable() {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
   return (
-    <Box>
+    <Box sx={{ overflowX: "auto" }}>
       <TableContainer component={Paper}>
-        <Table sx={{ minWidth: 650 }} size="small" aria-label="a dense table">
+        <Table
+          sx={{ minWidth: isMobile ? 300 : 650 }}
+          size="small"
+          aria-label="defaulters table"
+        >
           <TableHead>
             <TableRow>
               <TableCell>Purok</TableCell>

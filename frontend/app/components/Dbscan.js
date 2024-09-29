@@ -31,7 +31,7 @@ export default function Dbscan() {
   const { bounds, clusters } = clusterData;
 
   const getClusterColor = (index) => {
-    if (index === -1) return "#808080"; // Gray for noise points
+    if (index === -1) return "#808080";
     return `hsl(${(index * 137.5) % 360}, 70%, 50%)`;
   };
 
