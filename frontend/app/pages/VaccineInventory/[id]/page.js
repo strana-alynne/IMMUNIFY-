@@ -1,73 +1,90 @@
 "use client";
-import SideBar from "@/app/components/SideBar/page";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import dayjs from "dayjs";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import {
   Box,
   Container,
   Typography,
   Stack,
-  TableContainer,
-  TableCell,
-  TableHead,
-  TableRow,
-  Table,
-  TableBody,
-  Paper,
   Button,
-  Grid,
+  IconButton,
   TextField,
   Select,
   MenuItem,
   FormControl,
   InputLabel,
-  TablePagination,
-  IconButton,
+  Modal,
+  useTheme,
+  useMediaQuery,
 } from "@mui/material";
-import dayjs from "dayjs";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import VaccinesIcon from "@mui/icons-material/Vaccines";
+import {
+  VaccinesOutlined,
+  ArrowBack,
+  CheckCircle,
+  Add,
+  Edit,
+} from "@mui/icons-material";
+import EditModal from "@/app/components/Modals/EditModal";
+import GeneralModals from "@/app/components/Modals/Modals";
 import {
   fetchVaccineStock,
   addVaccineStock,
   updateVaccineStock,
   getInventoryTotal,
 } from "@/utils/supabase/api";
-import { useState, useEffect } from "react";
-import {
-  ArrowBack,
-  CheckCircle,
-  DriveFileRenameOutline,
-} from "@mui/icons-material";
-import EditModal from "@/app/components/Modals/EditModal";
-import GeneralModals from "@/app/components/Modals/Modals";
-import { useRouter } from "next/navigation";
+
 const Details = ({ params }) => {
   const [vaccines, setVaccines] = useState([]);
   const [vaccineName, setVaccineName] = useState("");
   const [transactionType, setTransactionType] = useState("");
   const [selectedDate, setSelectedDate] = useState(dayjs());
-  const [expirationDate, setexpirationDate] = useState(dayjs());
+  const [expirationDate, setExpirationDate] = useState(dayjs());
   const [quantity, setQuantity] = useState("");
   const [batchNumber, setBatchNumber] = useState("");
   const [inventoryID, setInventoryID] = useState(params.id);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
-  const [page, setPage] = useState(0);
   const [openModal, setOpenModal] = useState(false);
+  const [openAddModal, setOpenAddModal] = useState(false);
   const [openEditModal, setOpenEditModal] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);
-  const [total, setTotal] = useState();
+  const [total, setTotal] = useState(0);
+  const [filterModel, setFilterModel] = useState({
+    items: [
+      { field: "transaction_date", operator: "contains", value: "" },
+      { field: "transaction_type", operator: "equals", value: "" },
+    ],
+  });
   const router = useRouter();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
-  const handleCloseModal = () => {
-    setOpenModal(false);
-  };
-  const handleEditCloseModal = () => {
-    setOpenEditModal(false);
-  };
+  useEffect(() => {
+    async function loadVaccines() {
+      const storedVaccineName = localStorage.getItem("selectedVaccineName");
+      const storeInventoryId = localStorage.getItem("inventoryID");
+      const fetchTotal = localStorage.getItem("vaccineID");
+      const fetchedVaccines = await fetchVaccineStock(storeInventoryId);
+      const fetchInventory = await getInventoryTotal(fetchTotal);
+      setVaccineName(storedVaccineName);
+      setInventoryID(storeInventoryId);
+      setVaccines(fetchedVaccines);
+      setTotal(fetchInventory);
+    }
+    loadVaccines();
+  }, [params.id]);
+
+  const handleCloseModal = () => setOpenModal(false);
+  const handleCloseAddModal = () => setOpenAddModal(false);
+  const handleCloseEditModal = () => setOpenEditModal(false);
+  const handleOpenAddModal = () => setOpenAddModal(true);
+
   const handleEdit = (transaction) => {
     setEditingTransaction({
-      transaction_id: transaction.transaction_id,
+      transaction_id: transaction.id,
       transaction_date: dayjs(transaction.transaction_date),
       transaction_type: transaction.transaction_type,
       transaction_quantity: transaction.transaction_quantity,
@@ -77,285 +94,207 @@ const Details = ({ params }) => {
     setOpenEditModal(true);
   };
 
-  //TABLE THINGSSS
-  const handleChangePage = (newPage) => {
-    setPage(newPage);
-  };
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
-
   const handleUpdate = async (updatedTransaction) => {
-    // Perform update logic here (e.g., send the updated transaction to the server)
-    updateVaccineStock(updatedTransaction);
-
-    // After updating, refresh the vaccine stock list
+    await updateVaccineStock(updatedTransaction);
     const updatedVaccines = await fetchVaccineStock(inventoryID);
     setVaccines(updatedVaccines);
   };
 
-  // LOADS THE DATA
-  useEffect(() => {
-    async function loadVaccines() {
-      const storedVaccineName = localStorage.getItem("selectedVaccineName");
-      const storeInventoryId = localStorage.getItem("inventoryID");
-      const fetchTotal = localStorage.getItem("vaccineID");
-      const fetchedVaccines = await fetchVaccineStock(storeInventoryId);
-      const fetchInvetory = await getInventoryTotal(fetchTotal);
-      console.log("Vaccines loaded in component:", fetchedVaccines);
-      console.log("Invetories loaded in component:", fetchInvetory);
-      setVaccineName(storedVaccineName);
-      setInventoryID(storeInventoryId);
-      setVaccines(fetchedVaccines);
-      setTotal(fetchInvetory);
-    }
-    loadVaccines();
-  }, [params.id]);
-
-  //BUTTON CLICK
-  const handleButtonClick = async () => {
+  const handleAddTransaction = async () => {
     const formattedDate = selectedDate.format("YYYY-MM-DD");
-    const exformattedDate = expirationDate.format("YYYY-MM-DD");
+    const exFormattedDate = expirationDate.format("YYYY-MM-DD");
     const vaccineStockDetails = {
       transaction_date: formattedDate,
       transaction_type: transactionType,
       transaction_quantity: parseInt(quantity, 10),
       batch_number: batchNumber,
-      expiration_date: exformattedDate,
+      expiration_date: exFormattedDate,
       inventory_id: inventoryID,
-  };
+    };
 
     const result = await addVaccineStock(vaccineStockDetails);
-    setOpenModal(true);
     if (result) {
-      console.log("Vaccine stock added successfully:", result);
       const updatedVaccines = await fetchVaccineStock(inventoryID);
       setVaccines(updatedVaccines);
+      setOpenAddModal(false);
+      setOpenModal(true);
     } else {
       console.error("Failed to add vaccine stock.");
     }
   };
 
-  //TEXTFIELDS HANDLER
-  const handleTransactionTypeChange = (event) => {
-    setTransactionType(event.target.value);
-  };
+  const columns = [
+    { field: "transaction_id", headerName: "Transaction ID", width: 200 },
+    { field: "transaction_date", headerName: "Date", flex: 1 },
+    { field: "transaction_quantity", headerName: "Quantity", flex: 1 },
+    { field: "batch_number", headerName: "Batch Number", flex: 1 },
+    { field: "expiration_date", headerName: "Expiration Date", flex: 1 },
+    { field: "transaction_type", headerName: "Transaction Type", flex: 1 },
+    {
+      field: "actions",
+      headerName: "Actions",
+      flex: 1,
+      renderCell: (params) => (
+        <IconButton onClick={() => handleEdit(params.row)}>
+          <Edit />
+        </IconButton>
+      ),
+    },
+  ];
 
-  const handleDateChange = (newDate) => {
-    setSelectedDate(newDate);
-  };
-
-  const handleExpirationDateChange = (newDate) => {
-    setexpirationDate(newDate);
-  };
-
-  const handleQuantityChange = (event) => {
-    setQuantity(event.target.value);
-  };
-
-  const handleBatchNumberChange = (event) => {
-    setBatchNumber(event.target.value);
-  };
-
-  const handleBack = () => {
-    router.replace(`/pages/VaccineInventory`);
-  };
+  const mobileColumns = columns.filter((col) =>
+    ["transaction_date", "transaction_quantity", "transaction_type"].includes(
+      col.field
+    )
+  );
 
   return (
-    <Box sx={{ display: "flex", marginTop: "100px" }}>
-      <SideBar />
+    <Box sx={{ display: "flex" }}>
       <Container fixed>
         <Stack spacing={4}>
-          <Stack direction={"column"}>
-            <Stack direction="row" spacing={0.5}>
-              <IconButton onClick={handleBack}>
-                <ArrowBack sx={{ fontSize: 40 }} color="primary" />
-              </IconButton>
-              <VaccinesIcon sx={{ fontSize: 40 }} color="primary" />
-              <Typography variant="h2" color="primary">
-                Vaccine Inventory
-              </Typography>
-            </Stack>
-            <Typography variant="p" color="secondary">
-              vaccine name: <strong>{vaccineName}</strong>
+          <Stack direction="row" alignItems="center" spacing={2}>
+            <IconButton
+              onClick={() => router.replace("/pages/VaccineInventory")}
+            >
+              <ArrowBack />
+            </IconButton>
+            <VaccinesOutlined sx={{ fontSize: 40 }} color="primary" />
+            <Typography variant={isMobile ? "h6" : "h4"} color="primary">
+              Vaccine Inventory:{" "}
+              <span style={{ color: "#EE7423" }}>{vaccineName}</span>
             </Typography>
           </Stack>
 
-          <Grid container spacing={2}>
-            {/* DATE */}
-            <Grid item xs={2}>
+          <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<Add />}
+              onClick={handleOpenAddModal}
+            >
+              Add Transaction
+            </Button>
+          </Box>
+
+          <Box
+            sx={{
+              height: 400,
+              width: "100%",
+              display: "flex",
+              flexDirection: "column",
+              overflow: "hidden",
+            }}
+          >
+            <Box sx={{ flex: 1, overflow: "auto" }}>
+              <DataGrid
+                rows={vaccines}
+                columns={isMobile ? mobileColumns : columns}
+                pageSize={5}
+                getRowId={(row) => row.transaction_id}
+                rowsPerPageOptions={[5, 10, 20]}
+                checkboxSelection
+                disableSelectionOnClick
+                components={{ Toolbar: GridToolbar }}
+                filterModel={filterModel}
+                onFilterModelChange={(newModel) => setFilterModel(newModel)}
+                autoHeight
+                sx={{
+                  "& .MuiDataGrid-main": { overflow: "auto" },
+                  "& .MuiDataGrid-columnHeaders": {
+                    backgroundColor: "lightgray", // Keeping original styling
+                  },
+                  "& .MuiDataGrid-cell": {
+                    whiteSpace: "normal",
+                    wordWrap: "break-word",
+                  },
+                }}
+              />
+            </Box>
+          </Box>
+          <Typography variant="h6" color="secondary">
+            Available Stocks Left: <strong>{total}</strong>
+          </Typography>
+        </Stack>
+
+        <Modal open={openAddModal} onClose={handleCloseAddModal}>
+          <Box
+            sx={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: 400,
+              bgcolor: "background.paper",
+              boxShadow: 24,
+              p: 4,
+            }}
+          >
+            <Typography
+              variant="h6"
+              component="h2"
+              color="primary"
+              gutterBottom
+            >
+              Add New Transaction
+            </Typography>
+            <Stack spacing={2}>
               <LocalizationProvider dateAdapter={AdapterDayjs}>
                 <DatePicker
                   label="Date"
                   value={selectedDate}
-                  onChange={handleDateChange}
-                  renderInput={(params) => <TextField {...params} />}
-                  slotProps={{
-                    textField: {
-                      margin: "normal",
-                      fullWidth: true,
-                      required: true,
-                    },
-                  }}
+                  onChange={(newDate) => setSelectedDate(newDate)}
+                  renderInput={(params) => <TextField {...params} fullWidth />}
                 />
               </LocalizationProvider>
-            </Grid>
-
-            {/* QUANTITY */}
-            <Grid item xs={2}>
               <TextField
-                margin="normal"
-                required
                 fullWidth
-                id="quantity"
                 label="Quantity"
-                name="quantity"
                 type="number"
                 value={quantity}
-                onChange={handleQuantityChange}
+                onChange={(e) => setQuantity(e.target.value)}
               />
-            </Grid>
-            {/* BATCH NUMBER */}
-            <Grid item xs={2}>
               <TextField
-                margin="normal"
                 fullWidth
-                id="batchNumber"
                 label="Batch Number"
-                name="batchNumber"
                 value={batchNumber}
-                onChange={handleBatchNumberChange}
+                onChange={(e) => setBatchNumber(e.target.value)}
               />
-            </Grid>
-            {/* EXPIRATION DATE */}
-            <Grid item xs={2}>
               <LocalizationProvider dateAdapter={AdapterDayjs}>
                 <DatePicker
                   label="Expiration Date"
                   value={expirationDate}
-                  onChange={handleExpirationDateChange}
-                  renderInput={(params) => <TextField {...params} />}
-                  slotProps={{
-                    textField: {
-                      margin: "normal",
-                      fullWidth: true,
-                      required: true,
-                    },
-                  }}
+                  onChange={(newDate) => setExpirationDate(newDate)}
+                  renderInput={(params) => <TextField {...params} fullWidth />}
                 />
               </LocalizationProvider>
-            </Grid>
-            {/* TRANSACTION TYPE */}
-            <Grid item xs={2}>
-              <FormControl fullWidth margin="normal">
-                <InputLabel id="transaction-type-label">
-                  Transaction Type
-                </InputLabel>
+              <FormControl fullWidth>
+                <InputLabel>Transaction Type</InputLabel>
                 <Select
-                  labelId="transaction-type-label"
-                  id="transaction-type"
                   value={transactionType}
                   label="Transaction Type"
-                  onChange={handleTransactionTypeChange}
+                  onChange={(e) => setTransactionType(e.target.value)}
                 >
                   <MenuItem value="STOCK IN">STOCK IN</MenuItem>
                   <MenuItem value="STOCK OUT">STOCK OUT</MenuItem>
                 </Select>
               </FormControl>
-            </Grid>
-            <Grid item xs={2}>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={() => handleButtonClick()}
-                sx={{ marginTop: "16px" }}
-              >
-                Add to Stock
+              <Button variant="contained" onClick={handleAddTransaction}>
+                Add Transaction
               </Button>
-            </Grid>
-          </Grid>
-          <Box>
-            <TableContainer component={Paper}>
-              <Table sx={{ minWidth: 650 }} aria-label="simple table">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Date</TableCell>
-                    <TableCell>Quantity</TableCell>
-                    <TableCell>Batch Number</TableCell>
-                    <TableCell>Expiration Date</TableCell>
-                    <TableCell>Transaction Type</TableCell>
-                    <TableCell></TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {vaccines
-                    .sort(
-                      (a, b) =>
-                        new Date(b.transaction_date) -
-                        new Date(a.transaction_date)
-                    )
-                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                    .map((row) => (
-                      <TableRow
-                        key={row.transaction_id}
-                        sx={{
-                          "&:last-child td, &:last-child th": { border: 0 },
-                          backgroundColor:
-                            row.transaction_type === "STOCK IN"
-                              ? "primary.light"
-                              : "inherit",
-                        }}
-                      >
-                        <TableCell component="th" scope="row">
-                          {row.transaction_date}
-                        </TableCell>
-                        <TableCell>{row.transaction_quantity}</TableCell>
-                        <TableCell>{row.batch_number}</TableCell>
-                        <TableCell>{row.expiration_date}</TableCell>
-                        <TableCell>{row.transaction_type}</TableCell>
-                        <TableCell>
-                          {" "}
-                          <IconButton>
-                            <DriveFileRenameOutline
-                              onClick={() => handleEdit(row)}
-                            />
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  <TableRow sx={{ backgroundColor: "secondary.light" }}>
-                    <TableCell colSpan={4} />
-                    <TableCell colSpan={1}>
-                      <strong>Total</strong>
-                    </TableCell>
-                    <TableCell align="left">
-                      <strong>{total}</strong>
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </TableContainer>
-            <TablePagination
-              rowsPerPageOptions={[5, 10, 25]}
-              component="div"
-              count={vaccines.length}
-              rowsPerPage={rowsPerPage}
-              page={page}
-              onPageChange={handleChangePage}
-              onRowsPerPageChange={handleChangeRowsPerPage}
-            />
+            </Stack>
           </Box>
-        </Stack>
+        </Modal>
+
         <GeneralModals
           open={openModal}
           onClose={handleCloseModal}
           title={<CheckCircle color="primary" sx={{ fontSize: 80 }} />}
           content={<Typography>Successfully added Vaccine Stock</Typography>}
         />
+
         <EditModal
           open={openEditModal}
-          onClose={handleEditCloseModal}
+          onClose={handleCloseEditModal}
           title="Edit Vaccine Stock"
           transaction={editingTransaction}
           onUpdate={handleUpdate}
