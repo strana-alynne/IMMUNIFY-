@@ -1,6 +1,13 @@
 "use client";
-import SideBar from "@/app/components/SideBar/page";
-import { Box, Container, Typography, Stack, Grid } from "@mui/material";
+import {
+  Box,
+  Container,
+  Typography,
+  Stack,
+  Grid,
+  useTheme,
+  useMediaQuery,
+} from "@mui/material";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import DashBoardCard from "@/app/components/DashBoardCard";
 import ReminderCard from "@/app/components/ReminderCard";
@@ -9,13 +16,18 @@ import Map from "@/app/components/Map";
 import VaccineAlert from "@/app/components/VaccineAlert";
 
 export default function Dashboard() {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   return (
     <Box display="flex">
       <Container fixed>
         <Stack spacing={4}>
           <Stack direction="row" spacing={0.5}>
-            <DashboardIcon sx={{ fontSize: 40 }} color="primary" />
-            <Typography variant="h2" color="primary">
+            <DashboardIcon
+              sx={{ fontSize: { xs: 30, sm: 40 } }}
+              color="primary"
+            />
+            <Typography variant={isMobile ? "h4" : "h2"} color="primary">
               Dashboard
             </Typography>
           </Stack>

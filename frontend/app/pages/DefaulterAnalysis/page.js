@@ -8,8 +8,7 @@ import DefaultersTable from "./tables/DefaultersTable";
 import VaccineLagTable from "./tables/VaccineLagTable";
 export default function DefaulterAnalysis() {
   return (
-    <Box sx={{ display: "flex", marginTop: "50px" }}>
-      <SideBar />
+    <Box sx={{ display: "flex" }}>
       <Container fixed>
         <Stack spacing={4}>
           <Stack direction="row" spacing={0.5}>

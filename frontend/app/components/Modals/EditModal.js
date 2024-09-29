@@ -78,7 +78,12 @@ export default function EditModal({
       aria-describedby="modal-modal-description"
     >
       <Box sx={style}>
-        <Typography id="modal-modal-title" variant="h6" component="h2">
+        <Typography
+          id="modal-modal-title"
+          variant="h6"
+          component="h2"
+          color="primary"
+        >
           {title}
         </Typography>
         <Grid container direction="column" spacing={2}>

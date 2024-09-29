@@ -28,6 +28,7 @@ import {
   CheckCircle,
   Add,
   Edit,
+  Inventory2,
 } from "@mui/icons-material";
 import EditModal from "@/app/components/Modals/EditModal";
 import GeneralModals from "@/app/components/Modals/Modals";
@@ -36,6 +37,7 @@ import {
   addVaccineStock,
   updateVaccineStock,
   getInventoryTotal,
+  checkVaccineStock,
 } from "@/utils/supabase/api";
 
 const Details = ({ params }) => {
@@ -61,6 +63,7 @@ const Details = ({ params }) => {
   const router = useRouter();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const [VacId, setVacId] = useState("");
 
   useEffect(() => {
     async function loadVaccines() {
@@ -69,6 +72,7 @@ const Details = ({ params }) => {
       const fetchTotal = localStorage.getItem("vaccineID");
       const fetchedVaccines = await fetchVaccineStock(storeInventoryId);
       const fetchInventory = await getInventoryTotal(fetchTotal);
+      setVacId(fetchTotal);
       setVaccineName(storedVaccineName);
       setInventoryID(storeInventoryId);
       setVaccines(fetchedVaccines);
@@ -81,6 +85,9 @@ const Details = ({ params }) => {
   const handleCloseAddModal = () => setOpenAddModal(false);
   const handleCloseEditModal = () => setOpenEditModal(false);
   const handleOpenAddModal = () => setOpenAddModal(true);
+  const [modalContent, setModalContent] = useState("");
+  const [title, setTitle] = useState("");
+  const [modeIcon, setModeIcon] = useState("");
 
   const handleEdit = (transaction) => {
     setEditingTransaction({
@@ -101,8 +108,10 @@ const Details = ({ params }) => {
   };
 
   const handleAddTransaction = async () => {
+    console.log("click");
     const formattedDate = selectedDate.format("YYYY-MM-DD");
     const exFormattedDate = expirationDate.format("YYYY-MM-DD");
+    const parseQtty = parseInt(quantity, 10);
     const vaccineStockDetails = {
       transaction_date: formattedDate,
       transaction_type: transactionType,
@@ -112,14 +121,42 @@ const Details = ({ params }) => {
       inventory_id: inventoryID,
     };
 
+    if (transactionType === "STOCK OUT") {
+      const stock = await checkVaccineStock(VacId, parseInt(quantity, 10));
+      console.log("stock", stock);
+
+      if (!stock) {
+        // Insufficient stock
+        setOpenAddModal(false);
+        setModalContent(
+          "Insufficient vaccine stock. Please check your vaccine inventory."
+        );
+        setOpenModal(true);
+        setModeIcon(<Inventory2 color="error" sx={{ fontSize: 64 }} />);
+        setTitle("No Stock Available");
+        return; // Exit early
+      }
+    }
+
+    // Proceed to add transaction since stock is sufficient
     const result = await addVaccineStock(vaccineStockDetails);
-    if (result) {
+    if (!result) {
+      // Success: stock added
       const updatedVaccines = await fetchVaccineStock(inventoryID);
       setVaccines(updatedVaccines);
       setOpenAddModal(false);
+      setModalContent("Vaccine stock added successfully.");
+      setModeIcon(<CheckCircle color="primary" sx={{ fontSize: 80 }} />);
       setOpenModal(true);
+      setTitle("Vaccine Stock Added");
     } else {
+      // Failure to add stock
       console.error("Failed to add vaccine stock.");
+      setOpenAddModal(false);
+      setModalContent("Failed to add stock for unknown reasons.");
+      setOpenModal(true);
+      setModeIcon(<Inventory2 color="error" sx={{ fontSize: 64 }} />);
+      setTitle("Error Adding Stock");
     }
   };
 
@@ -164,7 +201,7 @@ const Details = ({ params }) => {
               <span style={{ color: "#EE7423" }}>{vaccineName}</span>
             </Typography>
           </Stack>
-
+          {/* MAIN PAGE MODAL */}
           <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
             <Button
               variant="contained"
@@ -288,8 +325,9 @@ const Details = ({ params }) => {
         <GeneralModals
           open={openModal}
           onClose={handleCloseModal}
-          title={<CheckCircle color="primary" sx={{ fontSize: 80 }} />}
-          content={<Typography>Successfully added Vaccine Stock</Typography>}
+          title={title}
+          content={modalContent}
+          icon={modeIcon}
         />
 
         <EditModal

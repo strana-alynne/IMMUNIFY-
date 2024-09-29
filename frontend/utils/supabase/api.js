@@ -65,7 +65,8 @@ export async function addVaccineStock(addDetails) {
   ]);
 
   if (error) {
-    console.error("Error adding vaccine stock:", error.message);
+    console.error("Error adding vaccine stock:", error);
+    alert(`Error adding vaccine stock: ${error.message}`);
     return null;
   }
   const { data: inventoryData, error: inventoryError } = await supabase

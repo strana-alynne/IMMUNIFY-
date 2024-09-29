@@ -85,7 +85,7 @@ const purok = [
 ];
 
 //status filter
-const statusArr = ["Completed", "Partial", "Missed"];
+const statusArr = ["Complete", "Partially Complete", "Missed"];
 const ITEM_HEIGHT = 48;
 const ITEM_PADDING_TOP = 8;
 const MenuProps = {

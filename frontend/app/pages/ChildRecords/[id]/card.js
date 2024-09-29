@@ -52,7 +52,6 @@ const formatDate = (date) => {
   return format(date, "MM/dd/yyyy");
 };
 
-// Helper function to get the color based on completion status
 const getChipColor = (status) => {
   switch (status) {
     case "Completed":
