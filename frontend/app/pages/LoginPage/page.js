@@ -70,13 +70,24 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
+    <main className="flex min-h-screen flex-col items-center justify-center p-2 sm:p-4 md:p-8">
       <Paper sx={{ p: 4, width: "90%", maxWidth: "400px" }}>
         <Stack
           alignItems="center" // Center contents horizontally
           justifyContent="center" // Center contents vertically
+          spacing={2}
         >
-          <Typography variant="h2">WELCOME TO</Typography>
+          <Typography
+            variant="h2"
+            sx={{
+              fontSize: {
+                xs: 36, // Font size for extra-small screens
+                sm: 40, // Font size for small screens and up
+              },
+            }}
+          >
+            WELCOME TO
+          </Typography>
           <img src="/logo-wordmark.png" alt="logo" width="400" />
         </Stack>
         <form ref={formRef}>

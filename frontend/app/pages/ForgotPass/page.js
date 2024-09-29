@@ -31,7 +31,8 @@ export default function ForgotPassword() {
             Forgot Your Password?
           </Typography>
           <Typography variant="body1" sx={{ mb: 2, textAlign: "center" }}>
-            Enter your email address below and we'll send you a link to reset your password.
+            Enter your email address below and we'll send you a link to reset
+            your password.
           </Typography>
         </Stack>
         <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
@@ -58,7 +59,7 @@ export default function ForgotPassword() {
           </Button>
           <Grid container justifyContent="center">
             <Grid item>
-              <Link href="/" variant="body2">
+              <Link href="/pages/LoginPage" variant="body2">
                 {"Remembered your password? Log in"}
               </Link>
             </Grid>

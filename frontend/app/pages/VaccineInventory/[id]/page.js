@@ -124,7 +124,7 @@ const Details = ({ params }) => {
       batch_number: batchNumber,
       expiration_date: exformattedDate,
       inventory_id: inventoryID,
-    };
+  };
 
     const result = await addVaccineStock(vaccineStockDetails);
     setOpenModal(true);
