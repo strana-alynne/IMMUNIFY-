@@ -9,12 +9,8 @@ import Map from "@/app/components/Map";
 import VaccineAlert from "@/app/components/VaccineAlert";
 
 export default function Dashboard() {
-  const address =
-    "2GJ7+H26, Barangay Dumoy, Davao City, Davao, McArthur Highway, Toril, Davao City, Davao del Sur"; // Example address
-
   return (
-    <Box sx={{ display: "flex", marginTop: "50px" }}>
-      <SideBar />
+    <Box display="flex">
       <Container fixed>
         <Stack spacing={4}>
           <Stack direction="row" spacing={0.5}>
@@ -29,7 +25,7 @@ export default function Dashboard() {
         </div>
         {/* Population Cards */}
         <Grid container spacing={4}>
-          <Grid item xs={4}>
+          <Grid item xs={12} sm={12} md={4}>
             <DashBoardCard
               icon={Group}
               title="20,373"
@@ -37,31 +33,47 @@ export default function Dashboard() {
               color="primary"
             />
           </Grid>
-          <Grid item xs={4}>
+          <Grid item xs={12} sm={12} md={4}>
             <DashBoardCard
               icon={Face}
               title="303"
-              description="Total number of Babies as 2024"
+              description="Number of Babies as 2024"
               color="secondary"
             />
           </Grid>
-          <Grid item xs={4}>
+          <Grid item xs={12} sm={12} md={4}>
             <DashBoardCard
               icon={EventBusy}
               title="303"
-              description="Total number of Babies as 2024"
+              description="Number of Defaulted Babies as 2024"
               color="error"
             />
           </Grid>
         </Grid>
-        <Grid container>
-          <Grid item xs={6} marginTop={5}>
+        <Grid
+          container
+          spacing={{
+            xs: 0,
+            sm: 2,
+            md: 3,
+            lg: 4,
+          }}
+        >
+          <Grid item xs={12} sm={12} md={8} lg={8} marginTop={5}>
             <Typography variant="h5" color="primary" marginBottom={2}>
               DEFAULTER ANALYSIS
             </Typography>
             <Map />
           </Grid>
-          <Grid item xs={4} direction="column" marginLeft={24} marginTop={5}>
+          <Grid
+            item
+            xs={12}
+            sm={12}
+            md={4}
+            lg={4}
+            direction="column"
+            marginTop={5}
+          >
             {/* Appointments and Messages Section */}
             <Grid item spacing={4}>
               <Typography variant="h6" color="primary">
