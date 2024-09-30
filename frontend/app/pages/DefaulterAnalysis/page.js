@@ -31,7 +31,7 @@ export default function DefaulterAnalysis() {
 
         <Stack direction={isMobile || isTablet ? "column" : "row"} spacing={2}>
           {/* GRAPHS AND NUMBERS */}
-          <Box sx={isMobile || isTablet ? "100%" : "80%"}>
+          <Box width={isMobile || isTablet ? "100%" : "80%"}>
             <Stack sx={{ display: "flex" }}>
               <Typography
                 variant={isMobile || isTablet ? "h6" : "h5"}
@@ -62,7 +62,7 @@ export default function DefaulterAnalysis() {
             </Stack>
           </Box>
           {/* TABLES */}
-          <Box sx={isMobile || isTablet ? "100%" : "40%"}>
+          <Box width={isMobile || isTablet ? "100%" : "40%"}>
             <Stack spacing={4} display="flex">
               <Stack spacing={2}>
                 <Typography
