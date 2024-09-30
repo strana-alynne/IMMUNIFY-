@@ -4,6 +4,61 @@ const supabase = createClient();
 
 //========================== ABOUT INVENTORY =================================
 
+//DELETE VACCINE
+export async function delVaccine(inventory, id, type, qtty) {
+  // Fetch the current vaccine quantity in the inventory
+  const { data: inventoryData, error: inventoryError } = await supabase
+    .from("VaccineInventory")
+    .select("vaccine_quantity")
+    .eq("inventory_id", inventory)
+    .single(); // Use single() to ensure only one row is returned
+
+  if (inventoryError) {
+    console.error(
+      "Error fetching current vaccine quantity:",
+      inventoryError.message
+    );
+    return null;
+  }
+
+  // Ensure we have a current quantity from the fetched data
+  let currentQuantity = inventoryData.vaccine_quantity;
+
+  // Adjust the inventory quantity based on the transaction type
+  if (type === "STOCK IN") {
+    currentQuantity -= qtty;
+  } else if (type === "STOCK OUT") {
+    currentQuantity += qtty;
+  }
+
+  // Update the vaccine inventory with the new quantity
+  const { error: updateError } = await supabase
+    .from("VaccineInventory")
+    .update({
+      vaccine_quantity: currentQuantity,
+      current_update: new Date().toISOString(),
+    })
+    .eq("inventory_id", inventory);
+
+  if (updateError) {
+    console.error("Error updating vaccine quantity:", updateError.message);
+    return null;
+  }
+
+  // Delete the VaccineTransaction record
+  const { error } = await supabase
+    .from("VaccineTransaction")
+    .delete()
+    .eq("transaction_id", id);
+
+  if (error) {
+    console.error("Error deleting vaccine transaction:", error.message);
+    return null;
+  }
+
+  return console.log("Succesfully deleted"); // Return the deleted transaction data or any confirmation if needed
+}
+
 //DISPLAY VACCINES IN VACCINE INVENTORY
 export async function fetchVaccines() {
   const { data, error } = await supabase

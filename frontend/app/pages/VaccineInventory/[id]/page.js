@@ -29,6 +29,8 @@ import {
   Add,
   Edit,
   Inventory2,
+  Delete,
+  DeleteForever,
 } from "@mui/icons-material";
 import EditModal from "@/app/components/Modals/EditModal";
 import GeneralModals from "@/app/components/Modals/Modals";
@@ -38,6 +40,7 @@ import {
   updateVaccineStock,
   getInventoryTotal,
   checkVaccineStock,
+  delVaccine,
 } from "@/utils/supabase/api";
 
 const Details = ({ params }) => {
@@ -54,6 +57,7 @@ const Details = ({ params }) => {
   const [openEditModal, setOpenEditModal] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);
   const [total, setTotal] = useState(0);
+  const [actions, setActions] = useState();
   const [filterModel, setFilterModel] = useState({
     items: [
       { field: "transaction_date", operator: "contains", value: "" },
@@ -107,11 +111,65 @@ const Details = ({ params }) => {
     setVaccines(updatedVaccines);
   };
 
+  const handleDelete = async (delTransaction) => {
+    console.log(
+      "Transaction",
+      inventoryID,
+      delTransaction.transaction_id,
+      delTransaction.transaction_type,
+      delTransaction.transaction_quantity
+    );
+
+    await delVaccine(
+      inventoryID,
+      delTransaction.transaction_id,
+      delTransaction.transaction_type,
+      delTransaction.transaction_quantity
+    );
+    const fetchInventory = await getInventoryTotal(VacId);
+    const updatedVaccines = await fetchVaccineStock(inventoryID);
+    setVaccines(updatedVaccines);
+    setTotal(fetchInventory);
+    setOpenModal(false);
+  };
+
+  const handleDelModal = async (transaction) => {
+    console.log(transaction);
+    setModalContent(
+      "This will delete the transaction from the inventory. Are you sure?"
+    );
+    setModeIcon(<DeleteForever color="error" sx={{ fontSize: 100 }} />);
+    setTitle(
+      <Typography color="error" variant="h6">
+        Are you sure?
+      </Typography>
+    );
+    setOpenModal(true);
+    setActions(
+      <Box display="flex">
+        <Button
+          style={{ marginRight: "8px" }}
+          variant="contained"
+          color="info"
+          onClick={handleCloseModal}
+        >
+          Cancel
+        </Button>
+        <Button
+          variant="contained"
+          color="error"
+          onClick={() => handleDelete(transaction)}
+        >
+          Yes
+        </Button>
+      </Box>
+    );
+  };
+
   const handleAddTransaction = async () => {
     console.log("click");
     const formattedDate = selectedDate.format("YYYY-MM-DD");
     const exFormattedDate = expirationDate.format("YYYY-MM-DD");
-    const parseQtty = parseInt(quantity, 10);
     const vaccineStockDetails = {
       transaction_date: formattedDate,
       transaction_type: transactionType,
@@ -172,9 +230,14 @@ const Details = ({ params }) => {
       headerName: "Actions",
       flex: 1,
       renderCell: (params) => (
-        <IconButton onClick={() => handleEdit(params.row)}>
-          <Edit />
-        </IconButton>
+        <Box>
+          <IconButton onClick={() => handleEdit(params.row)}>
+            <Edit />
+          </IconButton>
+          <IconButton color="error" onClick={() => handleDelModal(params.row)}>
+            <Delete />
+          </IconButton>
+        </Box>
       ),
     },
   ];
@@ -328,6 +391,7 @@ const Details = ({ params }) => {
           title={title}
           content={modalContent}
           icon={modeIcon}
+          actions={actions}
         />
 
         <EditModal

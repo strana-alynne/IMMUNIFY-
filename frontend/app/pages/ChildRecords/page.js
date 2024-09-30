@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Box,
   Container,
@@ -18,6 +18,8 @@ import {
   Checkbox,
   ListItemText,
   OutlinedInput,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { fetchAllChildren } from "@/utils/supabase/api";
@@ -25,7 +27,6 @@ import { AddCircle, Face, Face2 } from "@mui/icons-material";
 import EditIcon from "@mui/icons-material/Edit";
 import SearchIcon from "@mui/icons-material/Search";
 import { useRouter } from "next/navigation";
-import SideBar from "@/app/components/SideBar/page";
 import VaccineAlert from "@/app/components/VaccineAlert";
 //Chip Color
 const getChipColor = (status) => {
@@ -99,6 +100,9 @@ const MenuProps = {
 
 export default function ChildRecords() {
   const router = useRouter();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const isTablet = useMediaQuery(theme.breakpoints.between("sm", "md"));
   const [purokName, setPurokName] = useState([]);
   const [statusName, setStatusName] = useState([]);
   const [child, setChild] = useState([]);
@@ -158,7 +162,8 @@ export default function ChildRecords() {
     {
       field: "name",
       headerName: "Name",
-      width: 250,
+      flex: 1,
+      minWidth: 200,
       renderCell: (params) => (
         <>
           {params.row.gender === "Female" ? (
@@ -180,23 +185,21 @@ export default function ChildRecords() {
       field: "bday",
       headerName: "Birth Date",
       width: 150,
+      hide: isMobile,
       renderCell: (params) => <>{params.row.birthdate}</>,
     },
     {
       field: "purok",
       headerName: "Purok",
       width: 150,
-      renderCell: (params) => (
-        <>
-          {params.row.Purok?.purok_name || "N/A"}{" "}
-          {/* Fallback to "N/A" if undefined */}
-        </>
-      ),
+      hide: isMobile,
+      renderCell: (params) => <>{params.row.Purok?.purok_name || "N/A"}</>,
     },
     {
       field: "mother",
       headerName: "Mother's Name",
-      width: 250,
+      width: 200,
+      hide: isMobile || isTablet,
       renderCell: (params) => <>{params.row.Mother.mother_name}</>,
     },
     {
@@ -213,127 +216,126 @@ export default function ChildRecords() {
     {
       field: "actions",
       headerName: "Action",
-      width: 150,
+      width: 100,
+      hide: isMobile || isTablet,
       renderCell: (params) => (
-        <>
-          <IconButton
-            aria-label="edit"
-            color="primary"
-            onClick={() => handleEdit(params.row.id)}
-          >
-            <EditIcon />
-          </IconButton>
-        </>
+        <IconButton
+          aria-label="edit"
+          color="primary"
+          onClick={() => handleEdit(params.row.id)}
+        >
+          <EditIcon />
+        </IconButton>
       ),
     },
   ];
 
   return (
-    <Box sx={{ display: "flex", marginTop: "50px" }}>
-      <SideBar />
+    <Box sx={{ display: "flex" }}>
       <Container fixed>
         <Stack spacing={4}>
-          <Stack direction="row" spacing={0.5}>
-            <Typography variant="h2" color="primary">
-              Child Records
-            </Typography>
-          </Stack>
+          <Typography
+            variant="h2"
+            color="primary"
+            sx={{ fontSize: { xs: "2rem", sm: "3rem" } }}
+          >
+            Child Records
+          </Typography>
           <VaccineAlert />
-          <Grid container alignItems="start" spacing={2}>
-            {/* SEARCH TEXTFIELD */}
-            <Grid item xs={4}>
-              <TextField
-                size="medium"
-                fullWidth
-                label="Search..."
-                onChange={(e) => setSearchTerm(e.target.value)}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <SearchIcon />
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            </Grid>
 
-            {/* DROPDOWN BY PUROK */}
-            <Grid item xs={4}>
-              <FormControl fullWidth>
-                <InputLabel>Filter by Purok</InputLabel>
-                <Select
-                  multiple
-                  value={purokName}
-                  onChange={(e) => setPurokName(e.target.value)}
-                  input={<OutlinedInput label="Filter by Purok" />}
-                  renderValue={(selected) => selected.join(", ")}
-                >
-                  {purok.map((name) => (
-                    <MenuItem key={name} value={name}>
-                      <Checkbox checked={purokName.indexOf(name) > -1} />
-                      <ListItemText primary={name} />
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-
-            {/* DROPDOWN BY STATUS */}
-            <Grid item xs={2}>
-              <FormControl fullWidth>
-                <InputLabel>Filter by Status</InputLabel>
-                <Select
-                  multiple
-                  value={statusName}
-                  onChange={(e) => setStatusName(e.target.value)}
-                  input={<OutlinedInput label="Filter by Status" />}
-                  renderValue={(selected) => selected.join(", ")}
-                >
-                  {statusArr.map((name) => (
-                    <MenuItem key={name} value={name}>
-                      <Checkbox checked={statusName.indexOf(name) > -1} />
-                      <ListItemText primary={name} />
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-
-            {/* ADD BUTTON */}
-            <Grid item xs={2}>
+          <Stack spacing={2}>
+            <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
               <Button
                 variant="contained"
                 color="primary"
                 startIcon={<AddCircle />}
                 onClick={handleAdd}
+                size={isMobile ? "small" : "medium"}
               >
                 Add Child
               </Button>
+            </Box>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6} md={4}>
+                <TextField
+                  fullWidth
+                  label="Search..."
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <SearchIcon />
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6} md={4}>
+                <FormControl fullWidth>
+                  <InputLabel>Filter by Purok</InputLabel>
+                  <Select
+                    multiple
+                    value={purokName}
+                    onChange={(e) => setPurokName(e.target.value)}
+                    input={<OutlinedInput label="Filter by Purok" />}
+                    renderValue={(selected) => selected.join(", ")}
+                    MenuProps={MenuProps}
+                  >
+                    {purok.map((name) => (
+                      <MenuItem key={name} value={name}>
+                        <Checkbox checked={purokName.indexOf(name) > -1} />
+                        <ListItemText primary={name} />
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={6} md={4}>
+                <FormControl fullWidth>
+                  <InputLabel>Filter by Status</InputLabel>
+                  <Select
+                    multiple
+                    value={statusName}
+                    onChange={(e) => setStatusName(e.target.value)}
+                    input={<OutlinedInput label="Filter by Status" />}
+                    renderValue={(selected) => selected.join(", ")}
+                    MenuProps={MenuProps}
+                  >
+                    {statusArr.map((name) => (
+                      <MenuItem key={name} value={name}>
+                        <Checkbox checked={statusName.indexOf(name) > -1} />
+                        <ListItemText primary={name} />
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
             </Grid>
-          </Grid>
-
-          {/* DATA GRID TABLE */}
-          <Box sx={{ height: 500, width: "100%" }}>
-            <DataGrid
-              rows={child}
-              columns={columns}
-              pageSize={pageSize}
-              rowsPerPageOptions={[5, 10, 25]}
-              pagination
-              page={page}
-              onPageChange={(newPage) => setPage(newPage)}
-              onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
-              getRowId={(row) => row.child_id} // Ensure each row has a unique id
-              disableSelectionOnClick
-              onRowClick={handleRowClick}
-              sx={{
-                "& .MuiDataGrid-row:hover": {
-                  cursor: "pointer", // Change cursor on row hover
-                  backgroundColor: "#f5f5f5", // Optional: Add hover background effect
-                },
-              }}
-            />
-          </Box>
+            <Box sx={{ height: 500, width: "100%" }}>
+              <DataGrid
+                rows={child}
+                columns={columns}
+                pageSize={pageSize}
+                rowsPerPageOptions={[5, 10, 25]}
+                pagination
+                page={page}
+                onPageChange={(newPage) => setPage(newPage)}
+                onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
+                getRowId={(row) => row.child_id}
+                disableSelectionOnClick
+                onRowClick={handleRowClick}
+                sx={{
+                  "& .MuiDataGrid-row:hover": {
+                    cursor: "pointer",
+                    backgroundColor: "#f5f5f5",
+                  },
+                  "& .MuiDataGrid-cell": {
+                    wordBreak: "break-word",
+                  },
+                }}
+              />
+            </Box>
+          </Stack>
         </Stack>
       </Container>
     </Box>

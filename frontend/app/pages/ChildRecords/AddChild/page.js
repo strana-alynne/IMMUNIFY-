@@ -1,6 +1,5 @@
 "use client";
-import React, { useState } from "react";
-import SideBar from "@/app/components/SideBar/page";
+import { useState } from "react";
 import {
   Box,
   Container,
@@ -9,12 +8,14 @@ import {
   Typography,
   Button,
   IconButton,
+  useTheme,
+  useMediaQuery,
 } from "@mui/material";
 import FaceIcon from "@mui/icons-material/Face";
 import Childinfo from "./childinfo";
 import Motherinfo from "./motherinfo";
 import { ArrowBack, Check, CheckCircle } from "@mui/icons-material";
-import { addChild, addRecord } from "@/utils/supabase/api";
+import { addChild } from "@/utils/supabase/api";
 import GeneralModals from "@/app/components/Modals/Modals";
 import { useRouter } from "next/navigation";
 import { geocodeAddress, handleSchedules } from "@/utils/supabase/api"; // Use the correct import for default export
@@ -28,6 +29,9 @@ export default function AddChild() {
   const [openModal, setOpenModal] = useState(false);
   const [scheduleData, setScheduleData] = useState({});
   const [address, setAddress] = useState("");
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const isTablet = useMediaQuery(theme.breakpoints.between("sm", "md"));
 
   const handleCloseModal = () => {
     setOpenModal(false);
@@ -49,21 +53,26 @@ export default function AddChild() {
     router.replace(`/pages/ChildRecords`);
   };
   return (
-    <Box sx={{ display: "flex", marginTop: "50px" }}>
-      <SideBar />
+    <Box sx={{ display: "flex" }}>
       <Container fixed>
         <Stack spacing={4}>
           <Stack direction="column">
             <Stack direction="row" spacing={0.5}>
               <IconButton>
                 <ArrowBack
-                  sx={{ fontSize: 40 }}
+                  sx={{ fontSize: { lg: 40, md: 40, sm: 28 } }}
                   color="primary"
                   onClick={handleBack}
                 />
               </IconButton>
-              <FaceIcon sx={{ fontSize: 40 }} color="primary" />
-              <Typography variant="h2" color="primary">
+              <FaceIcon
+                sx={{ fontSize: { lg: 40, md: 40, sm: 28 } }}
+                color="primary"
+              />
+              <Typography
+                variant={isMobile || isTablet ? "h4" : "h2"}
+                color="primary"
+              >
                 Child Records
               </Typography>
             </Stack>
