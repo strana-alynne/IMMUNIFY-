@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import "./globals.css";
 import Theme from "./theme";
 import SideBar from "./components/SideBar/page";
+import { useEffect } from "react";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -16,19 +17,38 @@ const metadata = {
     shortcut: ["/favicon.ico?v=4"],
   },
 };
+const noSidebarPaths = {
+  folders: ["mobilePages"],
+  pages: ["/pages/LoginPage", "/pages/SignupPage", "/pages/ForgotPass"],
+};
 
 export default function RootLayout({ children }) {
   const pathname = usePathname();
-  const isAuthPage =
-    pathname === "pages/LoginPage" ||
-    pathname === "pages/SignupPage" ||
-    pathname === "pages/ForgotPassword";
+
+  const shouldHaveSidebar = () => {
+    // Check if the path is in the excluded folders
+    const inExcludedFolder = noSidebarPaths.folders.some((folder) =>
+      pathname.startsWith(`/${folder}`)
+    );
+
+    // Check if the path is an excluded page
+    const isExcludedPage = noSidebarPaths.pages.includes(pathname);
+
+    return !inExcludedFolder && !isExcludedPage;
+  };
 
   return (
     <html lang="en">
       <Theme>
         <body className={inter.className}>
-          {isAuthPage ? children : <SideBar>{children}</SideBar>}
+          {shouldHaveSidebar() ? (
+            <>
+              <SideBar />
+              <main>{children}</main>
+            </>
+          ) : (
+            children
+          )}
 
           <footer
             style={{

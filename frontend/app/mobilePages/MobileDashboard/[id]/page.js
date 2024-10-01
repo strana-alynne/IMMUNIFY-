@@ -1,22 +1,55 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Typography,
   Card,
   CardContent,
   Stack,
-  IconButton,
-  Avatar,
+  Chip,
+  useTheme,
+  useMediaQuery,
 } from "@mui/material";
 import { useRouter, useParams } from "next/navigation";
 import MobileSideBar from "@/app/components/MobileSideBar/page";
-import AppBarMobile from "@/app/components/AppBarMobile"; // Importing MobileSideBar
+import AppBarMobile from "@/app/components/AppBarMobile";
+import { fetchChild } from "@/utils/supabase/api";
+import { Face, Face2 } from "@mui/icons-material";
+// Make sure this path is correct for your project structure
+import MobileCard from "./mobileCard";
 
-export default function ChildDetails({ params }) {
-  const [open, setOpen] = React.useState(false);
+const ChildDetails = ({ params }) => {
+  const [open, setOpen] = useState(false);
   const router = useRouter();
-  const { id } = useParams();
+  const [childData, setChildData] = useState([]);
+  const [schedules, setSchedules] = useState([]);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
+  const getChipColor = (status) => {
+    switch (status) {
+      case "Complete":
+        return {
+          backgroundColor: "primary.light",
+          color: "primary.dark",
+          fontWeight: "bold",
+        };
+      case "Partially Completed":
+        return {
+          backgroundColor: "secondary.light",
+          color: "secondary.dark",
+          fontWeight: "bold",
+        };
+      case "Missed":
+        return {
+          backgroundColor: "error.light",
+          color: "error.dark",
+          fontWeight: "bold",
+        };
+      default:
+        return "default";
+    }
+  };
 
   const toggleDrawer = (open) => (event) => {
     if (
@@ -26,86 +59,112 @@ export default function ChildDetails({ params }) {
     ) {
       return;
     }
-
     setOpen(open);
   };
 
-  // Sample child data
-  const children = [
-    {
-      id: 1,
-      name: "Sarah Johnson",
-      age: "12 months",
-      bday: "12/24/2023",
-      purok: "Farland",
-      mother: "Maria Johnson",
-      contact: "09564356754",
-      status: "Completed",
-    },
-    {
-      id: 2,
-      name: "John Doe",
-      age: "11 months",
-      bday: "11/15/2023",
-      purok: "Country Homes",
-      mother: "Jane Doe",
-      contact: "09564356754",
-      status: "Partial",
-    },
-    // More children can be added here
-  ];
+  useEffect(() => {
+    async function loadChild() {
+      try {
+        const data = await fetchChild(params.id);
+        setChildData(data || []);
 
-  // Find the child by ID
-  const child = children.find((c) => c.id === parseInt(id, 10));
-
-  if (!child) {
-    return <Typography>No child record found.</Typography>;
-  }
+        if (data && data.length > 0) {
+          const fetchedSchedules = data[0].Schedule.map((schedule) => ({
+            sched_id: schedule.sched_id,
+            scheduled_date: schedule.scheduled_date,
+            vaccine_id: schedule.Vaccine.vaccine_id,
+            vaccine_name: schedule.Vaccine.vaccine_name,
+            immunization_records: schedule.ImmunizationRecords.map(
+              (record) => ({
+                record_id: record.record_id,
+                date_administered: record.date_administered,
+                completion_status: record.completion_status,
+              })
+            ),
+          }));
+          setSchedules(fetchedSchedules);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    }
+    loadChild();
+  }, [params.id]);
 
   return (
     <Box
       sx={{
         display: "flex",
+        flexDirection: "column",
         width: "100%",
-        maxWidth: "390px", // iPhone 12 Pro screen width
-        backgroundColor: "#ffffff", // Set background color to white
-        minHeight: "100vh",
+        height: "100vh",
+        overflow: "hidden",
         padding: "16px",
-        boxSizing: "border-box",
       }}
     >
-      {/* Main Content */}
-      <Box sx={{ flexGrow: 1 }}>
-        {/* Top Bar */}
+      <MobileSideBar open={open} toggleDrawer={toggleDrawer} />
+      <Box
+        sx={{
+          flex: 1,
+          overflow: "auto",
+          display: "flex",
+          flexDirection: "column",
+          gap: 1,
+        }}
+      >
         <AppBarMobile toggleDrawer={toggleDrawer} />
-        <MobileSideBar open={open} toggleDrawer={toggleDrawer} />
 
-        <Typography
-          variant="h4"
-          color="primary"
-          gutterBottom
-          textAlign="center"
-        >
+        <Typography variant="h4" color="primary" gutterBottom textAlign="left">
           Child Details
         </Typography>
+        {childData.map((row) => (
+          <Card key={row.child_id} sx={{ boxShadow: 3 }}>
+            <CardContent>
+              <Stack spacing={0.5}>
+                {row.gender === "Female" ? (
+                  <Face2 color="secondary" style={{ fontSize: "40px" }} />
+                ) : (
+                  <Face color="primary" style={{ fontSize: "40px" }} />
+                )}
+                <Typography variant="h6">{row.child_name}</Typography>
+                <Typography variant="body2">
+                  <strong>Age: </strong>
+                  {row.child_age} months
+                </Typography>
+                <Typography variant="body2">
+                  <strong>Birthday: </strong>
+                  {row.birthdate}
+                </Typography>
+                <Box />
+                <Box />
+                <div>
+                  <Typography variant="body2">Immunization Status</Typography>
+                  <Chip
+                    label={row.overallStatus}
+                    sx={getChipColor(row.overallStatus)}
+                  />
+                </div>
+              </Stack>
+            </CardContent>
+          </Card>
+        ))}
 
-        <Card sx={{ boxShadow: 3 }}>
-          <CardContent>
-            <Stack spacing={2}>
-              <Avatar sx={{ width: 56, height: 56 }}>{child.name[0]}</Avatar>
-              <Typography variant="h6">Name: {child.name}</Typography>
-              <Typography variant="body2">Age: {child.age}</Typography>
-              <Typography variant="body2">Birthday: {child.bday}</Typography>
-              <Typography variant="body2">Purok: {child.purok}</Typography>
-              <Typography variant="body2">Mother: {child.mother}</Typography>
-              <Typography variant="body2">Contact: {child.contact}</Typography>
-              <Typography variant="body2">
-                Vaccination Status: {child.status}
-              </Typography>
-            </Stack>
-          </CardContent>
-        </Card>
+        <Typography variant="h5" color="primary">
+          Immunization Card
+        </Typography>
+
+        <Box
+          sx={{
+            flex: 1,
+            minHeight: 0, // This is crucial for nested flex containers
+            overflow: "hidden", // This ensures the MobileCard's scroll doesn't affect parent
+          }}
+        >
+          {schedules.length > 0 && <MobileCard schedule={schedules} />}
+        </Box>
       </Box>
     </Box>
   );
-}
+};
+
+export default ChildDetails;

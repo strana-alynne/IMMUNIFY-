@@ -924,3 +924,89 @@ export async function setMap() {
     throw error;
   }
 }
+
+//========================== MOBILE FUNCTIONS ============================
+export async function motherChild(mother_id) {
+  const { data, error } = await supabase
+    .from("Child")
+    .select(
+      `child_id, child_name, child_age, birthdate, address, gender,
+      Mother(mother_id, mother_name, contact_number, mother_email),
+      Purok(purok_id, purok_name),
+      Schedule(sched_id, scheduled_date, Vaccine(vaccine_id, vaccine_name),
+      ImmunizationRecords(record_id, date_administered, completion_status)
+      )`
+    )
+    .eq("mother_id", mother_id);
+
+  if (error) {
+    console.error("Error fetching child:", error.message);
+    return error.message;
+  }
+
+  if (!data || data.length === 0) {
+    console.warn("No data found for child_id:", mother_id);
+    return [];
+  }
+
+  const processedData = data.map((child) => {
+    let overallStatus = "No Records";
+
+    // Check if Schedule exists and is an array
+    if (
+      child.Schedule &&
+      Array.isArray(child.Schedule) &&
+      child.Schedule.length > 0
+    ) {
+      let allCompleted = true;
+      let hasMissed = false;
+      let hasScheduled = false;
+
+      child.Schedule.forEach((schedule) => {
+        const currentDate = new Date();
+        const scheduleDate = new Date(schedule.scheduled_date);
+
+        // Check if schedule and ImmunizationRecords exist
+        if (
+          !schedule.ImmunizationRecords ||
+          schedule.ImmunizationRecords.length === 0
+        ) {
+          if (scheduleDate < currentDate) {
+            hasMissed = true;
+          } else {
+            hasScheduled = true;
+          }
+          allCompleted = false;
+        } else {
+          schedule.ImmunizationRecords.forEach((record) => {
+            if (record.completion_status !== "Completed") {
+              allCompleted = false;
+              if (
+                record.completion_status === "Missed" ||
+                (scheduleDate < currentDate && !record.date_administered)
+              ) {
+                hasMissed = true;
+              } else if (scheduleDate > currentDate) {
+                hasScheduled = true;
+              }
+            }
+          });
+        }
+      });
+
+      if (hasMissed) {
+        overallStatus = "Missed";
+      } else if (allCompleted) {
+        overallStatus = "Complete";
+      } else if (hasScheduled) {
+        overallStatus = "Partially Complete";
+      }
+    }
+
+    return { ...child, overallStatus };
+  });
+
+  console.log("Processed child data:", processedData);
+
+  return processedData;
+}

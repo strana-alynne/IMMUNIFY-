@@ -3,7 +3,8 @@ import AppointmentPage from "./mobilePages/MobileAppointments/page";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import ReminderPage from "./mobilePages/MobileReminder/page";
-import { Notifications } from "@mui/icons-material";
+import { Notifications, InboxRounded } from "@mui/icons-material";
+import InboxPage from "./mobilePages/MobileInbox/page";
 
 const mobilepath = () => [
   {
@@ -27,7 +28,7 @@ const mobilepath = () => [
     component: <ReminderPage />,
     path: "/mobilePages/MobileReminder",
   },
-    {
+  {
     id: 4,
     label: "Inbox",
     img: <InboxRounded />,
