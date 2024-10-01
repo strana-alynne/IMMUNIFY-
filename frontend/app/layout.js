@@ -43,8 +43,7 @@ export default function RootLayout({ children }) {
         <body className={inter.className}>
           {shouldHaveSidebar() ? (
             <>
-              <SideBar />
-              <main>{children}</main>
+              <SideBar>{children}</SideBar>
             </>
           ) : (
             children
