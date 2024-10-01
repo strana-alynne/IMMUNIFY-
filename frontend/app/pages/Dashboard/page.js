@@ -8,16 +8,35 @@ import {
   useTheme,
   useMediaQuery,
 } from "@mui/material";
+import React, { useEffect, useState } from "react";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import DashBoardCard from "@/app/components/DashBoardCard";
 import ReminderCard from "@/app/components/ReminderCard";
 import { Group, Face, EventBusy, NewReleases } from "@mui/icons-material";
 import Map from "@/app/components/Map";
 import VaccineAlert from "@/app/components/VaccineAlert";
+import { countMissedChildren, totalChildren } from "@/utils/supabase/api";
 
 export default function Dashboard() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const [totalDefaulters, setTotalDefaulters] = useState();
+  const [total, setTotal] = useState();
+  useEffect(() => {
+    async function loadChild() {
+      try {
+        const totalDef = await countMissedChildren();
+        const totalChild = await totalChildren();
+        console.log("totalDef", totalDef);
+        setTotalDefaulters(totalDef);
+        setTotal(totalChild);
+      } catch (error) {
+        console.error(error);
+      }
+    }
+    loadChild();
+  }, []);
+
   return (
     <Box display="flex">
       <Container fixed>
@@ -48,7 +67,7 @@ export default function Dashboard() {
           <Grid item xs={12} sm={12} md={4}>
             <DashBoardCard
               icon={Face}
-              title="303"
+              title={total}
               description="Number of Babies as 2024"
               color="secondary"
             />
@@ -56,7 +75,7 @@ export default function Dashboard() {
           <Grid item xs={12} sm={12} md={4}>
             <DashBoardCard
               icon={EventBusy}
-              title="303"
+              title={totalDefaulters}
               description="Number of Defaulted Babies as 2024"
               color="error"
             />

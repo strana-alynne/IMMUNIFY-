@@ -1010,3 +1010,74 @@ export async function motherChild(mother_id) {
 
   return processedData;
 }
+
+//========================== SUMMARY ============================
+
+//COUNT NUMBER OF DEFAULTERS
+export async function countMissedChildren() {
+  const { data, error } = await supabase.from("Child").select(
+    `
+      child_id,
+      Schedule!left (
+        scheduled_date,
+        ImmunizationRecords!left (
+          date_administered,
+          completion_status
+        )
+      )
+    `
+  );
+
+  if (error) {
+    console.error("Error fetching children data:", error);
+    return 0;
+  }
+
+  const missedCount = data.reduce((count, child) => {
+    let hasMissed = false;
+
+    if (child.Schedule && child.Schedule.length > 0) {
+      child.Schedule.forEach((schedule) => {
+        const currentDate = new Date();
+        const scheduleDate = new Date(schedule.scheduled_date);
+
+        if (
+          !schedule.ImmunizationRecords ||
+          schedule.ImmunizationRecords.length === 0
+        ) {
+          if (scheduleDate < currentDate) {
+            hasMissed = true;
+          }
+        } else {
+          schedule.ImmunizationRecords.forEach((record) => {
+            if (
+              record.completion_status === "Missed" ||
+              (scheduleDate < currentDate && !record.date_administered)
+            ) {
+              hasMissed = true;
+            }
+          });
+        }
+      });
+    }
+
+    return hasMissed ? count + 1 : count;
+  }, 0);
+
+  return missedCount;
+}
+
+//COUNT NUMBER OF ALL CHILDREN
+export async function totalChildren() {
+  const { data, count, error } = await supabase
+    .from("Child")
+    .select("*", { count: "exact" });
+
+  if (error) {
+    console.error("Error fetching children:", error.message);
+    return 0; // Return 0 or handle error as appropriate
+  }
+
+  console.log("Total children:", count);
+  return count; // Return the count instead of data
+}
