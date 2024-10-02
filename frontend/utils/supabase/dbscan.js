@@ -9,6 +9,7 @@ export async function fecthChildrenData() {
       child_id,
       latitude,
       longitude,
+      Purok(purok_name),
       Schedule!left (
         sched_id,
         scheduled_date,
@@ -76,14 +77,18 @@ export async function fecthChildrenData() {
 
     return { ...child, overallStatus };
   });
-
-  return processedData;
+  console.log(
+    "overallStatus",
+    processedData.filter((child) => child.overallStatus === "Missed")
+  );
+  return processedData.filter((child) => child.overallStatus === "Missed");
 }
 
 //PASS TO THE DBSCAN
 
 export async function DBSCAN(data) {
   try {
+    console.log(JSON.stringify(data, null, 2));
     const response = await fetch("http://127.0.0.1:8000/dbscan", {
       method: "POST",
       headers: {

@@ -1,64 +1,84 @@
 import React from "react";
 import {
-  Box,
-  TableContainer,
+  Table,
+  TableBody,
   TableCell,
+  TableContainer,
   TableHead,
   TableRow,
-  Table,
   Paper,
-  TableBody,
-  useTheme,
-  useMediaQuery,
+  Typography,
+  Chip,
+  Box,
 } from "@mui/material";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
 
-function createData(purok, immunized, defaulter) {
-  return { purok, immunized, defaulter };
-}
-
-const rows = [
-  createData("Dacoville", 159, 6),
-  createData("Dumoy", 237, 9),
-  createData("Farland", 262, 16),
-  createData("Pepsi", 305, 3),
-  createData("Farland", 356, 16),
-];
-
-export default function DefaultersTable() {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-
+const DefaultersTable = ({ clusters }) => {
   return (
-    <Box sx={{ overflowX: "auto" }}>
-      <TableContainer component={Paper}>
-        <Table
-          sx={{ minWidth: isMobile ? 300 : 650 }}
-          size="small"
-          aria-label="defaulters table"
-        >
-          <TableHead>
-            <TableRow>
-              <TableCell>Purok</TableCell>
-              <TableCell>Immunized</TableCell>
-              <TableCell>Defaulter</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {rows.map((row) => (
+    <TableContainer component={Paper}>
+      <Table sx={{ minWidth: 650 }} aria-label="cluster information table">
+        <TableHead>
+          <TableRow>
+            <TableCell>Cluster</TableCell>
+            <TableCell>Puroks (Defaulters)</TableCell>
+            <TableCell>Total Defaulters</TableCell>
+            <TableCell>Defaulted Vaccines</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {clusters.map((cluster, index) => {
+            // Get unique purok names and count defaulters per purok
+            const purokCounts = cluster.points.reduce((acc, point) => {
+              acc[point.purok_name] = (acc[point.purok_name] || 0) + 1;
+              return acc;
+            }, {});
+
+            return (
               <TableRow
-                key={row.purok}
+                key={index}
                 sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
               >
-                <TableCell component="th" scope="row">
-                  {row.purok}
+                <TableCell>
+                  <Typography variant="body1" fontWeight="bold">
+                    Cluster {index + 1}
+                  </Typography>
                 </TableCell>
-                <TableCell>{row.immunized}</TableCell>
-                <TableCell>{row.defaulter}</TableCell>
+                <TableCell>
+                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                    {Object.entries(purokCounts).map(([purok, count]) => (
+                      <Chip
+                        key={purok}
+                        label={`${purok} (${count})`}
+                        size="small"
+                        color="primary"
+                      />
+                    ))}
+                  </Box>
+                </TableCell>
+                <TableCell>{cluster.total_defaulters}</TableCell>
+                <TableCell>
+                  <Box
+                    sx={{ display: "flex", flexDirection: "column", gap: 1 }}
+                  >
+                    {Object.entries(cluster.defaulted_vaccines).map(
+                      ([vaccine, count]) => (
+                        <Chip
+                          key={vaccine}
+                          label={`${vaccine}: ${count}`}
+                          size="small"
+                          variant="outlined"
+                          color="secondary"
+                        />
+                      )
+                    )}
+                  </Box>
+                </TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    </Box>
+            );
+          })}
+        </TableBody>
+      </Table>
+    </TableContainer>
   );
-}
+};
+export default DefaultersTable;

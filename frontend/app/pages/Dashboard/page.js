@@ -68,7 +68,7 @@ export default function Dashboard() {
             <DashBoardCard
               icon={Face}
               title={total}
-              description="Number of Babies as 2024"
+              description="Number of Babies"
               color="secondary"
             />
           </Grid>
@@ -76,7 +76,7 @@ export default function Dashboard() {
             <DashBoardCard
               icon={EventBusy}
               title={totalDefaulters}
-              description="Number of Defaulted Babies as 2024"
+              description="Number of Defaulter"
               color="error"
             />
           </Grid>
