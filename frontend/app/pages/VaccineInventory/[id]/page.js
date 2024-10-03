@@ -42,7 +42,7 @@ import {
   checkVaccineStock,
   delVaccine,
 } from "@/utils/supabase/api";
-
+import ExportDialog from "@/app/components/ExportDialog";
 const Details = ({ params }) => {
   const [vaccines, setVaccines] = useState([]);
   const [vaccineName, setVaccineName] = useState("");
@@ -274,6 +274,7 @@ const Details = ({ params }) => {
             >
               Add Transaction
             </Button>
+            <ExportDialog vaccines={vaccines} vaccineName={vaccineName} />
           </Box>
 
           <Box

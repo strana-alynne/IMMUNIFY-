@@ -287,7 +287,7 @@ const ChildId = ({ params }) => {
   }
 
   return (
-    <Box sx={{ display: "flex", marginTop: "50px" }}>
+    <Box sx={{ display: "flex" }}>
       <Container fixed>
         <Stack spacing={4}>
           <Stack direction="column">
