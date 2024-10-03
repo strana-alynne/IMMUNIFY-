@@ -19,6 +19,7 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import { useRouter } from "next/navigation";
 import getPath from "@/app/path";
+import { Logout } from "@mui/icons-material";
 
 const drawerWidth = 240;
 
@@ -79,6 +80,13 @@ export default function SideBar({ children }) {
 
   const handleDrawerClose = () => {
     setOpen(false);
+  };
+
+  const handleLogout = () => {
+    // Add your logout logic here
+    // For example:
+    // await signOut()
+    router.push("/login"); // Redirect to login page
   };
 
   return (
@@ -152,6 +160,31 @@ export default function SideBar({ children }) {
             )
           )}
         </List>
+        <Box
+          sx={{
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            borderTop: 1,
+            borderColor: "divider",
+            bgcolor: "#E94A4A",
+          }}
+        >
+          <List>
+            <ListItem disablePadding color="error">
+              <ListItemButton
+                onClick={handleLogout}
+                sx={{ bgcolor: "transparent" }}
+              >
+                <ListItemIcon sx={{ color: "white" }}>
+                  <Logout />
+                </ListItemIcon>
+                <ListItemText primary="Logout" sx={{ color: "white" }} />
+              </ListItemButton>
+            </ListItem>
+          </List>
+        </Box>
       </Drawer>
       <Main open={open}>
         <DrawerHeader />
