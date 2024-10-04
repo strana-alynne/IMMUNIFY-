@@ -20,6 +20,8 @@ import ListItemText from "@mui/material/ListItemText";
 import { useRouter } from "next/navigation";
 import getPath from "@/app/path";
 import { Logout } from "@mui/icons-material";
+import { UserCircle } from "lucide-react";
+import { Stack } from "@mui/material";
 
 const drawerWidth = 240;
 
@@ -168,19 +170,29 @@ export default function SideBar({ children }) {
             right: 0,
             borderTop: 1,
             borderColor: "divider",
-            bgcolor: "#E94A4A",
+            bgcolor: "#147162",
           }}
         >
           <List>
-            <ListItem disablePadding color="error">
+            <ListItem color="primary.light">
+              <Box sx={{ bgcolor: "#EE7423", p: 1, borderRadius: 1, mr: 1 }}>
+                <UserCircle fontSize={32} />
+              </Box>
+              <Stack sx={{ paddingRight: "4px" }}>
+                <Typography sx={{ fontSize: 12, fontWeight: "600" }}>
+                  A Very Long Name
+                </Typography>
+                <Typography sx={{ fontSize: 12 }}>
+                  Brgy. Health Worker
+                </Typography>
+              </Stack>
               <ListItemButton
                 onClick={handleLogout}
-                sx={{ bgcolor: "transparent" }}
+                sx={{ bgcolor: "transparent", padding: "0px" }}
               >
-                <ListItemIcon sx={{ color: "white" }}>
+                <ListItemIcon sx={{ color: "white", padding: "2px" }}>
                   <Logout />
                 </ListItemIcon>
-                <ListItemText primary="Logout" sx={{ color: "white" }} />
               </ListItemButton>
             </ListItem>
           </List>
