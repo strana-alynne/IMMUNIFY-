@@ -22,6 +22,7 @@ import getPath from "@/app/path";
 import { Logout } from "@mui/icons-material";
 import { UserCircle } from "lucide-react";
 import { Stack } from "@mui/material";
+import { useState } from "react";
 
 const drawerWidth = 240;
 
@@ -71,6 +72,8 @@ const DrawerHeader = styled("div")(({ theme }) => ({
 }));
 
 export default function SideBar({ children }) {
+  const [isClicked, setIsClicked] = useState(false);
+
   const theme = useTheme();
   const [open, setOpen] = React.useState(false);
   const router = useRouter();
@@ -85,6 +88,7 @@ export default function SideBar({ children }) {
   };
 
   const handleLogout = () => {
+    setIsClicked(true);
     // Add your logout logic here
     // For example:
     // await signOut()
@@ -175,7 +179,7 @@ export default function SideBar({ children }) {
         >
           <List>
             <ListItem color="primary.light">
-              <Box sx={{ bgcolor: "#EE7423", p: 1, borderRadius: 1, mr: 1 }}>
+              <Box sx={{ bgcolor: "#EE7423", p: 0.5, borderRadius: 1, mr: 1 }}>
                 <UserCircle fontSize={32} />
               </Box>
               <Stack sx={{ paddingRight: "4px" }}>
@@ -188,9 +192,17 @@ export default function SideBar({ children }) {
               </Stack>
               <ListItemButton
                 onClick={handleLogout}
-                sx={{ bgcolor: "transparent", padding: "0px" }}
+                onMouseLeave={() => setIsClicked(false)} // Reset click state on mouse leave
+                sx={{
+                  bgcolor: isClicked ? "#FF5722" : "transparent", // Change color on click
+                  padding: "0px",
+                  "&:hover": {
+                    bgcolor: "#FF8A65",
+                    padding: "0px", // Change color on hover
+                  },
+                }}
               >
-                <ListItemIcon sx={{ color: "white", padding: "2px" }}>
+                <ListItemIcon sx={{ color: "white", padding: "0px" }}>
                   <Logout />
                 </ListItemIcon>
               </ListItemButton>

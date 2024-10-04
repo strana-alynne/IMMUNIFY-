@@ -31,6 +31,7 @@ import {
   Inventory2,
   Delete,
   DeleteForever,
+  WindowRounded,
 } from "@mui/icons-material";
 import EditModal from "@/app/components/Modals/EditModal";
 import GeneralModals from "@/app/components/Modals/Modals";
@@ -43,6 +44,16 @@ import {
   delVaccine,
 } from "@/utils/supabase/api";
 import ExportDialog from "@/app/components/ExportDialog";
+
+const VACCINE_COVERAGE = {
+  "BCG (Bacillus-Calmette-Guerin)": 10,
+  "Hepatitis B": 10,
+  "Penta: DTwP-HepBHib": 1,
+  "PCV (Pneumococcal Conjugate Vaccine)": 4,
+  "OPV (Oral Polio Vaccine)": 20,
+  "IPV (Inactive Polio Vaccine)": 10,
+  "MMR (Measles - Mumps - Rubella Vaccine)": 10,
+};
 const Details = ({ params }) => {
   const [vaccines, setVaccines] = useState([]);
   const [vaccineName, setVaccineName] = useState("");
@@ -64,6 +75,8 @@ const Details = ({ params }) => {
       { field: "transaction_type", operator: "equals", value: "" },
     ],
   });
+  const [babiesCovered, setBabiesCovered] = useState(0);
+
   const router = useRouter();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -76,11 +89,14 @@ const Details = ({ params }) => {
       const fetchTotal = localStorage.getItem("vaccineID");
       const fetchedVaccines = await fetchVaccineStock(storeInventoryId);
       const fetchInventory = await getInventoryTotal(fetchTotal);
+      const coverageRatio = VACCINE_COVERAGE[storedVaccineName] || 0;
+      const calculatedBabiesCovered = fetchInventory * coverageRatio;
       setVacId(fetchTotal);
       setVaccineName(storedVaccineName);
       setInventoryID(storeInventoryId);
       setVaccines(fetchedVaccines);
       setTotal(fetchInventory);
+      setBabiesCovered(calculatedBabiesCovered);
     }
     loadVaccines();
   }, [params.id]);
@@ -92,7 +108,6 @@ const Details = ({ params }) => {
   const [modalContent, setModalContent] = useState("");
   const [title, setTitle] = useState("");
   const [modeIcon, setModeIcon] = useState("");
-
   const handleEdit = (transaction) => {
     setEditingTransaction({
       transaction_id: transaction.id,
@@ -111,6 +126,11 @@ const Details = ({ params }) => {
     setVaccines(updatedVaccines);
   };
 
+  const handleClose = () => {
+    console.log(window.location.pathname);
+    window.location.reload();
+    setOpenModal(false);
+  };
   const handleDelete = async (delTransaction) => {
     console.log(
       "Transaction",
@@ -207,6 +227,11 @@ const Details = ({ params }) => {
       setModeIcon(<CheckCircle color="primary" sx={{ fontSize: 80 }} />);
       setOpenModal(true);
       setTitle("Vaccine Stock Added");
+      setActions(
+        <Button variant="contained" color="primary" onClick={handleClose}>
+          Ok
+        </Button>
+      );
     } else {
       // Failure to add stock
       console.error("Failed to add vaccine stock.");
@@ -216,6 +241,7 @@ const Details = ({ params }) => {
       setModeIcon(<Inventory2 color="error" sx={{ fontSize: 64 }} />);
       setTitle("Error Adding Stock");
     }
+    router.refresh();
   };
 
   const columns = [
@@ -312,9 +338,20 @@ const Details = ({ params }) => {
               />
             </Box>
           </Box>
-          <Typography variant="h6" color="secondary">
-            Available Stocks Left: <strong>{total}</strong>
-          </Typography>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <Typography variant="h6" color="secondary">
+              Available Stocks Left: <strong>{total}</strong>
+            </Typography>
+            <Typography variant="h6" color="primary">
+              Babies Covered: <strong>{babiesCovered}</strong>
+            </Typography>
+          </Box>
         </Stack>
 
         <Modal open={openAddModal} onClose={handleCloseAddModal}>

@@ -22,6 +22,16 @@ import { useRouter } from "next/navigation";
 import { fetchVaccines } from "@/utils/supabase/api";
 import VaccineAlert from "@/app/components/VaccineAlert";
 
+const VACCINE_COVERAGE = {
+  "BCG (Bacillus-Calmette-Guerin)": 10,
+  "Hepatitis B": 10,
+  "Penta: DTwP-HepBHib": 1,
+  "PCV (Pneumococcal Conjugate Vaccine)": 4,
+  "OPV (Oral Polio Vaccine)": 20,
+  "IPV (Inactive Polio Vaccine)": 10,
+  "MMR (Measles - Mumps - Rubella Vaccine)": 10,
+};
+
 export default function VaccineInventory() {
   const [vaccines, setVaccines] = useState([]);
   const router = useRouter();
@@ -31,10 +41,22 @@ export default function VaccineInventory() {
   useEffect(() => {
     async function loadVaccines() {
       const fetchedVaccines = await fetchVaccines();
-      setVaccines(fetchedVaccines);
+      const vaccinesWithCoverage = fetchedVaccines.map((vaccine) => ({
+        ...vaccine,
+        babiesCovered: calculateBabiesCovered(
+          vaccine.Vaccine.vaccine_name,
+          vaccine.vaccine_quantity
+        ),
+      }));
+      setVaccines(vaccinesWithCoverage);
     }
     loadVaccines();
   }, []);
+
+  const calculateBabiesCovered = (vaccineName, quantity) => {
+    const coverage = VACCINE_COVERAGE[vaccineName];
+    return coverage ? quantity * coverage : 0;
+  };
 
   const handleButtonClick = (id, name, inventoryid) => {
     localStorage.setItem("selectedVaccineName", name);
@@ -48,10 +70,10 @@ export default function VaccineInventory() {
       <TableRow>
         <TableCell>Vaccine ID</TableCell>
         <TableCell>Name</TableCell>
-        <TableCell>Total</TableCell>
+        <TableCell>Total Vials</TableCell>
+        <TableCell>Babies Covered</TableCell>
         {!isMobile && (
           <>
-            <TableCell>Doses Required</TableCell>
             <TableCell>Restock Date</TableCell>
           </>
         )}
@@ -72,9 +94,9 @@ export default function VaccineInventory() {
           </TableCell>
           <TableCell>{row.Vaccine.vaccine_name}</TableCell>
           <TableCell>{row.vaccine_quantity}</TableCell>
+          <TableCell>{row.babiesCovered}</TableCell>
           {!isMobile && (
             <>
-              <TableCell>{row.Vaccine.doses_required}</TableCell>
               <TableCell>{row.current_update}</TableCell>
             </>
           )}
@@ -86,7 +108,8 @@ export default function VaccineInventory() {
                 handleButtonClick(
                   row.Vaccine.vaccine_id,
                   row.Vaccine.vaccine_name,
-                  row.inventory_id
+                  row.inventory_id,
+                  row.babiesCovered
                 )
               }
             >
