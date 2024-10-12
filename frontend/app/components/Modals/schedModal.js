@@ -1,9 +1,18 @@
 import { useState, useEffect } from "react";
-import { Box, Typography, Button, Grid, TextField, Modal } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Button,
+  Grid,
+  TextField,
+  Modal,
+  Link,
+} from "@mui/material";
 import dayjs from "dayjs";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { Delete } from "@mui/icons-material";
 
 export default function SchedModal({
   title,
@@ -12,6 +21,7 @@ export default function SchedModal({
   onClose,
   transaction,
   onUpdate,
+  onDelete,
 }) {
   const [selectedDate, setSelectedDate] = useState(dayjs());
   const [record, setRecord] = useState("");
@@ -29,8 +39,15 @@ export default function SchedModal({
       date_administered: selectedDate.format("YYYY-MM-DD"),
       record_id: record,
     };
-    console.log("update", updatedTransaction);
     await onUpdate(updatedTransaction);
+    onClose();
+  };
+
+  const handleDelete = async () => {
+    const deleteTransaction = {
+      record_id: record,
+    };
+    await onDelete(deleteTransaction);
     onClose();
   };
 
@@ -60,11 +77,22 @@ export default function SchedModal({
       aria-describedby="modal-modal-description"
     >
       <Box sx={style}>
+        <Box sx={{ alignSelf: "flex-end" }}>
+          <Link
+            underline="none"
+            color="error"
+            onClick={handleDelete}
+            sx={{ fontSize: "0.875rem", display: "flex", alignItems: "center" }}
+          >
+            <Delete sx={{ fontSize: "0.875rem" }} /> Delete Record?
+          </Link>
+        </Box>
         <Typography
           id="modal-modal-title"
           variant="h6"
           component="h2"
           color="black"
+          sx={{ alignSelf: "flex-start" }}
         >
           Age: {age}
         </Typography>
@@ -74,8 +102,9 @@ export default function SchedModal({
           component="h2"
           color="black"
           fontSize="large"
+          sx={{ alignSelf: "flex-start" }}
         >
-          Vacceine Name: {title}
+          Vaccine Name: {title}
         </Typography>
         <Grid container direction="column" spacing={2}>
           <Grid item xs={2}>

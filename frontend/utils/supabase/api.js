@@ -64,7 +64,7 @@ export async function fetchVaccines() {
   const { data, error } = await supabase
     .from("VaccineInventory")
     .select(
-      `inventory_id, current_update, vaccine_quantity, Vaccine(vaccine_id, vaccine_name, doses_required)`
+      `inventory_id, current_update, vaccine_quantity, Vaccine(vaccine_id, vaccine_name, vials_per_baby)`
     );
   if (error) {
     console.error("Error fetching vaccines:", error.message);
@@ -749,6 +749,37 @@ export async function newImmunizationRecord(record) {
   return data;
 }
 
+// FETCH EXISTING RECORDS FOR TODAY
+export const fetchExistingRecords = async (vaccineId, date) => {
+  const { data, error } = await supabase
+    .from("Schedule")
+    .select(
+      `
+      *,
+      ImmunizationRecords!inner(*)
+    `
+    )
+    .eq("vaccine_id", vaccineId)
+    .eq("ImmunizationRecords.date_administered", date);
+
+  if (error) {
+    console.error("Error:", error);
+    throw error;
+  }
+
+  return data;
+};
+// FETCH VACCINE DETAILS
+export const fetchVaccineDetails = async (vaccineId) => {
+  const { data, error } = await supabase
+    .from("Vaccine")
+    .select("vials_per_baby")
+    .eq("vaccine_id", vaccineId)
+    .single();
+  if (error) throw new Error(error.message);
+  return data;
+};
+
 export function determineCompletionStatus(scheduledDate, dateAdministered) {
   const scheduled = new Date(scheduledDate);
   const administered = new Date(dateAdministered);
@@ -794,6 +825,18 @@ export async function updateRecords(updateRecord) {
     return null;
   }
   return data;
+}
+
+//DELETE IMMUNIZATION RECORD
+export async function deleteRecord(delRecord) {
+  const { error } = await supabase
+    .from("ImmunizationRecords")
+    .delete()
+    .eq("record_id", delRecord.record_id);
+
+  if (error) {
+    console.error("Error updating vaccine stock:", error.message);
+  }
 }
 
 //========================== ABOUT THE LOCATION =================================

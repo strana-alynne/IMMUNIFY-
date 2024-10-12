@@ -20,6 +20,7 @@ import {
   OutlinedInput,
   useMediaQuery,
   useTheme,
+  Skeleton,
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { fetchAllChildren } from "@/utils/supabase/api";
@@ -100,6 +101,7 @@ const MenuProps = {
 
 export default function ChildRecords() {
   const router = useRouter();
+  const [loading, setLoading] = useState(true);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const isTablet = useMediaQuery(theme.breakpoints.between("sm", "md"));
@@ -146,6 +148,8 @@ export default function ChildRecords() {
         setChild(filteredChildren);
       } catch (error) {
         console.error("Error fetching children:", error);
+      } finally {
+        setLoading(false); // Set loading to false after fetching
       }
     }
     loadChild();
@@ -312,28 +316,37 @@ export default function ChildRecords() {
               </Grid>
             </Grid>
             <Box sx={{ height: 500, width: "100%" }}>
-              <DataGrid
-                rows={child}
-                columns={columns}
-                pageSize={pageSize}
-                rowsPerPageOptions={[5, 10, 25]}
-                pagination
-                page={page}
-                onPageChange={(newPage) => setPage(newPage)}
-                onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
-                getRowId={(row) => row.child_id}
-                disableSelectionOnClick
-                onRowClick={handleRowClick}
-                sx={{
-                  "& .MuiDataGrid-row:hover": {
-                    cursor: "pointer",
-                    backgroundColor: "#f5f5f5",
-                  },
-                  "& .MuiDataGrid-cell": {
-                    wordBreak: "break-word",
-                  },
-                }}
-              />
+              {loading ? (
+                <Skeleton
+                  variant="rectangular"
+                  width="100%"
+                  height={500}
+                  animation="wave"
+                />
+              ) : (
+                <DataGrid
+                  rows={child}
+                  columns={columns}
+                  pageSize={pageSize}
+                  rowsPerPageOptions={[5, 10, 25]}
+                  pagination
+                  page={page}
+                  onPageChange={(newPage) => setPage(newPage)}
+                  onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
+                  getRowId={(row) => row.child_id}
+                  disableSelectionOnClick
+                  onRowClick={handleRowClick}
+                  sx={{
+                    "& .MuiDataGrid-row:hover": {
+                      cursor: "pointer",
+                      backgroundColor: "#f5f5f5",
+                    },
+                    "& .MuiDataGrid-cell": {
+                      wordBreak: "break-word",
+                    },
+                  }}
+                />
+              )}
             </Box>
           </Stack>
         </Stack>

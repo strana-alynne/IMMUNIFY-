@@ -11,9 +11,9 @@ import {
   Typography,
   Chip,
 } from "@mui/material";
-import { parseISO, format } from "date-fns";
+import { format } from "date-fns";
 import SchedModal from "@/app/components/Modals/schedModal";
-import { updateRecords } from "@/utils/supabase/api";
+import { updateRecords, deleteRecord } from "@/utils/supabase/api";
 import dayjs from "dayjs";
 
 // Define the vaccines and their schedule columns
@@ -82,8 +82,7 @@ const getChipColor = (status) => {
   }
 };
 
-export default function ChildCard({ schedule }) {
-  console.log("shehehe0", schedule);
+export default function ChildCard({ schedule, onDataChange }) {
   const [vaccineData, setVaccineData] = useState([]);
   const [openEditModal, setOpenEditModal] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);
@@ -169,12 +168,16 @@ export default function ChildCard({ schedule }) {
       });
 
       setVaccineData(processedData);
-      console.log("Processed Data:", processedData); // Log the processed data
+      // Log the processed data
     }
   }, [schedule]);
 
   const handleUpdate = async (updateRecord) => {
     await updateRecords(updateRecord);
+  };
+  const handleDelete = async (delRecord) => {
+    await deleteRecord(delRecord);
+    onDataChange();
   };
 
   const handleCellClick = (dose, vaccineName, age) => {
@@ -224,17 +227,16 @@ export default function ChildCard({ schedule }) {
                         : "#f0f0f0",
                       padding: 1,
                       cursor:
-                        row.columns.includes(index) &&
-                        dose &&
-                        dose.status !== "Scheduled"
+                        dose && dose.status !== "Scheduled"
                           ? "pointer"
-                          : "default",
+                          : "default", // Only show pointer if clickable
                     }}
-                    onClick={() =>
-                      row.columns.includes(index) &&
-                      dose.status !== "Scheduled" &&
-                      handleCellClick(dose, row.name, columnHeaders[index])
-                    }
+                    onClick={() => {
+                      // Ensure dose exists and status is not 'Scheduled' before triggering click logic
+                      if (dose && dose.status !== "Scheduled") {
+                        handleCellClick(dose, row.name, columnHeaders[index]);
+                      }
+                    }}
                   >
                     {row.columns.includes(index) && dose ? (
                       <>
@@ -264,6 +266,7 @@ export default function ChildCard({ schedule }) {
         age={age}
         transaction={editingTransaction}
         onUpdate={handleUpdate}
+        onDelete={handleDelete}
       />
     </>
   );
