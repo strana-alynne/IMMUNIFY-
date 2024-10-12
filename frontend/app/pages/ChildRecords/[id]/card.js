@@ -83,6 +83,7 @@ const getChipColor = (status) => {
 };
 
 export default function ChildCard({ schedule }) {
+  console.log("shehehe0", schedule);
   const [vaccineData, setVaccineData] = useState([]);
   const [openEditModal, setOpenEditModal] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);
@@ -128,7 +129,7 @@ export default function ChildCard({ schedule }) {
           } else {
             // Process the immunization records as usual
             immunizationRecords.forEach((record) => {
-              const date = record.date_administered;
+              let date = record.date_administered;
               const recordId = record.record_id;
 
               while (
@@ -140,12 +141,22 @@ export default function ChildCard({ schedule }) {
               }
 
               if (nextAvailableColumn < recordArr.length) {
-                recordArr[nextAvailableColumn] = {
-                  recordId,
-                  date,
-                  status: record.completion_status || "Scheduled",
-                };
-                nextAvailableColumn++;
+                if (date == null) {
+                  date = item.scheduled_date;
+                  recordArr[nextAvailableColumn] = {
+                    recordId,
+                    date,
+                    status: record.completion_status || "Scheduled",
+                  };
+                  nextAvailableColumn++;
+                } else {
+                  recordArr[nextAvailableColumn] = {
+                    recordId,
+                    date,
+                    status: record.completion_status || "Scheduled",
+                  };
+                  nextAvailableColumn++;
+                }
               }
             });
           }
