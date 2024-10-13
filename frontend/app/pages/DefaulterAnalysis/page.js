@@ -32,6 +32,7 @@ export default function DefaulterAnalysis() {
       const data = await fecthChildrenData();
       const dbData = await DBSCAN(data);
       setClusterData(dbData);
+      console.log("counts", clusterData);
 
       // Process top puroks when cluster data is available
       if (dbData && dbData.clusters) {
