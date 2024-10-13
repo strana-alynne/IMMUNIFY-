@@ -868,7 +868,6 @@ export async function deleteRecord(delRecords) {
     return sched.ImmunizationRecords.length === 0;
   });
 
-  // Delete the filtered schedules
   if (schedulesToDelete.length > 0) {
     const idsToDelete = schedulesToDelete.map((sched) => sched.sched_id);
     const { error: deleteError } = await supabase
@@ -885,6 +884,58 @@ export async function deleteRecord(delRecords) {
   } else {
     console.log("No schedules to delete");
   }
+}
+//FETCH SCHEDULED CHILD TODAY
+export async function fetchScheduledChild() {
+  const today = new Date().toISOString().split("T")[0];
+
+  const { count, error } = await supabase
+    .from("Schedule")
+    .select("*", { count: "exact" })
+    .eq("scheduled_date", today);
+
+  if (error) {
+    console.error("Error:", error);
+    throw error;
+  }
+
+  return count;
+}
+//FETCH IMMUINIZED CHILD TODAY
+export async function fetchImmunizedChild() {
+  const today = new Date().toISOString().split("T")[0];
+  const { count, error } = await supabase
+    .from("ImmunizationRecords")
+    .select("*", { count: "exact" })
+    .eq("date_administered", today)
+    .eq("completion_status", "Completed");
+
+  if (error) {
+    console.error("Error:", error);
+    throw error;
+  }
+
+  return count;
+}
+
+//FETCH SCHEDULETS TOMORROW
+export async function fetchScheduledChildTom() {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const formattedTomorrow = tomorrow.toISOString().split("T")[0];
+
+  const { count, error } = await supabase
+    .from("ImmunizationRecords")
+    .select("*", { count: "exact" })
+    .eq("date_administered", formattedTomorrow)
+    .eq("completion_status", "Completed");
+
+  if (error) {
+    console.error("Error:", error);
+    throw error;
+  }
+
+  return count;
 }
 //========================== ABOUT THE LOCATION =================================
 

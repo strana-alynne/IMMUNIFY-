@@ -188,7 +188,7 @@ const ChildId = ({ params }) => {
       const vialsUsed = totalBabiesToAdminister / vialsPerBaby;
       const inventory_id = await getInventoryId(getVacId);
 
-      if (vialsUsed != 1) {
+      if (!Number.isInteger(vialsUsed)) {
         const stockAvailable = await checkVaccineStock(getVacId, vialsUsed);
 
         if (!stockAvailable) {

@@ -21,14 +21,21 @@ import {
   useMediaQuery,
   useTheme,
   Skeleton,
+  Paper,
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
-import { fetchAllChildren } from "@/utils/supabase/api";
-import { AddCircle, Face, Face2 } from "@mui/icons-material";
+import {
+  fetchAllChildren,
+  fetchImmunizedChild,
+  fetchScheduledChild,
+  fetchScheduledChildTom,
+} from "@/utils/supabase/api";
+import { AddCircle, EventBusy, Face, Face2, Group } from "@mui/icons-material";
 import EditIcon from "@mui/icons-material/Edit";
 import SearchIcon from "@mui/icons-material/Search";
 import { useRouter } from "next/navigation";
 import VaccineAlert from "@/app/components/VaccineAlert";
+import ChildRecordCard from "@/app/components/ChildRecordCard";
 //Chip Color
 const getChipColor = (status) => {
   switch (status) {
@@ -111,6 +118,23 @@ export default function ChildRecords() {
   const [pageSize, setPageSize] = useState(5); // Page size for pagination
   const [page, setPage] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
+  const [scheduledToday, SetScheduledToday] = useState();
+  const [childToday, setChildToday] = useState();
+  const [scheduledTomorrow, setScheduledTomorrow] = useState();
+  const today = new Date();
+  const formattedToday = today.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const formattedTomorrow = tomorrow.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 
   const handleAdd = () => {
     router.replace(`/pages/ChildRecords/AddChild`);
@@ -121,6 +145,12 @@ export default function ChildRecords() {
       try {
         const fetchedChildren = await fetchAllChildren();
         setChild(fetchedChildren);
+        const totalScheduledToday = await fetchScheduledChild();
+        const totalChildToday = await fetchImmunizedChild();
+        const totalScheduledTomorrow = await fetchScheduledChildTom();
+        SetScheduledToday(totalScheduledToday);
+        setChildToday(totalChildToday);
+        setScheduledTomorrow(totalScheduledTomorrow);
 
         // Filter based on search term and selected purok
         const filteredChildren = fetchedChildren.filter((child) => {
@@ -246,7 +276,36 @@ export default function ChildRecords() {
             Child Records
           </Typography>
           <VaccineAlert />
+          <Paper elevation={0}>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={12} md={4}>
+                <ChildRecordCard
+                  header="Scheduled Today"
+                  title={scheduledToday}
+                  description={formattedToday}
+                  color="primary"
+                />
+              </Grid>
+              <Grid item xs={12} sm={12} md={4}>
+                <ChildRecordCard
+                  header="Vaccinated Today"
+                  title={childToday}
+                  color="secondary"
+                  description={formattedToday}
+                />
+              </Grid>
+              <Grid item xs={12} sm={12} md={4}>
+                <ChildRecordCard
+                  header="Scheduled Tomorrow"
+                  title={scheduledTomorrow}
+                  description={formattedTomorrow}
+                  color="error.dark"
+                />
+              </Grid>
+            </Grid>
+          </Paper>
 
+          {/* TextFields */}
           <Stack spacing={2}>
             <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
               <Button
@@ -259,62 +318,65 @@ export default function ChildRecords() {
                 Add Child
               </Button>
             </Box>
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6} md={4}>
-                <TextField
-                  fullWidth
-                  label="Search..."
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <SearchIcon />
-                      </InputAdornment>
-                    ),
-                  }}
-                />
+            <Paper elevation={0}>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6} md={4}>
+                  <TextField
+                    fullWidth
+                    label="Search..."
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <SearchIcon />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6} md={4}>
+                  <FormControl fullWidth>
+                    <InputLabel>Filter by Purok</InputLabel>
+                    <Select
+                      multiple
+                      value={purokName}
+                      onChange={(e) => setPurokName(e.target.value)}
+                      input={<OutlinedInput label="Filter by Purok" />}
+                      renderValue={(selected) => selected.join(", ")}
+                      MenuProps={MenuProps}
+                    >
+                      {purok.map((name) => (
+                        <MenuItem key={name} value={name}>
+                          <Checkbox checked={purokName.indexOf(name) > -1} />
+                          <ListItemText primary={name} />
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={6} md={4}>
+                  <FormControl fullWidth>
+                    <InputLabel>Filter by Status</InputLabel>
+                    <Select
+                      multiple
+                      value={statusName}
+                      onChange={(e) => setStatusName(e.target.value)}
+                      input={<OutlinedInput label="Filter by Status" />}
+                      renderValue={(selected) => selected.join(", ")}
+                      MenuProps={MenuProps}
+                    >
+                      {statusArr.map((name) => (
+                        <MenuItem key={name} value={name}>
+                          <Checkbox checked={statusName.indexOf(name) > -1} />
+                          <ListItemText primary={name} />
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
               </Grid>
-              <Grid item xs={12} sm={6} md={4}>
-                <FormControl fullWidth>
-                  <InputLabel>Filter by Purok</InputLabel>
-                  <Select
-                    multiple
-                    value={purokName}
-                    onChange={(e) => setPurokName(e.target.value)}
-                    input={<OutlinedInput label="Filter by Purok" />}
-                    renderValue={(selected) => selected.join(", ")}
-                    MenuProps={MenuProps}
-                  >
-                    {purok.map((name) => (
-                      <MenuItem key={name} value={name}>
-                        <Checkbox checked={purokName.indexOf(name) > -1} />
-                        <ListItemText primary={name} />
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} sm={6} md={4}>
-                <FormControl fullWidth>
-                  <InputLabel>Filter by Status</InputLabel>
-                  <Select
-                    multiple
-                    value={statusName}
-                    onChange={(e) => setStatusName(e.target.value)}
-                    input={<OutlinedInput label="Filter by Status" />}
-                    renderValue={(selected) => selected.join(", ")}
-                    MenuProps={MenuProps}
-                  >
-                    {statusArr.map((name) => (
-                      <MenuItem key={name} value={name}>
-                        <Checkbox checked={statusName.indexOf(name) > -1} />
-                        <ListItemText primary={name} />
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-            </Grid>
+            </Paper>
+            {/* CHILD TABLE */}
             <Box sx={{ height: 500, width: "100%" }}>
               {loading ? (
                 <Skeleton
