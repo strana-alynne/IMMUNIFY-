@@ -367,56 +367,61 @@ const ChildId = ({ params }) => {
             </Paper>
           ))}
           <VaccineAlert />
-          <Grid container spacing={2}>
-            <Grid item xs={3}>
-              <FormControl fullWidth margin="normal">
-                <InputLabel id="schedule-label">Vaccine Schedule</InputLabel>
-                <Select
-                  labelId="schedule-label"
-                  id="schedule"
-                  value={selectedSchedule}
-                  onChange={(e) => setSelectedSchedule(e.target.value)}
-                  label="Vaccine Schedule"
+          <Paper elevation={0}>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6} md={6}>
+                <FormControl fullWidth margin="normal">
+                  <InputLabel id="schedule-label">Vaccine Schedule</InputLabel>
+                  <Select
+                    labelId="schedule-label"
+                    id="schedule"
+                    value={selectedSchedule}
+                    onChange={(e) => setSelectedSchedule(e.target.value)}
+                    label="Vaccine Schedule"
+                  >
+                    {dropdownOptions.map((schedule) => (
+                      <MenuItem
+                        key={schedule.sched_id}
+                        value={schedule.sched_id}
+                      >
+                        {`${schedule.vaccine_name} - ${dayjs(
+                          schedule.scheduled_date
+                        ).format("MMM D, YYYY")}`}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={6} md={4}>
+                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                  <DatePicker
+                    label="Date Administered"
+                    value={dateAdministered}
+                    onChange={(newDate) => setDateAdministered(newDate)}
+                    renderInput={(params) => <TextField {...params} />}
+                    slotProps={{
+                      textField: {
+                        margin: "normal",
+                        fullWidth: true,
+                        required: true,
+                      },
+                    }}
+                  />
+                </LocalizationProvider>
+              </Grid>
+              <Grid item xs={2}>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  startIcon={<Check />}
+                  onClick={handleSaveRecord}
+                  sx={{ mt: 2 }}
                 >
-                  {dropdownOptions.map((schedule) => (
-                    <MenuItem key={schedule.sched_id} value={schedule.sched_id}>
-                      {`${schedule.vaccine_name} - ${dayjs(
-                        schedule.scheduled_date
-                      ).format("MMM D, YYYY")}`}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+                  Save Record
+                </Button>
+              </Grid>
             </Grid>
-            <Grid item xs={3}>
-              <LocalizationProvider dateAdapter={AdapterDayjs}>
-                <DatePicker
-                  label="Date Administered"
-                  value={dateAdministered}
-                  onChange={(newDate) => setDateAdministered(newDate)}
-                  renderInput={(params) => <TextField {...params} />}
-                  slotProps={{
-                    textField: {
-                      margin: "normal",
-                      fullWidth: true,
-                      required: true,
-                    },
-                  }}
-                />
-              </LocalizationProvider>
-            </Grid>
-            <Grid item xs={2}>
-              <Button
-                variant="contained"
-                color="primary"
-                startIcon={<Check />}
-                onClick={handleSaveRecord}
-                sx={{ mt: 2 }}
-              >
-                Save Record
-              </Button>
-            </Grid>
-          </Grid>
+          </Paper>
           <ChildCard
             schedule={schedules}
             onDataChange={refreshChildData}

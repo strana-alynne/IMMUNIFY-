@@ -1,17 +1,27 @@
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
-import { Typography, Stack, Icon } from "@mui/material";
+import { Typography, Stack, Skeleton } from "@mui/material";
 import { CalendarMonth } from "@mui/icons-material";
 
-export default function ChildRecordCard({ title, header, description, color }) {
+export default function ChildRecordCard({
+  title,
+  header,
+  description,
+  color,
+  loading,
+}) {
   return (
     <Card>
       <CardContent>
         <Stack direction="row" spacing={4}>
           <Stack>
-            <Typography variant="h5" sx={{ paddingBottom: 1 }}>
-              {title}
-            </Typography>
+            {loading ? (
+              <Skeleton variant="text" width="60%" />
+            ) : (
+              <Typography variant="h5" sx={{ paddingBottom: 1 }}>
+                {title}
+              </Typography>
+            )}
             <Typography color={color} sx={{ fontSize: 16, fontWeight: "bold" }}>
               {header}
             </Typography>

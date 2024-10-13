@@ -284,6 +284,7 @@ export default function ChildRecords() {
                   title={scheduledToday}
                   description={formattedToday}
                   color="primary"
+                  loading={loading}
                 />
               </Grid>
               <Grid item xs={12} sm={12} md={4}>
@@ -292,6 +293,7 @@ export default function ChildRecords() {
                   title={childToday}
                   color="secondary"
                   description={formattedToday}
+                  loading={loading}
                 />
               </Grid>
               <Grid item xs={12} sm={12} md={4}>
@@ -300,6 +302,7 @@ export default function ChildRecords() {
                   title={scheduledTomorrow}
                   description={formattedTomorrow}
                   color="error.dark"
+                  loading={loading}
                 />
               </Grid>
             </Grid>
