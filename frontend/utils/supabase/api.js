@@ -829,14 +829,56 @@ export async function updateRecords(updateRecord) {
 
 //DELETE IMMUNIZATION RECORD
 export async function deleteRecord(delRecord) {
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("ImmunizationRecords")
-    .delete()
-    .eq("record_id", delRecord.record_id);
+    .select(`Schedule(sched_id, vaccine_id)`)
+    .eq("record_id", delRecord.record_id)
+    .single();
 
   if (error) {
-    console.error("Error updating vaccine stock:", error.message);
+    console.error("Error fetching record_id:", error.message);
+    return error.message;
   }
+
+  const sched_id = data.Schedule.sched_id;
+  const vaccine_id = data.Schedule.vaccine_id;
+  console.log("child_id", delRecord.child_id);
+  console.log("sched_id", sched_id);
+
+  console.log("vaccine_id", data.Schedule.vaccine_id);
+
+  // const { error } = await supabase
+  //   .from("ImmunizationRecords")
+  //   .delete()
+  //   .eq("record_id", delRecord.record_id);
+
+  // if (error) {
+  //   console.error("Error updating vaccine stock:", error.message);
+  // }
+
+  const { data: checkData, error: checkError } = await supabase
+    .from("Schedule")
+    .select("*")
+    .neq("sched_id", sched_id)
+    .eq("vaccine_id", vaccine_id)
+    .eq("child_id", delRecord.child_id);
+
+  if (checkError) {
+    console.log("checkError", checkError.message);
+    return checkError;
+  }
+
+  console.log("checkData", checkData);
+  // const { schedError } = await supabase
+  //   .from("Schedule")
+  //   .delete()
+  //   .neq("sched_id", sched_id)
+  //   .eq("vaccine_id", delRecord.vaccine_id)
+  //   .eq("child_id", delRecord.child_id);
+
+  // if (schedError) {
+  //   console.error("Error updating vaccine stock:", schedError.message);
+  // }
 }
 
 //========================== ABOUT THE LOCATION =================================
@@ -846,7 +888,7 @@ export async function geocodeAddress(address) {
   try {
     // Send the address to FastAPI for geocoding
     const response = await fetch(
-      "https://immunify-dbscan.onrender.com/address",
+      "https://inner-tricia-immunify-284d2a41.koyeb.app/address",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -944,7 +986,7 @@ export async function setMap() {
     console.log("Processed locations:", processedLoc);
     // Fetch map from API with locations
     const response = await fetch(
-      "https://immunify-dbscan.onrender.com/map_test",
+      "https://inner-tricia-immunify-284d2a41.koyeb.app/map_test",
       {
         method: "POST",
         headers: {
