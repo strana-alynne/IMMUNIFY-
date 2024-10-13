@@ -47,6 +47,7 @@ import VaccineAlert from "@/app/components/VaccineAlert";
 import GeneralModals from "@/app/components/Modals/Modals";
 
 const ChildId = ({ params }) => {
+  const child_id_params = params.id;
   const [childData, setChildData] = useState([]);
   const [childStatus, setChildStatus] = useState("Missed");
   const [schedules, setSchedules] = useState([]);
@@ -104,7 +105,6 @@ const ChildId = ({ params }) => {
 
   const refreshChildData = async () => {
     const data = await fetchChild(params.id);
-    console.log("jdkdjkdjkd", data);
     setChildData(data || []);
     if (data && data.length > 0) {
       const fetchedSchedules = data[0].Schedule.map((schedule) => ({
@@ -417,7 +417,11 @@ const ChildId = ({ params }) => {
               </Button>
             </Grid>
           </Grid>
-          <ChildCard schedule={schedules} onDataChange={refreshChildData} />
+          <ChildCard
+            schedule={schedules}
+            onDataChange={refreshChildData}
+            child_id={child_id_params}
+          />
         </Stack>
       </Container>
       <GeneralModals

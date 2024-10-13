@@ -828,11 +828,11 @@ export async function updateRecords(updateRecord) {
 }
 
 //DELETE IMMUNIZATION RECORD
-export async function deleteRecord(delRecord) {
+export async function deleteRecord(delRecords) {
   const { data, error } = await supabase
     .from("ImmunizationRecords")
     .select(`Schedule(sched_id, vaccine_id)`)
-    .eq("record_id", delRecord.record_id)
+    .eq("record_id", delRecords.record_id)
     .single();
 
   if (error) {
@@ -842,45 +842,50 @@ export async function deleteRecord(delRecord) {
 
   const sched_id = data.Schedule.sched_id;
   const vaccine_id = data.Schedule.vaccine_id;
-  console.log("child_id", delRecord.child_id);
-  console.log("sched_id", sched_id);
 
-  console.log("vaccine_id", data.Schedule.vaccine_id);
+  const { error: deleRecord } = await supabase
+    .from("ImmunizationRecords")
+    .delete()
+    .eq("record_id", delRecords.record_id);
 
-  // const { error } = await supabase
-  //   .from("ImmunizationRecords")
-  //   .delete()
-  //   .eq("record_id", delRecord.record_id);
+  if (error) {
+    console.error("Error updating vaccine stock:", error.message);
+  }
 
-  // if (error) {
-  //   console.error("Error updating vaccine stock:", error.message);
-  // }
-
-  const { data: checkData, error: checkError } = await supabase
+  const { data: checkSched, error: checkError } = await supabase
     .from("Schedule")
-    .select("*")
+    .select(`*, ImmunizationRecords(*)`)
     .neq("sched_id", sched_id)
     .eq("vaccine_id", vaccine_id)
-    .eq("child_id", delRecord.child_id);
+    .eq("child_id", delRecords.child_id);
 
   if (checkError) {
     console.log("checkError", checkError.message);
     return checkError;
   }
 
-  console.log("checkData", checkData);
-  // const { schedError } = await supabase
-  //   .from("Schedule")
-  //   .delete()
-  //   .neq("sched_id", sched_id)
-  //   .eq("vaccine_id", delRecord.vaccine_id)
-  //   .eq("child_id", delRecord.child_id);
+  const schedulesToDelete = checkSched.filter((sched) => {
+    return sched.ImmunizationRecords.length === 0;
+  });
 
-  // if (schedError) {
-  //   console.error("Error updating vaccine stock:", schedError.message);
-  // }
+  // Delete the filtered schedules
+  if (schedulesToDelete.length > 0) {
+    const idsToDelete = schedulesToDelete.map((sched) => sched.sched_id);
+    const { error: deleteError } = await supabase
+      .from("Schedule")
+      .delete()
+      .in("sched_id", idsToDelete);
+
+    if (deleteError) {
+      console.log("deleteError", deleteError.message);
+      return deleteError;
+    }
+
+    console.log("Deleted schedules:", idsToDelete);
+  } else {
+    console.log("No schedules to delete");
+  }
 }
-
 //========================== ABOUT THE LOCATION =================================
 
 //Fetching Latitude and Longitude

@@ -82,7 +82,7 @@ const getChipColor = (status) => {
   }
 };
 
-export default function ChildCard({ schedule, onDataChange }) {
+export default function ChildCard({ schedule, onDataChange, child_id }) {
   const [vaccineData, setVaccineData] = useState([]);
   const [openEditModal, setOpenEditModal] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);
@@ -262,6 +262,7 @@ export default function ChildCard({ schedule, onDataChange }) {
       </TableContainer>
       <SchedModal
         open={openEditModal}
+        child={child_id}
         onClose={handleEditCloseModal}
         title={title}
         age={age}

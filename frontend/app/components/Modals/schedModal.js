@@ -16,6 +16,7 @@ import { Delete } from "@mui/icons-material";
 
 export default function SchedModal({
   title,
+  child,
   age,
   open,
   onClose,
@@ -27,7 +28,7 @@ export default function SchedModal({
   const [record, setRecord] = useState("");
 
   useEffect(() => {
-    console.log(transaction);
+    console.log("child", child);
     if (transaction) {
       setSelectedDate(dayjs(transaction.date_administered));
       setRecord(transaction.record_id);
@@ -46,6 +47,8 @@ export default function SchedModal({
   const handleDelete = async () => {
     const deleteTransaction = {
       record_id: record,
+      vaccine_id: title,
+      child_id: child,
     };
     await onDelete(deleteTransaction);
     onClose();
