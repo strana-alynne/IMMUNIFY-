@@ -174,6 +174,7 @@ export default function ChildCard({ schedule, onDataChange }) {
 
   const handleUpdate = async (updateRecord) => {
     await updateRecords(updateRecord);
+    onDataChange();
   };
   const handleDelete = async (delRecord) => {
     await deleteRecord(delRecord);

@@ -7,6 +7,7 @@ import {
   Grid,
   useTheme,
   useMediaQuery,
+  Skeleton,
 } from "@mui/material";
 import { Assessment } from "@mui/icons-material";
 import DefaulterCard from "@/app/components/DefaulterCard";
@@ -15,6 +16,8 @@ import DefaultersTable from "./tables/DefaultersTable";
 import VaccineLagTable from "./tables/VaccineLagTable";
 import { DBSCAN, fecthChildrenData } from "@/utils/supabase/dbscan";
 import { useEffect, useState } from "react";
+import VaccineBarChart from "./tables/BarGraph";
+
 export default function DefaulterAnalysis() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -22,6 +25,7 @@ export default function DefaulterAnalysis() {
 
   const [clusterData, setClusterData] = useState();
   const [topPuroks, setTopPuroks] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchData() {
@@ -51,14 +55,11 @@ export default function DefaulterAnalysis() {
 
         setTopPuroks(sortedPuroks);
       }
+      setLoading(false);
     }
     fetchData();
   }, []);
 
-  console.log("djdldjl", clusterData);
-  if (!clusterData || !clusterData.clusters || !clusterData.bounds) {
-    return <div>Loading...</div>;
-  }
   return (
     <Box sx={{ display: "flex" }}>
       <Container fixed>
@@ -81,14 +82,20 @@ export default function DefaulterAnalysis() {
               Highest Number of Defaulters
             </Typography>
             <Grid container spacing={2} sx={{ width: "100%" }}>
-              {topPuroks.map((purok) => (
-                <Grid key={purok.name} item xs={12} sm={6} md={3}>
-                  <DefaulterCard
-                    title={purok.name}
-                    description={purok.count.toString()}
-                  />
-                </Grid>
-              ))}
+              {loading
+                ? Array.from(new Array(4)).map((_, index) => (
+                    <Grid key={index} item xs={12} sm={6} md={3}>
+                      <Skeleton variant="rounded" height={118} />
+                    </Grid>
+                  ))
+                : topPuroks.map((purok) => (
+                    <Grid key={purok.name} item xs={12} sm={6} md={3}>
+                      <DefaulterCard
+                        title={purok.name}
+                        description={purok.count.toString()}
+                      />
+                    </Grid>
+                  ))}
             </Grid>
           </Stack>
 
@@ -104,7 +111,11 @@ export default function DefaulterAnalysis() {
                 >
                   Defaulter Map
                 </Typography>
-                <Map sx={{ width: "100%", height: "auto" }} />
+                {loading ? (
+                  <Skeleton variant="rounded" height={400} />
+                ) : (
+                  <Map sx={{ width: "100%", height: "auto" }} />
+                )}
               </Stack>
             </Grid>
 
@@ -118,10 +129,14 @@ export default function DefaulterAnalysis() {
                 >
                   Lagging Vaccine Immunization
                 </Typography>
-                <VaccineLagTable
-                  clusterData={clusterData}
-                  sx={{ width: "100%" }}
-                />
+                {loading ? (
+                  <Skeleton variant="rounded" height={400} />
+                ) : (
+                  <VaccineLagTable
+                    clusterData={clusterData}
+                    sx={{ width: "100%" }}
+                  />
+                )}
               </Stack>
             </Grid>
           </Grid>
@@ -136,9 +151,22 @@ export default function DefaulterAnalysis() {
               >
                 No. of Defaulters per Purok
               </Typography>
-              <DefaultersTable clusters={clusterData.clusters} />
+              {loading ? (
+                <Skeleton variant="rounded" height={400} />
+              ) : (
+                <DefaultersTable clusters={clusterData.clusters} />
+              )}
             </Stack>
           </Box>
+
+          {/* Vaccine Bar Chart */}
+          {loading ? (
+            <Skeleton variant="rounded" height={400} />
+          ) : (
+            <VaccineBarChart
+              vaccineCounts={clusterData.vaccine_counts_per_purok}
+            />
+          )}
         </Stack>
       </Container>
     </Box>
