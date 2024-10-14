@@ -32,16 +32,42 @@ export default function AddChild() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const isTablet = useMediaQuery(theme.breakpoints.between("sm", "md"));
+  const [triggerErrorCheck, setTriggerErrorCheck] = useState(false);
 
   const handleCloseModal = () => {
     setOpenModal(false);
   };
   const handleSave = async () => {
-    const getAddress = await geocodeAddress(address);
-    await addChild(motherData, childData, purok, growth, getAddress);
-    const childid = localStorage.getItem("child_id");
-    await handleSchedules(scheduleData, childid);
-    setOpenModal(true);
+    // Trigger error checking in child components
+    setTriggerErrorCheck(true);
+
+    // Check if all required fields are filled and there are no errors
+    const childInfoComplete =
+      Object.values(childData).every(
+        (field) => field !== "" && field !== null && field !== undefined
+      ) && !childData.hasErrors; // Assuming childData.hasErrors is set by Childinfo component
+
+    const motherInfoComplete =
+      Object.values(motherData).every(
+        (field) => field !== "" && field !== null && field !== undefined
+      ) && !motherData.hasErrors; // Assuming motherData.hasErrors is set by Motherinfo component
+
+    if (!childInfoComplete || !motherInfoComplete) {
+      // If there are errors or empty fields, don't proceed with submission
+      console.log("Please fill all required fields correctly");
+      return;
+    }
+
+    try {
+      const getAddress = await geocodeAddress(address);
+      await addChild(motherData, childData, purok, growth, getAddress);
+      const childid = localStorage.getItem("child_id");
+      await handleSchedules(scheduleData, childid);
+      setOpenModal(true);
+    } catch (error) {
+      console.error("Error saving child data:", error);
+      // Handle error (e.g., show error modal)
+    }
   };
 
   const handleClose = () => {
@@ -91,13 +117,17 @@ export default function AddChild() {
               setGrowthData={setGrowthData}
               setScheduleData={setScheduleData}
               setNewAddress={setAddress}
+              triggerErrorCheck={triggerErrorCheck}
             />
           </Paper>
           <Paper sx={{ p: 4 }}>
             <Typography variant="h6" color="primary.darker" sx={{ mb: 4 }}>
               Mother's Personal Information
             </Typography>
-            <Motherinfo setMotherData={setMotherData} />
+            <Motherinfo
+              setMotherData={setMotherData}
+              triggerErrorCheck={triggerErrorCheck}
+            />
           </Paper>
           <Stack direction="row-reverse" spacing={2}>
             <Button variant="contained" color="info" xs={2}>

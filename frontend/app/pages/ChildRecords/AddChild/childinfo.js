@@ -13,6 +13,7 @@ import {
   RadioGroup,
   FormControlLabel,
   Radio,
+  FormHelperText,
 } from "@mui/material";
 import dayjs from "dayjs";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -24,6 +25,7 @@ export default function childinfo({
   setGrowthData,
   setScheduleData,
   setNewAddress,
+  triggerErrorCheck,
 }) {
   const purok = [
     "Farland 1",
@@ -57,7 +59,7 @@ export default function childinfo({
   const [firstname, setFirstName] = useState("");
   const [lastname, setLastName] = useState("");
   const [child_age, setAge] = useState();
-  const [gender, setGenderVal] = useState();
+  const [gender, setGenderVal] = useState("");
   const [birthdate, setBirthDateVal] = useState();
   const [address, setAddress] = useState("");
   const [purokName, setPurokName] = useState([]);
@@ -65,6 +67,23 @@ export default function childinfo({
   const [weight, setWeight] = useState();
   const [selectedRadio, setSelectedRadio] = useState("option1");
   const [selectedRadio2, setSelectedRadio2] = useState("option1");
+  const [errors, setErrors] = useState({
+    firstname: "",
+    lastname: "",
+    child_age: "",
+    gender: "",
+    birthdate: "",
+    address: "",
+    purokName: "",
+    height: "",
+    weight: "",
+  });
+
+  useEffect(() => {
+    if (triggerErrorCheck) {
+      validateFields();
+    }
+  }, [triggerErrorCheck]);
 
   useEffect(() => {
     const child_name = `${firstname} ${lastname}`;
@@ -100,6 +119,11 @@ export default function childinfo({
       birthdate: birthdate ? dayjs(birthdate).format("YYYY-MM-DD") : null,
       address,
     });
+
+    setChildData((prev) => ({
+      ...prev,
+      hasErrors: Object.values(errors).some((error) => error !== ""),
+    }));
   }, [
     firstname,
     lastname,
@@ -114,44 +138,118 @@ export default function childinfo({
     selectedRadio2,
   ]);
 
+  const validateFields = () => {
+    const newErrors = {
+      firstname: firstname.trim() === "" ? "First name is required" : "",
+      lastname: lastname.trim() === "" ? "Last name is required" : "",
+      child_age:
+        child_age === "" || isNaN(child_age) || child_age < 0
+          ? "Please enter a valid age"
+          : "",
+      gender: gender === "" ? "Gender is required" : "",
+      birthdate: !birthdate ? "Birthdate is required" : "",
+      address: address.trim() === "" ? "Address is required" : "",
+      purokName: purokName.length === 0 ? "Purok is required" : "",
+      height:
+        height === "" || isNaN(height) || height <= 0
+          ? "Please enter a valid height"
+          : "",
+      weight:
+        weight === "" || isNaN(weight) || weight <= 0
+          ? "Please enter a valid weight"
+          : "",
+    };
+
+    setErrors(newErrors);
+  };
+
   const handlePurokChange = (event) => {
     const {
       target: { value },
     } = event;
-    setPurokName(
-      // On autofill we get a stringified value.
-      typeof value === "string" ? value.split(",") : value
-    );
+    setPurokName(typeof value === "string" ? value.split(",") : value);
   };
 
   const handleFirstName = (event) => {
     setFirstName(event.target.value);
+    if (triggerErrorCheck) {
+      setErrors((prev) => ({
+        ...prev,
+        firstname:
+          event.target.value.trim() === "" ? "First name is required" : "",
+      }));
+    }
   };
 
   const handleLastname = (event) => {
     setLastName(event.target.value);
+    if (triggerErrorCheck) {
+      setErrors((prev) => ({
+        ...prev,
+        lastname:
+          event.target.value.trim() === "" ? "last name is required" : "",
+      }));
+    }
   };
 
   const handleAge = (event) => {
     setAge(event.target.value);
+    if (triggerErrorCheck) {
+      setErrors((prev) => ({
+        ...prev,
+        child_age:
+          event.target.value.trim() === "" ? "Age name is required" : "",
+      }));
+    }
   };
   const handleAddress = (event) => {
     setAddress(event.target.value);
+    if (triggerErrorCheck) {
+      setErrors((prev) => ({
+        ...prev,
+        address: event.target.value.trim() === "" ? "Address is required" : "",
+      }));
+    }
   };
 
   const handleGender = (event) => {
     setGenderVal(event.target.value);
+    if (triggerErrorCheck) {
+      setErrors((prev) => ({
+        ...prev,
+        gender: event.target.value === "" ? "Gender is required" : "",
+      }));
+    }
   };
   const handleBirthDate = (newDate) => {
     setBirthDateVal(newDate);
+    if (triggerErrorCheck) {
+      setErrors((prev) => ({
+        ...prev,
+        birthdate:
+          event.target.value.trim() === "" ? "Birthdate is required" : "",
+      }));
+    }
   };
 
   const handleWeight = (event) => {
     setWeight(event.target.value);
+    if (triggerErrorCheck) {
+      setErrors((prev) => ({
+        ...prev,
+        weight: event.target.value.trim() === "" ? "Weight is required" : "",
+      }));
+    }
   };
 
   const handleHeight = (event) => {
     setHeight(event.target.value);
+    if (triggerErrorCheck) {
+      setErrors((prev) => ({
+        ...prev,
+        height: event.target.value.trim() === "" ? "Height is required" : "",
+      }));
+    }
   };
 
   const handleRadioChangeBCG = (event) => {
@@ -179,6 +277,8 @@ export default function childinfo({
           autoFocus
           value={firstname}
           onChange={handleFirstName}
+          error={!!errors.firstname}
+          helperText={errors.firstname}
         />
       </Grid>
 
@@ -197,6 +297,8 @@ export default function childinfo({
           autoFocus
           value={lastname}
           onChange={handleLastname}
+          error={!!errors.lastname}
+          helperText={errors.lastname}
         />
       </Grid>
 
@@ -216,6 +318,8 @@ export default function childinfo({
           type="number"
           value={child_age}
           onChange={handleAge}
+          error={!!errors.child_age}
+          helperText={errors.child_age}
         />
       </Grid>
 
@@ -224,7 +328,7 @@ export default function childinfo({
         <Typography variant="p" color="darker">
           Gender
         </Typography>
-        <FormControl fullWidth variant="filled">
+        <FormControl fullWidth variant="filled" error={!!errors.gender}>
           <InputLabel id="gender-label">Gender</InputLabel>
           <Select
             labelId="gender-label"
@@ -236,9 +340,9 @@ export default function childinfo({
             <MenuItem value="Female">Female</MenuItem>
             <MenuItem value="Male">Male</MenuItem>
           </Select>
+          {errors.gender && <FormHelperText>{errors.gender}</FormHelperText>}
         </FormControl>
       </Grid>
-
       {/* BIRTHDATE */}
       <Grid item xs={4}>
         <Typography variant="p" color="darker">
@@ -255,6 +359,8 @@ export default function childinfo({
                 fullWidth: true,
                 required: true,
                 variant: "filled",
+                error: !!errors.birthdate,
+                helperText: errors.birthdate,
               },
             }}
           />
@@ -276,6 +382,8 @@ export default function childinfo({
           autoFocus
           value={address}
           onChange={handleAddress}
+          error={!!errors.address}
+          helperText={errors.address}
         />
       </Grid>
 
@@ -284,7 +392,7 @@ export default function childinfo({
         <Typography variant="p" color="darker">
           Purok
         </Typography>
-        <FormControl fullWidth variant="filled">
+        <FormControl fullWidth variant="filled" error={!!errors.purokName}>
           <InputLabel id="purok-label">Select Purok</InputLabel>
           <Select
             labelId="purok-label"
@@ -299,6 +407,9 @@ export default function childinfo({
               </MenuItem>
             ))}
           </Select>
+          {errors.purokName && (
+            <FormHelperText>{errors.purokName}</FormHelperText>
+          )}
         </FormControl>
       </Grid>
 
@@ -307,17 +418,19 @@ export default function childinfo({
         <Typography variant="p" color="darker">
           Height
         </Typography>
-        <FilledInput
-          size="small"
-          fullWidth
-          id="outlined-size-small"
-          label="Height"
-          name="height"
-          autoFocus
-          value={height}
-          onChange={handleHeight}
-          endAdornment={<InputAdornment position="end">cm</InputAdornment>}
-        />
+        <FormControl fullWidth variant="filled" error={!!errors.height}>
+          <FilledInput
+            size="small"
+            id="outlined-size-small"
+            label="Height"
+            name="height"
+            autoFocus
+            value={height}
+            onChange={handleHeight}
+            endAdornment={<InputAdornment position="end">cm</InputAdornment>}
+          />
+          {errors.height && <FormHelperText>{errors.height}</FormHelperText>}
+        </FormControl>
       </Grid>
 
       {/* WEIGHT */}
@@ -325,17 +438,19 @@ export default function childinfo({
         <Typography variant="p" color="darker">
           Weight
         </Typography>
-        <FilledInput
-          size="small"
-          fullWidth
-          id="outlined-size-small"
-          label="Weight"
-          name="weight"
-          autoFocus
-          value={weight}
-          onChange={handleWeight}
-          endAdornment={<InputAdornment position="end">kg</InputAdornment>}
-        />
+        <FormControl fullWidth variant="filled" error={!!errors.weight}>
+          <FilledInput
+            size="small"
+            id="outlined-size-small"
+            label="Weight"
+            name="weight"
+            autoFocus
+            value={weight}
+            onChange={handleWeight}
+            endAdornment={<InputAdornment position="end">kg</InputAdornment>}
+          />
+          {errors.weight && <FormHelperText>{errors.weight}</FormHelperText>}
+        </FormControl>
       </Grid>
       <Grid item sx={{ mt: 2 }}>
         <FormControl component="fieldset">
