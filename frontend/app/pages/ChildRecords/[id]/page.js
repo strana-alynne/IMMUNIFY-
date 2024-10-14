@@ -38,6 +38,8 @@ import {
   addVaccineStock,
   fetchExistingRecords,
   fetchVaccineDetails,
+  createSchedBCGHb,
+  checkRecordsBCGandHb,
 } from "@/utils/supabase/api";
 import { useRouter } from "next/navigation";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -45,6 +47,7 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import VaccineAlert from "@/app/components/VaccineAlert";
 import GeneralModals from "@/app/components/Modals/Modals";
+import EditChildModal from "@/app/components/Modals/EditChildModal";
 
 const ChildId = ({ params }) => {
   const child_id_params = params.id;
@@ -58,6 +61,7 @@ const ChildId = ({ params }) => {
   const router = useRouter();
   const [openModal, setOpenModal] = useState(false);
   const [modalContent, setModalContent] = useState("");
+  const [editModalOpen, setEditModalOpen] = useState(false);
 
   const handleCloseModal = () => {
     setOpenModal(false);
@@ -105,6 +109,7 @@ const ChildId = ({ params }) => {
 
   const refreshChildData = async () => {
     const data = await fetchChild(params.id);
+    console.log("Child data:", data);
     setChildData(data || []);
     if (data && data.length > 0) {
       const fetchedSchedules = data[0].Schedule.map((schedule) => ({
@@ -172,7 +177,7 @@ const ChildId = ({ params }) => {
 
       const dateVac = dateAdministered.format("YYYY-MM-DD");
       const getVacId = selectedScheduleData.vaccine_id;
-      console.log("vacID", getVacId, dateVac);
+
       // Fetch existing immunization records for the day
       const existingRecords = await fetchExistingRecords(getVacId, dateVac);
       console.log("existing", existingRecords);
@@ -233,44 +238,74 @@ const ChildId = ({ params }) => {
         }
       }
 
-      // Schedule the next dose if applicable
-      const vaccine = vaccineSchedule.find(
-        (v) => v.id === selectedScheduleData.vaccine_id
-      );
-      const administeredDoses = schedules.filter(
-        (s) => s.vaccine_id === vaccine.id && s.immunization_records.length > 0
-      ).length;
+      const isBCGorHepB = ["V001", "V002"].includes(getVacId);
 
-      if (
-        vaccine &&
-        vaccine.nextDose &&
-        administeredDoses + 1 < vaccine.totalDoses
-      ) {
-        const nextScheduledDate = dayjs(dateAdministered)
-          .add(vaccine.nextDose, "day")
-          .toISOString();
-        const newSchedule = await createNewSchedule(
-          params.id,
-          vaccine.id,
-          nextScheduledDate
-        );
-        setSchedules((prev) => [...prev, newSchedule]);
-        setDropdownOptions((prev) => [
-          ...prev.filter((schedule) => schedule.sched_id !== selectedSchedule),
-          newSchedule,
-        ]);
+      if (isBCGorHepB) {
+        const checkRecords = await checkRecordsBCGandHb(params.id);
+        if (checkRecords === false) {
+          await createSchedBCGHb(params.id, dateAdministered.toDate());
+        }
       } else {
-        setDropdownOptions((prev) =>
-          prev.filter((schedule) => schedule.sched_id !== selectedSchedule)
+        // Schedule the next dose if applicable
+        const vaccine = vaccineSchedule.find(
+          (v) => v.id === selectedScheduleData.vaccine_id
         );
+        const administeredDoses = schedules.filter(
+          (s) =>
+            s.vaccine_id === vaccine.id && s.immunization_records.length > 0
+        ).length;
+
+        if (
+          vaccine &&
+          vaccine.nextDose &&
+          administeredDoses + 1 < vaccine.totalDoses
+        ) {
+          const nextScheduledDate = dayjs(dateAdministered)
+            .add(vaccine.nextDose, "day")
+            .toISOString();
+          const newSchedule = await createNewSchedule(
+            params.id,
+            vaccine.id,
+            nextScheduledDate
+          );
+          setSchedules((prev) => [...prev, newSchedule]);
+          setDropdownOptions((prev) => [
+            ...prev.filter(
+              (schedule) => schedule.sched_id !== selectedSchedule
+            ),
+            newSchedule,
+          ]);
+        } else {
+          setDropdownOptions((prev) =>
+            prev.filter((schedule) => schedule.sched_id !== selectedSchedule)
+          );
+        }
       }
 
-      // Refresh child data and reset form fields
       await refreshChildData();
       setSelectedSchedule("");
       setDateAdministered(dayjs());
     } catch (error) {
       console.error("Error saving record:", error.message);
+    }
+  };
+
+  const handleEditClick = () => {
+    setEditModalOpen(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setEditModalOpen(false);
+  };
+
+  const handleSaveEditedData = async (editedData) => {
+    try {
+      await updateChildDetails(params.id, editedData);
+      await refreshChildData();
+      alert("Child details updated successfully!");
+    } catch (error) {
+      console.error("Error updating child details:", error.message);
+      alert("Failed to update child details. Please try again.");
     }
   };
 
@@ -307,6 +342,7 @@ const ChildId = ({ params }) => {
               color="primary"
               startIcon={<Edit />}
               xs={2}
+              onClick={handleEditClick}
             >
               Edit Record
             </Button>
@@ -445,6 +481,12 @@ const ChildId = ({ params }) => {
             Close
           </Button>
         }
+      />
+      <EditChildModal
+        open={editModalOpen}
+        onClose={handleCloseEditModal}
+        childData={childData[0]}
+        onSave={handleSaveEditedData}
       />
     </Box>
   );

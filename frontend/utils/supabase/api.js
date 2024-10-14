@@ -947,6 +947,67 @@ export async function fetchScheduledChildTom() {
 
   return count;
 }
+
+//CREATE BCG AND HEPATITIS B SCHEDULE
+export async function createSchedBCGHb(childId, baseDate) {
+  const vaccinesToSchedule = [
+    { id: "V003", name: "Penta" },
+    { id: "V004", name: "OPV" },
+    { id: "V005", name: "PCV" },
+    { id: "V006", name: "IPV" },
+    { id: "V007", name: "MMR" },
+  ];
+
+  for (const vaccine of vaccinesToSchedule) {
+    let scheduleDate;
+    if (vaccine.id === "V004" || vaccine.id === "V007") {
+      scheduleDate = addFourMonth(baseDate, 1.5);
+    } else {
+      scheduleDate = addOneMonth(baseDate, 1);
+    }
+
+    const result = await initialSchedule({
+      scheduled_date: scheduleDate,
+      vaccine_id: vaccine.id,
+      child_id: childId,
+    });
+
+    if (result.error) {
+      console.error(`Error scheduling ${vaccine.name}:`, result.error);
+    } else {
+      console.log(`Scheduled ${vaccine.name} for ${scheduleDate}`);
+    }
+  }
+}
+
+export async function checkRecordsBCGandHb(child_id) {
+  const { data, error } = await supabase
+    .from("Schedule")
+    .select(
+      `
+      *,
+      ImmunizationRecords(*)
+    `
+    )
+    .eq("child_id", child_id)
+    .in("vaccine_id", ["V001", "V002"]);
+
+  if (error) {
+    console.error("Error fetching records:", error);
+    throw error;
+  }
+
+  const hasRecords = data.some(
+    (entry) => entry.ImmunizationRecords && entry.ImmunizationRecords.length > 0
+  );
+  console.log("Has records:", hasRecords);
+  if (hasRecords) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
 //========================== ABOUT THE LOCATION =================================
 
 //Fetching Latitude and Longitude
