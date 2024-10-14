@@ -62,12 +62,12 @@ export default function AddChild() {
       const getAddress = await geocodeAddress(address);
       await addChild(motherData, childData, purok, growth, getAddress);
       const childid = localStorage.getItem("child_id");
+      console.log("schchch", scheduleData);
       await handleSchedules(scheduleData, childid);
-      setOpenModal(true);
     } catch (error) {
       console.error("Error saving child data:", error);
-      // Handle error (e.g., show error modal)
     }
+    setOpenModal(true);
   };
 
   const handleClose = () => {

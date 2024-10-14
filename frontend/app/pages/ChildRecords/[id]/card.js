@@ -83,6 +83,7 @@ const getChipColor = (status) => {
 };
 
 export default function ChildCard({ schedule, onDataChange, child_id }) {
+  console.log("ChildCard", schedule);
   const [vaccineData, setVaccineData] = useState([]);
   const [openEditModal, setOpenEditModal] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);

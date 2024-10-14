@@ -288,12 +288,6 @@ export async function addChild(
   address
 ) {
   try {
-    // Log input data for debugging
-    console.log("Received motherData:", JSON.stringify(motherData, null, 2));
-    console.log("Received childData:", JSON.stringify(childData, null, 2));
-    console.log("Received growthData:", JSON.stringify(growthData, null, 2));
-    console.log("Received purokName:", purokName);
-
     // Validate input data
     if (!motherData || !childData || !growthData || !purokName || !address) {
       throw new Error("Missing required data fields");
@@ -574,27 +568,6 @@ export const updateImmunizationRecord = async (childId, vaccineData) => {
   return { message: "Vaccine data updated successfully" };
 };
 
-// ADD INITIAL SCHEDULE
-export async function initialSchedule(sched) {
-  const { data, error } = await supabase
-    .from("Schedule")
-    .insert([
-      {
-        scheduled_date: sched.scheduled_date,
-        child_id: sched.child_id,
-        vaccine_id: sched.vaccine_id,
-      },
-    ])
-    .select("sched_id, scheduled_date");
-
-  if (error) {
-    console.error("Error inserting schedule:", error);
-    return { error };
-  }
-
-  return { sched_id: data[0]?.sched_id, scheduledDate: data[0].scheduled_date }; // Return the inserted data
-}
-
 //ADD INITAL IMMUNIZATION RECORDS
 export async function addImmunizationRecord(
   scheduleId,
@@ -620,11 +593,33 @@ export async function addImmunizationRecord(
   return { data: data[0] };
 }
 
+// ADD INITIAL SCHEDULE
+export async function initialSchedule(sched) {
+  const { data, error } = await supabase
+    .from("Schedule")
+    .insert([
+      {
+        scheduled_date: sched.scheduled_date,
+        child_id: sched.child_id,
+        vaccine_id: sched.vaccine_id,
+      },
+    ])
+    .select("sched_id, scheduled_date");
+
+  if (error) {
+    console.error("Error inserting schedule:", error);
+    return { error };
+  }
+
+  return { sched_id: data[0]?.sched_id, scheduledDate: data[0].scheduled_date }; // Return the inserted data
+}
+
 //HANDLE SCHEDULES
 export async function handleSchedules(schedules, childId) {
   const nextVaccinesToSchedule = new Set();
   const scheduledVaccines = new Set();
-  console.log("Initial scheduled vaccines:", scheduledVaccines);
+  let baseDate = null;
+  let allCreateRecord = true;
 
   for (const [key, schedule] of Object.entries(schedules)) {
     const { vaccineId, date, createImmunizationRecord } = schedule;
@@ -632,6 +627,10 @@ export async function handleSchedules(schedules, childId) {
     if (date === null) {
       console.log(`Null date for ${key}. Skipping schedule.`);
       continue;
+    }
+
+    if (!baseDate) {
+      baseDate = new Date(date);
     }
 
     if (!scheduledVaccines.has(vaccineId)) {
@@ -659,6 +658,7 @@ export async function handleSchedules(schedules, childId) {
         );
       } else {
         console.log(`Skipping immunization record creation for ${key}`);
+        allCreateRecord = false;
       }
 
       scheduledVaccines.add(vaccineId);
@@ -673,30 +673,39 @@ export async function handleSchedules(schedules, childId) {
     }
   }
 
-  for (const nextVaccine of nextVaccinesToSchedule) {
-    if (!scheduledVaccines.has(nextVaccine.vaccineId)) {
-      const scheduleDate =
-        nextVaccine.vaccineId != "V004" && nextVaccine.vaccineId != "V007"
-          ? addOneMonth(new Date(), 1.5)
-          : addFourMonth(new Date(), 1.5);
+  if (allCreateRecord) {
+    for (const nextVaccine of nextVaccinesToSchedule) {
+      if (!scheduledVaccines.has(nextVaccine.vaccineId)) {
+        const scheduleDate =
+          nextVaccine.vaccineId !== "V004" && nextVaccine.vaccineId !== "V007"
+            ? addOneMonth(baseDate, 1)
+            : addFourMonth(baseDate, 1.5);
 
-      const nextResult = await initialSchedule({
-        scheduled_date: scheduleDate,
-        vaccine_id: nextVaccine.vaccineId,
-        child_id: childId,
-      });
+        const nextResult = await initialSchedule({
+          scheduled_date: scheduleDate,
+          vaccine_id: nextVaccine.vaccineId,
+          child_id: childId,
+        });
 
-      console.log(`Next schedule result for ${nextVaccine.name}:`, nextResult);
-
-      if (nextResult.error) {
-        console.error(
-          `Error inserting next schedule for ${nextVaccine.name}:`,
-          nextResult.error
+        console.log(
+          `Next schedule result for ${nextVaccine.name}:`,
+          nextResult
         );
-      } else {
-        scheduledVaccines.add(nextVaccine.vaccineId);
+
+        if (nextResult.error) {
+          console.error(
+            `Error inserting next schedule for ${nextVaccine.name}:`,
+            nextResult.error
+          );
+        } else {
+          scheduledVaccines.add(nextVaccine.vaccineId);
+        }
       }
     }
+  } else {
+    console.log(
+      `Skipping scheduling next vaccines as not all immunization records were created.`
+    );
   }
 }
 
@@ -727,12 +736,13 @@ function getNextVaccines(currentVaccine) {
 function addOneMonth(date) {
   const newDate = new Date(date);
   newDate.setMonth(newDate.getMonth() + 1);
-  return newDate.toISOString().split("T")[0]; // Return formatted date as YYYY-MM-DD
+  return newDate.toISOString().split("T")[0];
 }
+
 function addFourMonth(date) {
   const newDate = new Date(date);
   newDate.setMonth(newDate.getMonth() + 4);
-  return newDate.toISOString().split("T")[0]; // Return formatted date as YYYY-MM-DD
+  return newDate.toISOString().split("T")[0];
 }
 
 //CREATE NEW IMMUNIZATION RECORD

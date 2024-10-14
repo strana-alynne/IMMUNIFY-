@@ -50,7 +50,6 @@ export default function Motherinfo({ setMotherData, triggerErrorCheck }) {
       attending,
       mother_email,
       contact_number,
-      hasErrors: Object.values(errors).some((error) => error !== ""),
     });
   }, [
     mfirstname,

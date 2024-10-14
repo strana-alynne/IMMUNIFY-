@@ -119,11 +119,6 @@ export default function childinfo({
       birthdate: birthdate ? dayjs(birthdate).format("YYYY-MM-DD") : null,
       address,
     });
-
-    setChildData((prev) => ({
-      ...prev,
-      hasErrors: Object.values(errors).some((error) => error !== ""),
-    }));
   }, [
     firstname,
     lastname,
@@ -223,11 +218,14 @@ export default function childinfo({
   };
   const handleBirthDate = (newDate) => {
     setBirthDateVal(newDate);
+    if (newDate) {
+      const ageInMonths = dayjs().diff(dayjs(newDate), "month"); // Calculate age in months
+      setAge(ageInMonths); // Update the age state
+    }
     if (triggerErrorCheck) {
       setErrors((prev) => ({
         ...prev,
-        birthdate:
-          event.target.value.trim() === "" ? "Birthdate is required" : "",
+        birthdate: !newDate ? "Birthdate is required" : "",
       }));
     }
   };
@@ -302,27 +300,6 @@ export default function childinfo({
         />
       </Grid>
 
-      {/* AGE */}
-      <Grid item xs={4}>
-        <Typography variant="p" color="darker">
-          Age
-        </Typography>
-        <TextField
-          variant="filled"
-          size="small"
-          fullWidth
-          id="outlined-size-small"
-          label="age in months"
-          name="age"
-          autoFocus
-          type="number"
-          value={child_age}
-          onChange={handleAge}
-          error={!!errors.child_age}
-          helperText={errors.child_age}
-        />
-      </Grid>
-
       {/* GENDER */}
       <Grid item xs={4}>
         <Typography variant="p" color="darker">
@@ -343,6 +320,7 @@ export default function childinfo({
           {errors.gender && <FormHelperText>{errors.gender}</FormHelperText>}
         </FormControl>
       </Grid>
+
       {/* BIRTHDATE */}
       <Grid item xs={4}>
         <Typography variant="p" color="darker">
@@ -365,6 +343,25 @@ export default function childinfo({
             }}
           />
         </LocalizationProvider>
+      </Grid>
+
+      {/* AGE */}
+      <Grid item xs={4}>
+        <Typography variant="p" color="darker">
+          Age
+        </Typography>
+        <TextField
+          variant="filled"
+          size="small"
+          fullWidth
+          id="outlined-size-small"
+          label="age in months"
+          name="age"
+          autoFocus
+          type="number"
+          value={child_age}
+          onChange={handleAge}
+        />
       </Grid>
 
       {/* COMPLETE ADDRESS */}
