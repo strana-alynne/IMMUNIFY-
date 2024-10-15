@@ -928,7 +928,7 @@ export async function fetchImmunizedChild() {
   return count;
 }
 
-//FETCH SCHEDULETS TOMORROW
+//FETCH SCHEDULES TOMORROW
 export async function fetchScheduledChildTom() {
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
@@ -980,6 +980,7 @@ export async function createSchedBCGHb(childId, baseDate) {
   }
 }
 
+//Checks Records for BCG and Hepatitis B
 export async function checkRecordsBCGandHb(child_id) {
   const { data, error } = await supabase
     .from("Schedule")
@@ -1008,9 +1009,39 @@ export async function checkRecordsBCGandHb(child_id) {
   }
 }
 
+//updateChildDetails
+export const updateChildDetails = async (childId, updatedData) => {
+  const getAddress = await geocodeAddress(updatedData.address);
+
+  const { data: purokdata, error: purokError } = await supabase
+    .from("Purok")
+    .select("purok_id")
+    .eq("purok_name", updatedData.purok)
+    .single();
+
+  if (purokError)
+    throw new Error(`Error fetching Purok ID: ${purokError.message}`);
+  if (!purokdata) throw new Error(`No Purok found with name: ${purokdata}`);
+
+  const purokId = purokdata.purok_id;
+
+  const { data, error } = await supabase
+    .from("Child")
+    .update({
+      child_name: updatedData.child_name,
+      gender: updatedData.gender,
+      birthdate: updatedData.birthdate.format("YYYY-MM-DD"),
+      address: updatedData.address,
+      purok_id: purokId,
+      ...getAddress,
+    })
+    .eq("child_id", childId);
+
+  if (error) throw error;
+  return data;
+};
 //========================== ABOUT THE LOCATION =================================
 
-//Fetching Latitude and Longitude
 export async function geocodeAddress(address) {
   try {
     // Send the address to FastAPI for geocoding

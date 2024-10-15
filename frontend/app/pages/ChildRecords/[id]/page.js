@@ -40,6 +40,7 @@ import {
   fetchVaccineDetails,
   createSchedBCGHb,
   checkRecordsBCGandHb,
+  updateChildDetails,
 } from "@/utils/supabase/api";
 import { useRouter } from "next/navigation";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";

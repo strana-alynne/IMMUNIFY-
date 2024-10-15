@@ -17,12 +17,43 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
 
+const purok = [
+  "Farland 1",
+  "Farland 2",
+  "Farlandville",
+  "Country Homes",
+  "New Creation",
+  "DLF",
+  "Macleod",
+  "Rasay",
+  "Sison",
+  "Back of Pepsi",
+  "Greenland",
+  "Maharlika",
+  "Pag-ibig",
+  "Philbanking",
+  "Dusnai",
+  "Sto. Rosario",
+  "Paderog",
+  "Mangrubang",
+  "Dumoy Proper",
+  "Iwha",
+  "Pepsi Village",
+  "Medalla",
+  "Leonor",
+  "Dacoville 1",
+  "Dacoville 2",
+  "Don Lorenzo",
+  "Espino Kalayaan",
+];
+
 const EditChildModal = ({ open, onClose, childData, onSave }) => {
   const [editedData, setEditedData] = useState({
     child_name: "",
     gender: "",
     birthdate: null,
     address: "",
+    purok: "",
   });
 
   useEffect(() => {
@@ -32,14 +63,23 @@ const EditChildModal = ({ open, onClose, childData, onSave }) => {
         gender: childData.gender,
         birthdate: dayjs(childData.birthdate),
         address: childData.address,
+        purok: childData.Purok.purok_name,
       });
     }
   }, [childData]);
 
-  const handleChange = (field) => (event) => {
+  const handleChangeName = (field) => (event) => {
     setEditedData({ ...editedData, [field]: event.target.value });
   };
-
+  const handleGenderChange = (field) => (event) => {
+    setEditedData({ ...editedData, [field]: event.target.value });
+  };
+  const handleAddressChnage = (field) => (event) => {
+    setEditedData({ ...editedData, [field]: event.target.value });
+  };
+  const handlePurokChange = (field) => (event) => {
+    setEditedData({ ...editedData, [field]: event.target.value });
+  };
   const handleDateChange = (date) => {
     setEditedData({ ...editedData, birthdate: date });
   };
@@ -58,13 +98,13 @@ const EditChildModal = ({ open, onClose, childData, onSave }) => {
           label="Child Name"
           fullWidth
           value={editedData.child_name}
-          onChange={handleChange("child_name")}
+          onChange={handleChangeName("child_name")}
         />
         <FormControl fullWidth margin="dense">
           <InputLabel>Gender</InputLabel>
           <Select
             value={editedData.gender}
-            onChange={handleChange("gender")}
+            onChange={handleGenderChange("gender")}
             label="Gender"
           >
             <MenuItem value="Male">Male</MenuItem>
@@ -86,8 +126,23 @@ const EditChildModal = ({ open, onClose, childData, onSave }) => {
           label="Address"
           fullWidth
           value={editedData.address}
-          onChange={handleChange("address")}
+          onChange={handleAddressChnage("address")}
         />
+
+        <FormControl fullWidth margin="dense">
+          <InputLabel>Purok</InputLabel>
+          <Select
+            value={editedData.purok}
+            onChange={handlePurokChange("purok")}
+            label="Purok"
+          >
+            {purok.map((name) => (
+              <MenuItem key={name} value={name}>
+                {name}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
