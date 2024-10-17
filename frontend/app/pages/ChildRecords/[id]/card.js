@@ -187,6 +187,7 @@ export default function ChildCard({ schedule, onDataChange, child_id }) {
       setEditingTransaction({
         date_administered: dayjs(dose.date),
         record_id: dose.recordId,
+        status: dose.status,
       });
       setTitle(`${vaccineName}`);
       setAge(`${age}`);
@@ -194,6 +195,7 @@ export default function ChildCard({ schedule, onDataChange, child_id }) {
     }
   };
 
+  console.log("vaccineData", vaccineData);
   return (
     <>
       <TableContainer component={Paper}>

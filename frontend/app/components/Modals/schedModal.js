@@ -1,3 +1,4 @@
+"use client";
 import { useState, useEffect } from "react";
 import {
   Box,
@@ -7,6 +8,10 @@ import {
   TextField,
   Modal,
   Link,
+  InputLabel,
+  Select,
+  MenuItem,
+  FormControl,
 } from "@mui/material";
 import dayjs from "dayjs";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -26,21 +31,35 @@ export default function SchedModal({
 }) {
   const [selectedDate, setSelectedDate] = useState(dayjs());
   const [record, setRecord] = useState("");
+  const [status, setStatus] = useState("");
+  const [originalStatus, setOriginalStatus] = useState("");
 
   useEffect(() => {
     console.log("child", child);
     if (transaction) {
       setSelectedDate(dayjs(transaction.date_administered));
       setRecord(transaction.record_id);
+      setStatus(transaction.status);
+      setOriginalStatus(transaction.status);
     }
   }, [transaction]);
 
   const handleUpdate = async () => {
-    const updatedTransaction = {
-      date_administered: selectedDate.format("YYYY-MM-DD"),
-      record_id: record,
-    };
-    await onUpdate(updatedTransaction);
+    if (originalStatus === "Missed") {
+      const updatedTransaction = {
+        date_administered: selectedDate.format("YYYY-MM-DD"),
+        record_id: record,
+        status: status,
+      };
+      await onUpdate(updatedTransaction);
+    } else {
+      const updatedTransaction = {
+        date_administered: selectedDate.format("YYYY-MM-DD"),
+        record_id: record,
+      };
+      await onUpdate(updatedTransaction);
+    }
+    setOriginalStatus(status);
     onClose();
   };
 
@@ -52,6 +71,10 @@ export default function SchedModal({
     };
     await onDelete(deleteTransaction);
     onClose();
+  };
+
+  const handleStatusChange = (event) => {
+    setStatus(event.target.value);
   };
 
   const style = {
@@ -127,7 +150,21 @@ export default function SchedModal({
               />
             </LocalizationProvider>
           </Grid>
-
+          {(originalStatus === "Missed" || status === "Missed") && (
+            <Grid item xs={2}>
+              <FormControl fullWidth margin="dense">
+                <InputLabel>Status</InputLabel>
+                <Select
+                  value={status}
+                  onChange={handleStatusChange}
+                  label="Status"
+                >
+                  <MenuItem value="Completed">Completed</MenuItem>
+                  <MenuItem value="Missed">Missed</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+          )}
           <Grid item xs={2}>
             <Button
               variant="contained"

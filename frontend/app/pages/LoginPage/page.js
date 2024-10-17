@@ -16,6 +16,7 @@ import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { useState } from "react";
 import * as React from "react";
 import { login } from "./actions";
+import Image from "next/image";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -48,7 +49,7 @@ export default function LoginPage() {
       }
     } else {
       const formData = new FormData(formRef.current);
-      const { error } = await login(formData);
+      const error = await login(formData);
       if (error) {
         setLoginError(error);
       }
@@ -88,7 +89,7 @@ export default function LoginPage() {
           >
             WELCOME TO
           </Typography>
-          <img src="/logo-wordmark.png" alt="logo" width="400" />
+          <img src="/logo-wordmark.png" alt="logo" style={{ width: 400 }} />
         </Stack>
         <form ref={formRef}>
           <Box sx={{ mt: 1 }}>

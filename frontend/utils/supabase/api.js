@@ -821,20 +821,36 @@ export const createNewSchedule = async (childId, vaccineId, scheduledDate) => {
 
 //UPDATES IMMUNIZATION RECORD
 export async function updateRecords(updateRecord) {
-  // Update the VaccineTransaction record with the new details
-  const { data, error } = await supabase
-    .from("ImmunizationRecords")
-    .update({
-      date_administered: updateRecord.date_administered,
-    })
-    .eq("record_id", updateRecord.record_id);
+  if (updateRecord.status === null) {
+    const { data, error } = await supabase
+      .from("ImmunizationRecords")
+      .update({
+        date_administered: updateRecord.date_administered,
+      })
+      .eq("record_id", updateRecord.record_id);
 
-  console.log("newRecord from API", data);
-  if (error) {
-    console.error("Error updating vaccine stock:", error.message);
-    return null;
+    console.log("newRecord from API", data);
+    if (error) {
+      console.error("Error updating vaccine stock:", error.message);
+      return null;
+    }
+    return data;
+  } else {
+    const { data, error } = await supabase
+      .from("ImmunizationRecords")
+      .update({
+        date_administered: updateRecord.date_administered,
+        completion_status: updateRecord.status,
+      })
+      .eq("record_id", updateRecord.record_id);
+
+    console.log("newRecord from API", data);
+    if (error) {
+      console.error("Error updating vaccine stock:", error.message);
+      return null;
+    }
+    return data;
   }
-  return data;
 }
 
 //DELETE IMMUNIZATION RECORD
