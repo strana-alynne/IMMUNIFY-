@@ -2,6 +2,7 @@ import DashboardIcon from "@mui/icons-material/Dashboard";
 import VaccinesIcon from "@mui/icons-material/Vaccines";
 import AssessmentIcon from "@mui/icons-material/Assessment";
 import FaceIcon from "@mui/icons-material/Face";
+import { Chat, Notifications } from "@mui/icons-material";
 
 const getPath = (role = "NURSE") => [
   { title: "General", kind: "header" },
@@ -40,7 +41,7 @@ const getPath = (role = "NURSE") => [
         {
           id: 5,
           title: "Inbox",
-          icon: <Message />,
+          icon: <Chat />,
           path: "/pages/Inbox",
         },
         {

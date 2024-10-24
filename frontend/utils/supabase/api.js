@@ -380,6 +380,7 @@ export async function addChild(
   growthData,
   address
 ) {
+  console.log("motherIdjdhjdhj", motherId[0].mother_id);
   try {
     // Validate input data
     if (!motherId || !childData || !growthData || !purokName || !address) {
@@ -387,7 +388,7 @@ export async function addChild(
     }
 
     // Ensure motherId is in the correct format (e.g., 'M001')
-    if (!motherId.match(/^M\d{3}$/)) {
+    if (!motherId[0].mother_id.match(/^M\d{3}$/)) {
       throw new Error("Invalid mother ID format");
     }
 
@@ -411,7 +412,7 @@ export async function addChild(
         {
           ...childData,
           ...address,
-          mother_id: motherId,
+          mother_id: motherId[0].mother_id,
           purok_id: purokId,
         },
       ])

@@ -59,17 +59,17 @@ export default function AddChild() {
     }
 
     try {
-      // const getAddress = await geocodeAddress(address);
+      const getAddress = await geocodeAddress(address);
       const result = await createMotherAccount(motherData);
       if (result.error) {
         console.error("Account creation failed:", result.error);
-        // Handle error (e.g., show error message to user)
         return;
       }
       console.log("Mother account created successfully:", result.motherData);
       console.log("Temporary password:", result.tempPassword);
-      await addChild(motherData, childData, purok, growth, getAddress);
+      await addChild(result.motherData, childData, purok, growth, getAddress);
       const childid = localStorage.getItem("child_id");
+      console.log("djdkdj", childid);
       console.log("schchch", scheduleData);
       await handleSchedules(scheduleData, childid);
     } catch (error) {
