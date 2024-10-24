@@ -10,7 +10,7 @@ import {
   Card,
   CardContent,
 } from "@mui/material";
-import AppBarMobile from "@/app/components/AppBarMobile";
+import MobileSideBar from "@/app/components/MobileSideBar";
 import { useRouter } from "next/navigation";
 import MobileSideBar from "@/app/components/MobileSideBar";
 import { motherChild } from "@/utils/supabase/api";
