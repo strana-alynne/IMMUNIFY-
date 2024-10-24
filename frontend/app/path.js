@@ -2,8 +2,6 @@ import DashboardIcon from "@mui/icons-material/Dashboard";
 import VaccinesIcon from "@mui/icons-material/Vaccines";
 import AssessmentIcon from "@mui/icons-material/Assessment";
 import FaceIcon from "@mui/icons-material/Face";
-import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
-import { Message, Notifications } from "@mui/icons-material";
 
 const getPath = (role = "NURSE") => [
   { title: "General", kind: "header" },
@@ -36,29 +34,23 @@ const getPath = (role = "NURSE") => [
     icon: <FaceIcon />,
     path: "/pages/ChildRecords",
   },
-  { title: "Messaging", kind: "header" },
-  ...(role === "NURSE"
+  ...(role !== "NURSE"
     ? [
+        { title: "Messaging", kind: "header" },
         {
           id: 5,
-          title: "Appointments",
-          icon: <CalendarMonthIcon />,
-          path: "/pages/Appointments",
+          title: "Inbox",
+          icon: <Message />,
+          path: "/pages/Inbox",
+        },
+        {
+          id: 6,
+          title: "Reminders",
+          icon: <Notifications />,
+          path: "/pages/Reminders",
         },
       ]
     : []),
-  {
-    id: 6,
-    title: "Inbox",
-    icon: <Message />,
-    path: "/pages/Inbox",
-  },
-  {
-    id: 7,
-    title: "Reminders",
-    icon: <Notifications />,
-    path: "/pages/Reminders",
-  },
 ];
 
 export default getPath;
