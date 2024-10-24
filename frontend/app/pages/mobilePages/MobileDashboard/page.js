@@ -11,8 +11,8 @@ import {
   CardContent,
 } from "@mui/material";
 import MobileSideBar from "@/app/components/MobileSideBar";
+import AppBarMobile from "@/app/components/AppBarMobile";
 import { useRouter } from "next/navigation";
-import MobileSideBar from "@/app/components/MobileSideBar";
 import { motherChild } from "@/utils/supabase/api";
 import { Face, Face2 } from "@mui/icons-material";
 import { useUser } from "@/app/lib/UserContext";
