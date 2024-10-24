@@ -142,15 +142,6 @@ export default function VaccineInventory() {
     <Box sx={{ display: "flex" }}>
       <Container fixed>
         <Stack spacing={4}>
-          <Stack direction="row" spacing={0.5} alignItems="center">
-            <VaccinesIcon
-              sx={{ fontSize: { xs: 30, sm: 40 } }}
-              color="primary"
-            />
-            <Typography variant={isMobile ? "h4" : "h2"} color="primary">
-              Vaccine Inventory
-            </Typography>
-          </Stack>
           <VaccineAlert />
           <Box sx={{ overflowX: "auto" }}>
             <TableContainer component={Paper}>

@@ -280,6 +280,15 @@ export async function checkVaccineStock(vaccine_id, quantity) {
 //========================== ACCOUNTS =================================
 
 //========================== MOTHER ACCOUNT=================================
+export const updateMotherDetails = async (motherId, updatedData) => {
+  const { data, error } = await supabase
+    .from("Mother")
+    .update(updatedData)
+    .eq("mother_id", motherId);
+
+  if (error) throw error;
+  return data;
+};
 
 export async function createMotherAccount(motherData) {
   const {
@@ -452,7 +461,7 @@ export async function fetchChild(child_id) {
     .from("Child")
     .select(
       `child_id, child_name, child_age, birthdate, address, gender,
-      Mother(mother_id, mother_name, contact_number, mother_email),
+      Mother(*),
       Purok(purok_id, purok_name),
       Schedule(sched_id, scheduled_date, Vaccine(vaccine_id, vaccine_name),
       ImmunizationRecords(record_id, date_administered, completion_status)
@@ -1093,6 +1102,7 @@ export async function fetchScheduledChildTom() {
     return 0;
   }
 
+  console.log("jdhdjhd", data);
   return data || 0;
 }
 

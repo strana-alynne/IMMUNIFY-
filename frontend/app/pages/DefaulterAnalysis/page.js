@@ -65,14 +65,6 @@ export default function DefaulterAnalysis() {
     <Box sx={{ display: "flex" }}>
       <Container fixed>
         <Stack spacing={4} sx={{ pb: 4 }}>
-          {/* Title Section */}
-          <Stack direction="row" spacing={0.5} alignContent="center">
-            <Assessment sx={{ fontSize: { xs: 30, sm: 40 } }} color="primary" />
-            <Typography variant={isMobile ? "h4" : "h2"} color="primary">
-              Defaulter Analysis
-            </Typography>
-          </Stack>
-
           {/* Highest Number of Defaulters Section */}
           <Stack sx={{ pb: 2 }} spacing={0.5}>
             <Typography

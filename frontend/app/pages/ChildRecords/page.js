@@ -31,6 +31,7 @@ import {
   fetchScheduledChild,
   fetchScheduledChildId,
   fetchScheduledChildTom,
+  fetchSchedTomChildId,
 } from "@/utils/supabase/api";
 import {
   AddCircle,
@@ -154,10 +155,10 @@ export default function ChildRecords() {
     async function loadChild() {
       try {
         const fetchedChildren = await fetchAllChildren();
+
         const scheduledIdsObjects = await fetchScheduledChildId();
         // Extract child_ids from the objects and store them in state
         const scheduledIds = scheduledIdsObjects.map((obj) => obj.child_id);
-
         const totalScheduledToday = await fetchScheduledChild();
 
         const totalChildToday = await fetchImmunizedChild();
@@ -165,8 +166,8 @@ export default function ChildRecords() {
         const vaccinatedId = vaccinatedIsObj.map((obj) => obj.child_id);
 
         const totalScheduledTomorrow = await fetchScheduledChildTom();
-        // const schedTomisObj = await fetchScheduledChildTom();
-        // const schedTomId = schedTomisObj.map((obj) => obj.child_id);
+        const schedTomisObj = await fetchSchedTomChildId();
+        const schedTomId = schedTomisObj.map((obj) => obj.child_id);
 
         SetScheduledToday(totalScheduledToday);
         setChildToday(totalChildToday);
@@ -183,6 +184,10 @@ export default function ChildRecords() {
         } else if (activeFilter === "vaccinated") {
           filteredChildren = fetchedChildren.filter((child) =>
             vaccinatedId.includes(child.child_id)
+          );
+        } else if (activeFilter === "schedTomorrow") {
+          filteredChildren = fetchedChildren.filter((child) =>
+            schedTomId.includes(child.child_id)
           );
         }
         // Apply other filters
@@ -318,13 +323,6 @@ export default function ChildRecords() {
     <Box sx={{ display: "flex" }}>
       <Container fixed>
         <Stack spacing={4}>
-          <Typography
-            variant="h2"
-            color="primary"
-            sx={{ fontSize: { xs: "2rem", sm: "3rem" } }}
-          >
-            Child Records
-          </Typography>
           <VaccineAlert />
           <Paper elevation={0}>
             <Grid container spacing={2}>

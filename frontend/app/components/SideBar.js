@@ -17,18 +17,36 @@ import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
-import { redirect, useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import getPath from "@/app/path";
 import { Logout } from "@mui/icons-material";
 import { UserCircle } from "lucide-react";
 import { Stack } from "@mui/material";
-import { useState } from "react";
-import Image from "next/image";
+import { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { CircularProgress } from "@mui/material";
-import { useEffect } from "react";
+import useScrollTrigger from "@mui/material/useScrollTrigger";
+import PropTypes from "prop-types";
 
 const drawerWidth = 240;
+
+function ElevationScroll(props) {
+  const { children, window } = props;
+  const trigger = useScrollTrigger({
+    disableHysteresis: true,
+    threshold: 0,
+    target: window ? window() : undefined,
+  });
+
+  return React.cloneElement(children, {
+    elevation: trigger ? 4 : 0,
+  });
+}
+
+ElevationScroll.propTypes = {
+  children: PropTypes.element,
+  window: PropTypes.func,
+};
 
 const Main = styled("main", { shouldForwardProp: (prop) => prop !== "open" })(
   ({ theme, open }) => ({
@@ -50,16 +68,18 @@ const Main = styled("main", { shouldForwardProp: (prop) => prop !== "open" })(
 );
 
 const AppBar = styled(MuiAppBar, {
-  shouldForwardProp: (prop) => prop !== "open",
-})(({ theme, open }) => ({
-  transition: theme.transitions.create(["margin", "width"], {
+  shouldForwardProp: (prop) => prop !== "open" && prop !== "elevation",
+})(({ theme, open, elevation }) => ({
+  transition: theme.transitions.create(["margin", "width", "box-shadow"], {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.leavingScreen,
   }),
+  backgroundColor: theme.palette.background.paper,
+  boxShadow: elevation ? theme.shadows[elevation] : "none",
   ...(open && {
     width: `calc(100% - ${drawerWidth}px)`,
     marginLeft: `${drawerWidth}px`,
-    transition: theme.transitions.create(["margin", "width"], {
+    transition: theme.transitions.create(["margin", "width", "box-shadow"], {
       easing: theme.transitions.easing.easeOut,
       duration: theme.transitions.duration.enteringScreen,
     }),
@@ -70,12 +90,11 @@ const DrawerHeader = styled("div")(({ theme }) => ({
   display: "flex",
   alignItems: "center",
   padding: theme.spacing(0, 1),
-  // necessary for content to be below app bar
   ...theme.mixins.toolbar,
   justifyContent: "flex-end",
 }));
 
-export default function SideBar({ children, user }) {
+export default function SideBar({ children, user, window }) {
   const [isClicked, setIsClicked] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [currentTitle, setCurrentTitle] = useState("Dashboard");
@@ -84,7 +103,6 @@ export default function SideBar({ children, user }) {
   const [open, setOpen] = React.useState(false);
   const router = useRouter();
   const pathname = usePathname();
-  const path = getPath(user.user_metadata.role);
 
   const memoizedPath = React.useMemo(
     () => getPath(user.user_metadata.role),
@@ -131,40 +149,43 @@ export default function SideBar({ children, user }) {
   return (
     <Box sx={{ display: "flex" }}>
       <CssBaseline />
-      <AppBar position="fixed" open={open} elevation={0} color="transparent">
-        <Toolbar variant="dense">
-          <IconButton
-            color="primary"
-            aria-label="open drawer"
-            onClick={handleDrawerOpen}
-            edge="start"
-            sx={{ mr: 2, ...(open && { display: "none" }) }}
-          >
-            <MenuIcon />
-          </IconButton>
-          {/* <Box sx={{ display: "flex", alignItems: "center" }}>
-            {currentIcon && (
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  mr: 1,
-                  "& svg": {
-                    // Style the icon
-                    fontSize: 24,
-                    color: "#0e6b58",
-                  },
-                }}
-              >
-                {React.cloneElement(currentIcon)}
-              </Box>
-            )}
-            <Typography variant="h6" noWrap component="div" color="primary">
-              {currentTitle}
-            </Typography>
-          </Box> */}
-        </Toolbar>
-      </AppBar>
+      <ElevationScroll window={window}>
+        <AppBar position="fixed" open={open}>
+          <Toolbar>
+            <IconButton
+              color="primary"
+              aria-label="open drawer"
+              onClick={handleDrawerOpen}
+              edge="start"
+              sx={{ mr: 2, ...(open && { display: "none" }) }}
+              size="large"
+            >
+              <MenuIcon />
+            </IconButton>
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              {currentIcon && (
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    mr: 1,
+                    "& svg": {
+                      fontSize: 32,
+                      color: "#0e6b58",
+                    },
+                  }}
+                >
+                  {React.cloneElement(currentIcon)}
+                </Box>
+              )}
+              <Typography variant="h3" noWrap component="div" color="primary">
+                {currentTitle}
+              </Typography>
+            </Box>
+          </Toolbar>
+        </AppBar>
+      </ElevationScroll>
+
       <Drawer
         sx={{
           width: drawerWidth,
@@ -179,12 +200,11 @@ export default function SideBar({ children, user }) {
         open={open}
       >
         <DrawerHeader>
-          <Image
-            src={open ? "/logo-wordmark-white.png" : "/logo-white.png"} // Change this path as needed
+          <img
+            src={open ? "/logo-wordmark-white.png" : "/logo-white.png"}
             alt="logo"
             width={open ? 180 : 40}
             height={open ? 180 : 40}
-            // Adjust size for closed state if needed
           />
 
           <IconButton onClick={handleDrawerClose}>
@@ -197,7 +217,7 @@ export default function SideBar({ children, user }) {
         </DrawerHeader>
         <Divider />
         <List sx={{ p: 1 }}>
-          {path.map((item, index) =>
+          {memoizedPath.map((item, index) =>
             item.kind === "header" ? (
               <ListItem key={index} disablePadding>
                 <ListItemText
@@ -244,13 +264,13 @@ export default function SideBar({ children, user }) {
               </Stack>
               <ListItemButton
                 onClick={handleLogout}
-                onMouseLeave={() => setIsClicked(false)} // Reset click state on mouse leave
+                onMouseLeave={() => setIsClicked(false)}
                 sx={{
-                  bgcolor: isClicked ? "#FF5722" : "transparent", // Change color on click
+                  bgcolor: isClicked ? "#FF5722" : "transparent",
                   padding: "0px",
                   "&:hover": {
                     bgcolor: "#FF8A65",
-                    padding: "0px", // Change color on hover
+                    padding: "0px",
                   },
                 }}
               >
@@ -273,3 +293,9 @@ export default function SideBar({ children, user }) {
     </Box>
   );
 }
+
+SideBar.propTypes = {
+  children: PropTypes.node,
+  user: PropTypes.object.isRequired,
+  window: PropTypes.func,
+};

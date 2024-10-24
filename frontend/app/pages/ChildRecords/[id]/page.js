@@ -5,7 +5,6 @@ import {
   Container,
   Typography,
   Stack,
-  Chip,
   Paper,
   Button,
   IconButton,
@@ -19,10 +18,7 @@ import {
 } from "@mui/material";
 import {
   Face as FaceIcon,
-  Face2,
   Edit,
-  DeleteForever,
-  Face,
   ArrowBack,
   Check,
   Inventory2,
@@ -41,6 +37,7 @@ import {
   createSchedBCGHb,
   checkRecordsBCGandHb,
   updateChildDetails,
+  updateMotherDetails,
 } from "@/utils/supabase/api";
 import { useRouter } from "next/navigation";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -49,7 +46,10 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import VaccineAlert from "@/app/components/VaccineAlert";
 import GeneralModals from "@/app/components/Modals/Modals";
 import EditChildModal from "@/app/components/Modals/EditChildModal";
-
+import MotherAccordion from "@/app/components/MotherAccordion";
+import ChildInfoSection from "@/app/components/ChildInfoSection";
+import EditMotherModal from "@/app/components/EditMotherModal";
+import ChildRecordSkeleton from "@/app/components/ChildRecordSkeleton";
 const ChildId = ({ params }) => {
   const child_id_params = params.id;
   const [childData, setChildData] = useState([]);
@@ -63,6 +63,7 @@ const ChildId = ({ params }) => {
   const [openModal, setOpenModal] = useState(false);
   const [modalContent, setModalContent] = useState("");
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editMotherModalOpen, setEditMotherModalOpen] = useState(false);
 
   const handleCloseModal = () => {
     setOpenModal(false);
@@ -110,7 +111,6 @@ const ChildId = ({ params }) => {
 
   const refreshChildData = async () => {
     const data = await fetchChild(params.id);
-    console.log("Child data:", data);
     setChildData(data || []);
     if (data && data.length > 0) {
       const fetchedSchedules = data[0].Schedule.map((schedule) => ({
@@ -129,7 +129,6 @@ const ChildId = ({ params }) => {
       const filteredOptions = fetchedSchedules.filter(
         (s) => s.immunization_records.length === 0
       );
-      console.log("Dropdown contents:", filteredOptions);
 
       setDropdownOptions(
         fetchedSchedules.filter((s) => s.immunization_records.length === 0)
@@ -181,7 +180,7 @@ const ChildId = ({ params }) => {
 
       // Fetch existing immunization records for the day
       const existingRecords = await fetchExistingRecords(getVacId, dateVac);
-      console.log("existing", existingRecords);
+
       const babiesAdministeredToday = existingRecords.length;
       const totalBabiesToAdminister = babiesAdministeredToday + 1;
 
@@ -189,7 +188,6 @@ const ChildId = ({ params }) => {
       const vaccineData = await fetchVaccineDetails(getVacId);
       const vialsPerBaby = vaccineData.vials_per_baby;
 
-      console.log(totalBabiesToAdminister, vialsPerBaby);
       // Calculate vials needed
       const vialsUsed = totalBabiesToAdminister / vialsPerBaby;
       const inventory_id = await getInventoryId(getVacId);
@@ -286,9 +284,7 @@ const ChildId = ({ params }) => {
       await refreshChildData();
       setSelectedSchedule("");
       setDateAdministered(dayjs());
-    } catch (error) {
-      console.error("Error saving record:", error.message);
-    }
+    } catch (error) {}
   };
 
   const handleEditClick = () => {
@@ -299,23 +295,37 @@ const ChildId = ({ params }) => {
     setEditModalOpen(false);
   };
 
+  const handleEditMotherClick = () => {
+    setEditMotherModalOpen(true);
+  };
+
+  const handleCloseEditMotherModal = () => {
+    setEditMotherModalOpen(false);
+  };
+
+  const handleSaveMotherData = async (editedData) => {
+    try {
+      // Add this function to your api.js file
+      await updateMotherDetails(childData[0].Mother.mother_id, editedData);
+      await refreshChildData();
+      alert("Mother's details updated successfully!");
+    } catch (error) {
+      alert("Failed to update mother's details. Please try again.");
+    }
+  };
+
   const handleSaveEditedData = async (editedData) => {
     try {
       await updateChildDetails(params.id, editedData);
       await refreshChildData();
       alert("Child details updated successfully!");
     } catch (error) {
-      console.error("Error updating child details:", error.message);
       alert("Failed to update child details. Please try again.");
     }
   };
 
   if (!childData.length) {
-    return (
-      <div>
-        <CircularProgress />
-      </div>
-    );
+    return <ChildRecordSkeleton />;
   }
 
   return (
@@ -347,60 +357,20 @@ const ChildId = ({ params }) => {
             >
               Edit Record
             </Button>
+            <Button
+              variant="contained"
+              color="secondary"
+              startIcon={<Edit />}
+              onClick={handleEditMotherClick}
+            >
+              Edit Mother's Details
+            </Button>
           </Stack>
 
           {childData.map((row) => (
             <Paper sx={{ p: 4 }} key={row.child_id}>
-              <Stack direction="row" spacing={8}>
-                <Stack direction="row" spacing={2}>
-                  {row.gender === "Female" ? (
-                    <Face2 sx={{ fontSize: 100 }} color="secondary" />
-                  ) : (
-                    <Face sx={{ fontSize: 100 }} color="primary" />
-                  )}
-                  <Stack spacing={0.5}>
-                    <Typography variant="h5">{row.child_name}</Typography>
-                    <Stack direction="row" spacing={0}>
-                      <Stack>
-                        <Typography variant="p">
-                          <strong>Age: </strong> {row.child_age} years
-                        </Typography>
-                        <Typography variant="p">
-                          <strong>Sex: </strong> {row.gender}
-                        </Typography>
-                        <Typography variant="p">
-                          <strong>Birthdate: </strong> {row.birthdate}
-                        </Typography>
-                      </Stack>
-                      <Stack>
-                        <Typography variant="p">
-                          <strong>Address: </strong> {row.address}
-                        </Typography>
-                      </Stack>
-                      <Stack>
-                        <Typography variant="p">
-                          <strong>Mother's name: </strong>{" "}
-                          {row.Mother.mother_name}
-                        </Typography>
-                        <Typography variant="p">
-                          <strong>Contact Number: </strong>{" "}
-                          {row.Mother.contact_number}
-                        </Typography>
-                        <Typography variant="p">
-                          <strong>Email Address: </strong>{" "}
-                          {row.Mother.mother_email}
-                        </Typography>
-                      </Stack>
-                    </Stack>
-                  </Stack>
-                </Stack>
-                <Stack sx={{ textAlign: "start" }}>
-                  <Typography variant="h6_regular">
-                    Immunization Status
-                  </Typography>
-                  <Chip label={childStatus} sx={getChipColor(childStatus)} />
-                </Stack>
-              </Stack>
+              <ChildInfoSection childData={row} childStatus={childStatus} />
+              <MotherAccordion motherData={row.Mother} />
             </Paper>
           ))}
           <VaccineAlert />
@@ -488,6 +458,13 @@ const ChildId = ({ params }) => {
         onClose={handleCloseEditModal}
         childData={childData[0]}
         onSave={handleSaveEditedData}
+      />
+
+      <EditMotherModal
+        open={editMotherModalOpen}
+        onClose={handleCloseEditMotherModal}
+        motherData={childData[0]?.Mother}
+        onSave={handleSaveMotherData}
       />
     </Box>
   );
