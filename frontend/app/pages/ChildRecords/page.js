@@ -27,10 +27,19 @@ import { DataGrid } from "@mui/x-data-grid";
 import {
   fetchAllChildren,
   fetchImmunizedChild,
+  fetchImmunizedChildId,
   fetchScheduledChild,
+  fetchScheduledChildId,
   fetchScheduledChildTom,
 } from "@/utils/supabase/api";
-import { AddCircle, EventBusy, Face, Face2, Group } from "@mui/icons-material";
+import {
+  AddCircle,
+  CalendarMonth,
+  EventBusy,
+  Face,
+  Face2,
+  Group,
+} from "@mui/icons-material";
 import EditIcon from "@mui/icons-material/Edit";
 import SearchIcon from "@mui/icons-material/Search";
 import { useRouter } from "next/navigation";
@@ -122,6 +131,7 @@ export default function ChildRecords() {
   const [childToday, setChildToday] = useState();
   const [scheduledTomorrow, setScheduledTomorrow] = useState();
   const today = new Date();
+  const [activeFilter, setActiveFilter] = useState(null);
   const formattedToday = today.toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
@@ -144,16 +154,39 @@ export default function ChildRecords() {
     async function loadChild() {
       try {
         const fetchedChildren = await fetchAllChildren();
-        setChild(fetchedChildren);
+        const scheduledIdsObjects = await fetchScheduledChildId();
+        // Extract child_ids from the objects and store them in state
+        const scheduledIds = scheduledIdsObjects.map((obj) => obj.child_id);
+
         const totalScheduledToday = await fetchScheduledChild();
+
         const totalChildToday = await fetchImmunizedChild();
+        const vaccinatedIsObj = await fetchImmunizedChildId();
+        const vaccinatedId = vaccinatedIsObj.map((obj) => obj.child_id);
+
         const totalScheduledTomorrow = await fetchScheduledChildTom();
+        // const schedTomisObj = await fetchScheduledChildTom();
+        // const schedTomId = schedTomisObj.map((obj) => obj.child_id);
+
         SetScheduledToday(totalScheduledToday);
         setChildToday(totalChildToday);
         setScheduledTomorrow(totalScheduledTomorrow);
+        // Filter the children based on all criteria
+        let filteredChildren = fetchedChildren;
 
-        // Filter based on search term and selected purok
-        const filteredChildren = fetchedChildren.filter((child) => {
+        // Apply scheduled filter if active
+        if (activeFilter === "scheduled") {
+          filteredChildren = fetchedChildren.filter((child) =>
+            scheduledIds.includes(child.child_id)
+          );
+          console.log("Filtered children:", filteredChildren);
+        } else if (activeFilter === "vaccinated") {
+          filteredChildren = fetchedChildren.filter((child) =>
+            vaccinatedId.includes(child.child_id)
+          );
+        }
+        // Apply other filters
+        filteredChildren = filteredChildren.filter((child) => {
           const matchesSearchTerm =
             child.child_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             child.Purok?.purok_name
@@ -163,12 +196,10 @@ export default function ChildRecords() {
               .toLowerCase()
               .includes(searchTerm.toLowerCase());
 
-          // Filter by Purok if any are selected
           const matchesPurok =
             purokName.length === 0 ||
             purokName.includes(child.Purok?.purok_name);
 
-          // Filter by Status if any are selected
           const matchesStatus =
             statusName.length === 0 || statusName.includes(child.overallStatus);
 
@@ -179,16 +210,35 @@ export default function ChildRecords() {
       } catch (error) {
         console.error("Error fetching children:", error);
       } finally {
-        setLoading(false); // Set loading to false after fetching
+        setLoading(false);
       }
     }
     loadChild();
-  }, [searchTerm, purokName, statusName]);
+  }, [searchTerm, purokName, statusName, activeFilter]);
 
   const handleRowClick = (params) => {
     localStorage.setItem("childStatus", params.row.overallStatus);
-    // Navigate to details page with row ID
     router.push(`/pages/ChildRecords/${params.id}`);
+  };
+
+  const handleScheduledCardClick = () => {
+    // Toggle the filter
+    setActiveFilter(activeFilter === "scheduled" ? null : "scheduled");
+    // Reset to first page when filter changes
+    setPage(0);
+  };
+
+  const handleScheduledCardClickVac = () => {
+    // Toggle the filter
+    setActiveFilter(activeFilter === "vaccinated" ? null : "vaccinated");
+    // Reset to first page when filter changes
+    setPage(0);
+  };
+  const handleScheduledCardClickTom = () => {
+    // Toggle the filter
+    setActiveFilter(activeFilter === "schedTomorrow" ? null : "schedTomorrow");
+    // Reset to first page when filter changes
+    setPage(0);
   };
 
   // Define the columns for DataGrid
@@ -283,8 +333,10 @@ export default function ChildRecords() {
                   header="Scheduled Today"
                   title={scheduledToday}
                   description={formattedToday}
-                  color="primary"
+                  color="primary.main"
                   loading={loading}
+                  onClick={handleScheduledCardClick}
+                  isActive={activeFilter === "scheduled"}
                 />
               </Grid>
               <Grid item xs={12} sm={12} md={4}>
@@ -294,6 +346,8 @@ export default function ChildRecords() {
                   color="secondary"
                   description={formattedToday}
                   loading={loading}
+                  onClick={handleScheduledCardClickVac}
+                  isActive={activeFilter === "vaccinated"}
                 />
               </Grid>
               <Grid item xs={12} sm={12} md={4}>
@@ -303,11 +357,65 @@ export default function ChildRecords() {
                   description={formattedTomorrow}
                   color="error.dark"
                   loading={loading}
+                  onClick={handleScheduledCardClickTom}
+                  isActive={activeFilter === "schedTomorrow"}
                 />
               </Grid>
             </Grid>
           </Paper>
 
+          {activeFilter === "scheduled" && (
+            <Paper
+              sx={{
+                p: 2,
+                bgcolor: "primary.light",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <Stack direction="row" spacing={1} alignItems="center">
+                <CalendarMonth color="primary" />
+                <Typography color="primary.main">
+                  Showing {scheduledToday} scheduled children for today
+                </Typography>
+              </Stack>
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={() => setActiveFilter(null)}
+                startIcon={<EventBusy />}
+              >
+                Clear Filter
+              </Button>
+            </Paper>
+          )}
+          {activeFilter === "vaccinated" && (
+            <Paper
+              sx={{
+                p: 2,
+                bgcolor: "primary.light",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <Stack direction="row" spacing={1} alignItems="center">
+                <CalendarMonth color="primary" />
+                <Typography color="primary.main">
+                  Showing {childToday} Vaccinated children for today
+                </Typography>
+              </Stack>
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={() => setActiveFilter(null)}
+                startIcon={<EventBusy />}
+              >
+                Clear Filter
+              </Button>
+            </Paper>
+          )}
           {/* TextFields */}
           <Stack spacing={2}>
             <Box sx={{ display: "flex", justifyContent: "flex-end" }}>

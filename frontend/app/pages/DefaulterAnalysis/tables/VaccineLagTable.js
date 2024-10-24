@@ -1,4 +1,3 @@
-import React from "react";
 import {
   Table,
   TableBody,
@@ -7,15 +6,20 @@ import {
   TableContainer,
   TableRow,
   Paper,
-  Card,
-  CardContent,
   Typography,
 } from "@mui/material";
 
-const VaccineLagTable = ({ clusterData }) => {
-  // Debug logging
-  console.log("Received clusterData:", clusterData);
+const VACCINE_COVERAGE = {
+  "BCG (Bacillus-Calmette-Guerin)": 10,
+  "Hepatitis B": 10,
+  "Penta: DTwP-HepBHib": 1,
+  "PCV (Pneumococcal Conjugate Vaccine)": 4,
+  "OPV (Oral Polio Vaccine)": 20,
+  "IPV (Inactive Polio Vaccine)": 10,
+  "MMR (Measles - Mumps - Rubella Vaccine)": 10,
+};
 
+const VaccineLagTable = ({ clusterData }) => {
   // More detailed checking
   if (!clusterData) {
     console.log("clusterData is undefined or null");
@@ -82,6 +86,11 @@ const VaccineLagTable = ({ clusterData }) => {
   // Sort vaccines by total missed count
   sortedVaccines.sort(([, a], [, b]) => b.totalMissed - a.totalMissed);
 
+  const calculateBabiesCovered = (vaccineName, quantity) => {
+    const coverage = VACCINE_COVERAGE[vaccineName];
+    return coverage ? quantity / coverage : 0;
+  };
+
   return (
     <TableContainer component={Paper}>
       <Table aria-label="vaccine defaulter table">
@@ -89,6 +98,7 @@ const VaccineLagTable = ({ clusterData }) => {
           <TableRow>
             <TableCell>Vaccine</TableCell>
             <TableCell align="left">Total Missed</TableCell>
+            <TableCell align="left">Equivalent Vaccine Count</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -98,6 +108,9 @@ const VaccineLagTable = ({ clusterData }) => {
                 {vaccine}
               </TableCell>
               <TableCell align="left">{data.totalMissed}</TableCell>
+              <TableCell align="left">
+                {calculateBabiesCovered(vaccine, data.totalMissed)}
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>

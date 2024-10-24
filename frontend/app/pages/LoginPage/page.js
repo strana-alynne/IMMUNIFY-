@@ -49,7 +49,7 @@ export default function LoginPage() {
       }
     } else {
       const formData = new FormData(formRef.current);
-      const error = await login(formData);
+      const error = await login(formData, "web");
       if (error) {
         setLoginError(error);
       }

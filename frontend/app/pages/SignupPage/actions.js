@@ -1,42 +1,59 @@
 "use server";
-import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 
-// REGISTER
-//formData is an object that contains the user-input values from the textfields UI
 export async function signup(formData) {
   const supabase = createClient();
-  //Taking the email and password values from the formData
-  const data = {
-    email: formData.get("email"),
-    password: formData.get("password"),
-  };
-  // Try to sign up with Supabase
+  const email = formData.get("email");
+  const password = formData.get("password");
+  const role = formData.get("role");
+
   try {
-    const { error } = await supabase.auth.signUp(data); // Attempt to sign up with the extracted data
-    // If there's an error, handle it
-    if (error) {
-      // If the error is due to invalid credentials and the email already exists, return a specific error message
-      if (
-        error.code === "invalid-credentials" &&
-        error.message.includes("already exists")
-      ) {
-        return { success: false, message: "The email is already used" };
-      } else {
-        console.error("Error signing up:", error); // Display "Error signing up:" + return a generic error message on the terminal or console
-        return { success: false, message: error.message };
-      }
-    } else {
-      // If the signup is successful, return a success message and an email link will be provided
-      return {
-        success: true,
-        message: "Success! Confirm the link on your email.",
-      };
+    // Step 1: Sign up the user with metadata
+    const { data: authData, error: signUpError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          role: role, // Add role to user_metadata
+        },
+      },
+    });
+
+    if (signUpError) {
+      console.error("Signup error:", signUpError);
+      return { success: false, message: signUpError.message };
     }
+
+    if (!authData || !authData.user) {
+      console.error("No user data returned");
+      return { success: false, message: "Error creating user" };
+    }
+
+    // Step 2: Create user profile in the database
+    const { error: profileError } = await supabase
+      .from("user_profiles")
+      .insert([
+        {
+          id: authData.user.id,
+          email: email,
+          role: role,
+        },
+      ]);
+
+    if (profileError) {
+      console.error("Error creating user profile:", profileError);
+      // Optional: delete the auth user if profile creation fails
+      await supabase.auth.admin.deleteUser(authData.user.id);
+      return { success: false, message: "Error creating user profile" };
+    }
+
+    return {
+      success: true,
+      message:
+        "Success! User created and profile set up. Please confirm the link in your email.",
+    };
   } catch (error) {
-    // Catch any other errors that might occur and log them
-    console.error("Error signing up:", error);
-    return { success: false, message: "Error signing up" };
+    console.error("Unexpected error during signup:", error);
+    return { success: false, message: "Unexpected error during signup" };
   }
 }

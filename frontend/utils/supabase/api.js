@@ -277,11 +277,104 @@ export async function checkVaccineStock(vaccine_id, quantity) {
   }
 }
 
+//========================== ACCOUNTS =================================
+
+//========================== MOTHER ACCOUNT=================================
+
+export async function createMotherAccount(motherData) {
+  const {
+    mother_email,
+    mother_name,
+    mother_age,
+    facility_name,
+    facility_type,
+    delivery_type,
+    attending,
+    contact_number,
+  } = motherData;
+
+  try {
+    // Generate a temporary password
+    const tempPassword = Math.random().toString(36).slice(-8);
+
+    // Get the next available mother_id
+    const { data: lastMother, error: fetchError } = await supabase
+      .from("Mother")
+      .select("mother_id")
+      .order("mother_id", { ascending: false })
+      .limit(1)
+      .single();
+
+    if (fetchError && fetchError.code !== "PGRST116") {
+      throw fetchError;
+    }
+
+    let nextMotherId;
+    if (lastMother) {
+      const lastNumber = parseInt(lastMother.mother_id.slice(1), 10);
+      nextMotherId = `M${String(lastNumber + 1).padStart(3, "0")}`;
+    } else {
+      nextMotherId = "M001";
+    }
+
+    // Sign up the user with Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: mother_email,
+      password: tempPassword,
+      options: {
+        data: {
+          email_confirm: true,
+          role: "mother",
+          mother_id: nextMotherId, // Store the custom mother_id in user metadata
+        },
+      },
+    });
+
+    if (authError) throw authError;
+
+    // Insert the mother data into the Mother table
+    const { data: motherRecord, error: motherError } = await supabase
+      .from("Mother")
+      .insert({
+        mother_id: nextMotherId,
+        mother_name,
+        mother_age,
+        facility_name,
+        facility_type,
+        delivery_type,
+        attending,
+        mother_email,
+        mother_password: tempPassword, // Consider hashing this or handling it differently
+        contact_number,
+        role: "mother",
+        auth_id: authData.user.id, // Store the Supabase Auth ID for reference
+      })
+      .select();
+
+    if (motherError) throw motherError;
+
+    // Send a magic link email
+    const { error: magicLinkError } = await supabase.auth.signInWithOtp({
+      email: mother_email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/pages/mobilePages/MobileLogIn`,
+      },
+    });
+
+    if (magicLinkError) throw magicLinkError;
+
+    return { motherData: motherRecord, tempPassword };
+  } catch (error) {
+    console.error("Error creating mother account:", error);
+    return { error };
+  }
+}
+
 //========================== CHILD RECORDS =================================
 
 // ADD CHILD AND MOTHER RECORDS
 export async function addChild(
-  motherData,
+  motherId,
   childData,
   purokName,
   growthData,
@@ -289,8 +382,13 @@ export async function addChild(
 ) {
   try {
     // Validate input data
-    if (!motherData || !childData || !growthData || !purokName || !address) {
+    if (!motherId || !childData || !growthData || !purokName || !address) {
       throw new Error("Missing required data fields");
+    }
+
+    // Ensure motherId is in the correct format (e.g., 'M001')
+    if (!motherId.match(/^M\d{3}$/)) {
+      throw new Error("Invalid mother ID format");
     }
 
     // Get purok ID from the purok name
@@ -305,18 +403,6 @@ export async function addChild(
     if (!purok) throw new Error(`No Purok found with name: ${purokName}`);
 
     const purokId = purok.purok_id;
-    console.log("Fetched Purok ID:", purokId);
-
-    // Insert mother data
-    const { data: mother, error: motherError } = await supabase
-      .from("Mother")
-      .insert([motherData])
-      .select();
-
-    if (motherError)
-      throw new Error(`Error inserting Mother: ${motherError.message}`);
-    const motherId = mother[0].mother_id;
-    console.log("Inserted Mother ID:", motherId);
 
     // Insert child data
     const { data: child, error: childError } = await supabase
@@ -334,7 +420,6 @@ export async function addChild(
     if (childError)
       throw new Error(`Error inserting Child: ${childError.message}`);
     const childId = child[0].child_id;
-    console.log("Inserted Child ID:", childId);
 
     // Insert growth data
     const { data: growth, error: growthError } = await supabase
@@ -349,13 +434,11 @@ export async function addChild(
 
     if (growthError)
       throw new Error(`Error inserting Growth: ${growthError.message}`);
-    console.log("Inserted Growth data:", growth);
 
     // Store child_id in localStorage
     localStorage.setItem("child_id", childId);
-    // Log success and return response
-    console.log("Insertion successful:", { mother, child, growth });
-    return { success: true, mother, child, growth };
+
+    return { success: true, child, growth };
   } catch (error) {
     console.error("Error inserting data:", error.message);
     return { success: false, error: error.message };
@@ -912,12 +995,29 @@ export async function deleteRecord(delRecords) {
   }
 }
 //FETCH SCHEDULED CHILD TODAY
-export async function fetchScheduledChild() {
-  const today = new Date().toISOString().split("T")[0];
 
-  const { count, error } = await supabase
+export async function fetchScheduledChild() {
+  const { data, error } = await supabase.rpc(
+    "count_children_with_schedules_today"
+  );
+
+  if (error) {
+    console.error("Error:", error);
+    return 0;
+  }
+
+  return data || 0; // Use count instead of length
+}
+
+//FETCH SCHEDULED CHILD TODAY
+export async function fetchScheduledChildId() {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1); // Add one day
+  const today = tomorrow.toISOString().split("T")[0]; // Format as YYYY-MM-DD
+
+  const { data, error } = await supabase
     .from("Schedule")
-    .select("*", { count: "exact" })
+    .select("child_id")
     .eq("scheduled_date", today);
 
   if (error) {
@@ -925,43 +1025,74 @@ export async function fetchScheduledChild() {
     throw error;
   }
 
-  return count;
+  return data;
 }
-//FETCH IMMUINIZED CHILD TODAY
-export async function fetchImmunizedChild() {
-  const today = new Date().toISOString().split("T")[0];
-  const { count, error } = await supabase
-    .from("ImmunizationRecords")
-    .select("*", { count: "exact" })
-    .eq("date_administered", today)
-    .eq("completion_status", "Completed");
+
+export const fetchImmunizedChildId = async () => {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const today = tomorrow.toISOString().split("T")[0];
+
+  const { data, error } = await supabase
+    .from("Schedule")
+    .select(
+      `
+      child_id,
+      ImmunizationRecords!inner(*)
+    `
+    )
+    .eq("ImmunizationRecords.date_administered", today);
 
   if (error) {
     console.error("Error:", error);
     throw error;
   }
 
-  return count;
+  return data;
+};
+
+export const fetchSchedTomChildId = async () => {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 2);
+  const today = tomorrow.toISOString().split("T")[0];
+
+  const { data, error } = await supabase
+    .from("Schedule")
+    .select("child_id")
+    .eq("scheduled_date", today);
+
+  if (error) {
+    console.error("Error:", error);
+    throw error;
+  }
+
+  return data;
+};
+
+//FETCH IMMUINIZED CHILD TODAY
+export async function fetchImmunizedChild() {
+  const { data, error } = await supabase.rpc("count_children_immunized_today");
+
+  if (error) {
+    console.error("Error:", error);
+    return 0;
+  }
+
+  return data || 0;
 }
 
 //FETCH SCHEDULES TOMORROW
 export async function fetchScheduledChildTom() {
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  const formattedTomorrow = tomorrow.toISOString().split("T")[0];
-
-  const { count, error } = await supabase
-    .from("ImmunizationRecords")
-    .select("*", { count: "exact" })
-    .eq("date_administered", formattedTomorrow)
-    .eq("completion_status", "Completed");
+  const { data, error } = await supabase.rpc(
+    "count_children_with_schedules_tomorrow"
+  );
 
   if (error) {
     console.error("Error:", error);
-    throw error;
+    return 0;
   }
 
-  return count;
+  return data || 0;
 }
 
 //CREATE BCG AND HEPATITIS B SCHEDULE

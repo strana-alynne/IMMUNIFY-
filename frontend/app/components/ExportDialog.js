@@ -10,6 +10,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  TextField,
   Stack,
 } from "@mui/material";
 import { FileDownload } from "@mui/icons-material";
@@ -17,7 +18,7 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
-import * as XLSX from "xlsx";
+//import * as XLSX from "xlsx";
 
 export default function ExportDialog({ vaccines, vaccineName }) {
   const [open, setOpen] = useState(false);
@@ -51,16 +52,16 @@ export default function ExportDialog({ vaccines, vaccineName }) {
       "Transaction Type": vaccine.transaction_type,
     }));
 
-    // Create worksheet
-    const ws = XLSX.utils.json_to_sheet(dataToExport);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Vaccine Inventory");
+    // // Create worksheet
+    // const ws = XLSX.utils.json_to_sheet(dataToExport);
+    // const wb = XLSX.utils.book_new();
+    // XLSX.utils.book_append_sheet(wb, ws, "Vaccine Inventory");
 
-    // Generate filename with vaccine name, month, and year
-    const fileName = `${vaccineName}_Inventory_${selectedDate.format("MMMM_YYYY")}.xlsx`;
+    // // Generate filename with vaccine name, month, and year
+    // const fileName = `${vaccineName}_Inventory_${selectedDate.format("MMMM_YYYY")}.xlsx`;
 
-    // Save file
-    XLSX.writeFile(wb, fileName);
+    // // Save file
+    // XLSX.writeFile(wb, fileName);
     handleClose();
   };
 

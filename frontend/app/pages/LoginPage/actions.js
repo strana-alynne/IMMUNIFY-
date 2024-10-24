@@ -13,21 +13,17 @@ export async function login(formData) {
     password: formData.get("password"),
   };
 
-  const { user, error } = await supabase.auth.signInWithPassword(data);
+  const { error } = await supabase.auth.signInWithPassword(data);
 
   if (error) {
     if (error.status === 403) {
-      // Email is not registered
-      return { error: "Email is not registered" };
+      return "Email is not registered";
     } else if (error.status === 401) {
-      // Incorrect password
-      return { error: "Incorrect password" };
+      return "Incorrect password";
     } else {
-      // Other error
-      return { error: "An error occurred" };
+      return "An error occurred";
     }
   }
-
   // Login successful, redirect to dashboard
   revalidatePath("/pages/Dashboard", "layout");
   redirect("/pages/Dashboard");

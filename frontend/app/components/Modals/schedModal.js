@@ -45,6 +45,7 @@ export default function SchedModal({
   }, [transaction]);
 
   const handleUpdate = async () => {
+    console.log("status", status);
     if (originalStatus === "Missed") {
       const updatedTransaction = {
         date_administered: selectedDate.format("YYYY-MM-DD"),

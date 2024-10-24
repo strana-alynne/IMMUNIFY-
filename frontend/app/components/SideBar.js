@@ -17,7 +17,7 @@ import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
-import { redirect, useRouter } from "next/navigation";
+import { redirect, useRouter, usePathname } from "next/navigation";
 import getPath from "@/app/path";
 import { Logout } from "@mui/icons-material";
 import { UserCircle } from "lucide-react";
@@ -78,10 +78,29 @@ const DrawerHeader = styled("div")(({ theme }) => ({
 export default function SideBar({ children, user }) {
   const [isClicked, setIsClicked] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [currentTitle, setCurrentTitle] = useState("Dashboard");
+  const [currentIcon, setCurrentIcon] = useState(null);
   const theme = useTheme();
   const [open, setOpen] = React.useState(false);
   const router = useRouter();
-  const path = getPath();
+  const pathname = usePathname();
+  const path = getPath(user.user_metadata.role);
+
+  const memoizedPath = React.useMemo(
+    () => getPath(user.user_metadata.role),
+    [user.user_metadata.role]
+  );
+
+  useEffect(() => {
+    const currentPath = memoizedPath.find(
+      (item) => item.kind !== "header" && pathname.includes(item.path)
+    );
+
+    if (currentPath) {
+      setCurrentTitle(currentPath.title);
+      setCurrentIcon(currentPath.icon);
+    }
+  }, [pathname, memoizedPath]);
 
   const handleDrawerOpen = () => {
     setOpen(true);
@@ -103,7 +122,6 @@ export default function SideBar({ children, user }) {
       router.push("/");
     } catch (error) {
       console.error("Error signing out:", error.message);
-      // Optionally, show an error message to the user
     } finally {
       setIsLoggingOut(false);
       setIsClicked(false);
@@ -113,10 +131,10 @@ export default function SideBar({ children, user }) {
   return (
     <Box sx={{ display: "flex" }}>
       <CssBaseline />
-      <AppBar position="fixed" open={open}>
-        <Toolbar>
+      <AppBar position="fixed" open={open} elevation={0} color="transparent">
+        <Toolbar variant="dense">
           <IconButton
-            color="inherit"
+            color="primary"
             aria-label="open drawer"
             onClick={handleDrawerOpen}
             edge="start"
@@ -124,9 +142,27 @@ export default function SideBar({ children, user }) {
           >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" noWrap component="div">
-            Immunify Dashboard
-          </Typography>
+          {/* <Box sx={{ display: "flex", alignItems: "center" }}>
+            {currentIcon && (
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  mr: 1,
+                  "& svg": {
+                    // Style the icon
+                    fontSize: 24,
+                    color: "#0e6b58",
+                  },
+                }}
+              >
+                {React.cloneElement(currentIcon)}
+              </Box>
+            )}
+            <Typography variant="h6" noWrap component="div" color="primary">
+              {currentTitle}
+            </Typography>
+          </Box> */}
         </Toolbar>
       </AppBar>
       <Drawer
@@ -203,7 +239,7 @@ export default function SideBar({ children, user }) {
                   {user.email}
                 </Typography>
                 <Typography sx={{ fontSize: 12 }}>
-                  Brgy. Health Worker
+                  {user.user_metadata.role}
                 </Typography>
               </Stack>
               <ListItemButton

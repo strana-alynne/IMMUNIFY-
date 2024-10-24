@@ -8,13 +8,14 @@ export default function ReminderCard({ icon: Icon, title, description, time }) {
       <CardContent>
         <Stack direction="row" spacing={4}>
           <Stack direction="row" spacing={2}>
-            <Icon color="primary" sx={{ fontSize: 50 }} />
+            <Icon color="primary" sx={{ fontSize: 40 }} />
             <Stack>
-              <Typography variant="h6">{title}</Typography>
+              <Typography variant="p" fontWeight={600}>
+                {title}
+              </Typography>
               <Typography variant="p2">{description}</Typography>
             </Stack>
           </Stack>
-          <Typography variant="p"> {time}</Typography>
         </Stack>
       </CardContent>
     </Card>

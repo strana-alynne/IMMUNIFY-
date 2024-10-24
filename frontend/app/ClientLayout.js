@@ -96,7 +96,11 @@ export default function ClientLayout({ children, user }) {
         </UserProvider>
       );
     } else if (shouldHaveSidebar()) {
-      return <SideBar user={user}>{children}</SideBar>;
+      return (
+        <UserProvider value={user}>
+          <SideBar user={user}>{children}</SideBar>;
+        </UserProvider>
+      );
     } else {
       return children;
     }

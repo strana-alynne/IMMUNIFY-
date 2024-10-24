@@ -15,7 +15,7 @@ import FaceIcon from "@mui/icons-material/Face";
 import Childinfo from "./childinfo";
 import Motherinfo from "./motherinfo";
 import { ArrowBack, Check, CheckCircle } from "@mui/icons-material";
-import { addChild } from "@/utils/supabase/api";
+import { addChild, createMotherAccount } from "@/utils/supabase/api";
 import GeneralModals from "@/app/components/Modals/Modals";
 import { useRouter } from "next/navigation";
 import { geocodeAddress, handleSchedules } from "@/utils/supabase/api"; // Use the correct import for default export
@@ -59,7 +59,15 @@ export default function AddChild() {
     }
 
     try {
-      const getAddress = await geocodeAddress(address);
+      // const getAddress = await geocodeAddress(address);
+      const result = await createMotherAccount(motherData);
+      if (result.error) {
+        console.error("Account creation failed:", result.error);
+        // Handle error (e.g., show error message to user)
+        return;
+      }
+      console.log("Mother account created successfully:", result.motherData);
+      console.log("Temporary password:", result.tempPassword);
       await addChild(motherData, childData, purok, growth, getAddress);
       const childid = localStorage.getItem("child_id");
       console.log("schchch", scheduleData);

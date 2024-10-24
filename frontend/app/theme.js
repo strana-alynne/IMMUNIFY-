@@ -11,6 +11,7 @@ export default function Theme({ children }) {
         light: "#CEF9EC",
         dark: "#14967F",
         darker: "#062D29",
+        medium: "#000000",
       },
       secondary: {
         main: "#EE7423",

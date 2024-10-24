@@ -1,6 +1,6 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import SideBar from "@/app/components/SideBar/page";
+"use client";
+import { useState, useEffect } from "react";
 import {
   Box,
   Container,
@@ -16,6 +16,7 @@ import {
   Button,
   useTheme,
   useMediaQuery,
+  Skeleton,
 } from "@mui/material";
 import VaccinesIcon from "@mui/icons-material/Vaccines";
 import { useRouter } from "next/navigation";
@@ -34,6 +35,7 @@ const VACCINE_COVERAGE = {
 
 export default function VaccineInventory() {
   const [vaccines, setVaccines] = useState([]);
+  const [loading, setLoading] = useState(true); // Track loading state
   const router = useRouter();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -49,6 +51,7 @@ export default function VaccineInventory() {
         ),
       }));
       setVaccines(vaccinesWithCoverage);
+      setLoading(false); // Stop loading when data is ready
     }
     loadVaccines();
   }, []);
@@ -72,54 +75,68 @@ export default function VaccineInventory() {
         <TableCell>Name</TableCell>
         <TableCell>Total Vials</TableCell>
         <TableCell>Babies Covered</TableCell>
-        {!isMobile && (
-          <>
-            <TableCell>Restock Date</TableCell>
-          </>
-        )}
+        {!isMobile && <TableCell>Restock Date</TableCell>}
         <TableCell></TableCell>
       </TableRow>
     </TableHead>
   );
 
-  const renderTableBody = () => (
-    <TableBody>
-      {vaccines.map((row) => (
-        <TableRow
-          key={row.Vaccine.vaccine_name}
-          sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
-        >
-          <TableCell component="th" scope="row">
-            {row.Vaccine.vaccine_id}
-          </TableCell>
-          <TableCell>{row.Vaccine.vaccine_name}</TableCell>
-          <TableCell>{row.vaccine_quantity}</TableCell>
-          <TableCell>{row.babiesCovered}</TableCell>
-          {!isMobile && (
-            <>
-              <TableCell>{row.current_update}</TableCell>
-            </>
-          )}
-          <TableCell>
-            <Button
-              variant="text"
-              color="secondary"
-              onClick={() =>
-                handleButtonClick(
-                  row.Vaccine.vaccine_id,
-                  row.Vaccine.vaccine_name,
-                  row.inventory_id,
-                  row.babiesCovered
-                )
-              }
-            >
-              {isMobile ? "Details" : "View"}
-            </Button>
-          </TableCell>
-        </TableRow>
-      ))}
-    </TableBody>
-  );
+  const renderTableBody = () => {
+    if (loading) {
+      // Render skeletons while loading
+      return (
+        <TableBody>
+          {Array.from({ length: 5 }).map((_, index) => (
+            <TableRow key={index}>
+              {Array.from({ length: isMobile ? 4 : 5 }).map((_, colIndex) => (
+                <TableCell key={colIndex}>
+                  <Skeleton variant="text" width="100%" height={30} />
+                </TableCell>
+              ))}
+              <TableCell>
+                <Skeleton variant="rectangular" width={80} height={36} />
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      );
+    }
+
+    // Render actual data if not loading
+    return (
+      <TableBody>
+        {vaccines.map((row) => (
+          <TableRow
+            key={row.Vaccine.vaccine_name}
+            sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+          >
+            <TableCell component="th" scope="row">
+              {row.Vaccine.vaccine_id}
+            </TableCell>
+            <TableCell>{row.Vaccine.vaccine_name}</TableCell>
+            <TableCell>{row.vaccine_quantity}</TableCell>
+            <TableCell>{row.babiesCovered}</TableCell>
+            {!isMobile && <TableCell>{row.current_update}</TableCell>}
+            <TableCell>
+              <Button
+                variant="text"
+                color="secondary"
+                onClick={() =>
+                  handleButtonClick(
+                    row.Vaccine.vaccine_id,
+                    row.Vaccine.vaccine_name,
+                    row.inventory_id
+                  )
+                }
+              >
+                {isMobile ? "Details" : "View"}
+              </Button>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    );
+  };
 
   return (
     <Box sx={{ display: "flex" }}>

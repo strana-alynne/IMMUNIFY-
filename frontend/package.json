@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@ducanh2912/next-pwa": "^10.2.9",
     "@emotion/cache": "^11.13.1",
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
@@ -16,26 +17,32 @@
     "@mui/icons-material": "^5.16.7",
     "@mui/material": "^5.16.7",
     "@mui/material-nextjs": "^6.1.1",
+    "@mui/x-charts": "^7.20.0",
     "@mui/x-data-grid": "^7.16.0",
     "@mui/x-date-pickers": "^7.16.0",
+    "@supabase/auth-helpers-nextjs": "^0.10.0",
     "@supabase/ssr": "^0.5.1",
     "@supabase/supabase-js": "^2.45.3",
-    "@toolpad/core": "^0.7.0",
     "date-fns": "^3.6.0",
     "dayjs": "^1.11.13",
+    "js-cookie": "^3.0.5",
     "lucide-react": "^0.447.0",
-    "next": "^14.2.13",
+    "next": "^14.2.14",
+    "next-pwa": "^5.6.0",
     "react": "^18.3.1",
     "react-calendar": "^5.0.0",
     "react-date-range": "^2.0.1",
     "react-dom": "^18.3.1",
     "react-leaflet": "^4.2.1",
-    "recharts": "^2.12.7"
+    "recharts": "^2.13.0",
+    "sharp": "^0.33.5"
   },
   "devDependencies": {
+    "@types/next-pwa": "^5.6.9",
     "eslint": "^8",
-    "eslint-config-next": "^14.2.13",
+    "eslint-config-next": "^14.2.14",
     "postcss": "^8",
-    "tailwindcss": "^3.4.1"
+    "tailwindcss": "^3.4.1",
+    "webpack": "^5.95.0"
   }
 }

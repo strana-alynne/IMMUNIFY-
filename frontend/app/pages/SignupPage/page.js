@@ -23,6 +23,7 @@ import { useState } from "react";
 import * as React from "react";
 // Importing signup function from the actions module
 import { signup } from "./actions";
+import Image from "next/image";
 
 // Define the RegisterPage component
 export default function RegisterPage() {
@@ -49,6 +50,7 @@ export default function RegisterPage() {
     } else {
       // Get the form data from the form reference
       const formData = new FormData(formRef.current);
+      formData.append("role", role);
       // Get the email from the form data
       const email = formData.get("email");
       if (!email) {
@@ -56,13 +58,13 @@ export default function RegisterPage() {
         setError("Email is required");
         setSuccess(null);
       } else if (!role) {
-        // Check if the user role is empty
         setError("User role required");
         setSuccess(null);
       } else {
         setError(null); // Clear any previous error messages
         setLoading(true); // Set the loading state to true
         const response = await signup(formData);
+        console.log(response);
         setLoading(false);
         if (response.success) {
           setSuccess(response.message);
@@ -98,7 +100,7 @@ export default function RegisterPage() {
           >
             WELCOME TO
           </Typography>
-          <img src="/logo-wordmark.png" alt="logo" width="400" />
+          <img src="/logo-wordmark.png" alt="logo" style={{ width: 400 }} />
         </Stack>
         <form ref={formRef}>
           <Box sx={{ mt: 1 }}>
