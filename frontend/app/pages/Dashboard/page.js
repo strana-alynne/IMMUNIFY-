@@ -175,7 +175,7 @@ export default function Dashboard() {
             {/* Appointments and Messages Section */}
             <Grid item spacing={4}>
               <Typography variant="h6" color="primary">
-                Appointments
+                Reminders
                 <Box
                   spacing={2}
                   sx={{

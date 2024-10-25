@@ -10,7 +10,7 @@ import {
   Stack,
   Grid,
 } from "@mui/material";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import * as React from "react";
 import { sendOTP, verifyOTP } from "./actions";
 import { useRouter } from "next/navigation";
@@ -22,8 +22,19 @@ export default function LoginPage() {
   const [otp, setOtp] = useState("");
   const [message, setMessage] = useState("");
   const [isOtpSent, setIsOtpSent] = useState(false);
+  const [countdown, setCountdown] = useState(0);
+  const [isResending, setIsResending] = useState(false);
 
   const router = useRouter();
+
+  useEffect(() => {
+    if (countdown > 0) {
+      const timer = setInterval(() => {
+        setCountdown((prev) => prev - 1);
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [countdown]);
 
   const handleSendOTP = async (e) => {
     e.preventDefault();
@@ -40,6 +51,24 @@ export default function LoginPage() {
     setMessage(result);
     if (result === "OTP sent. Please check your email.") {
       setIsOtpSent(true);
+      setCountdown(60); // Start countdown after successful OTP send
+    }
+  };
+
+  const handleResendOTP = async () => {
+    try {
+      setIsResending(true);
+      const formData = new FormData();
+      formData.append("email", email);
+      const result = await sendOTP(formData);
+      setMessage(result);
+      if (result === "OTP sent. Please check your email.") {
+        setCountdown(60); // Restart countdown
+      }
+    } catch (error) {
+      setMessage("Failed to resend OTP. Please try again.");
+    } finally {
+      setIsResending(false);
     }
   };
 
@@ -58,7 +87,7 @@ export default function LoginPage() {
     const result = await verifyOTP(formData);
     console.log(result);
     if (result === "success") {
-      router.push("/pages/mobilePages/MobileDashboard"); // Redirect to dashboard after successful login
+      router.push("/pages/mobilePages/MobileDashboard");
     } else {
       setMessage(result);
     }
@@ -109,7 +138,7 @@ export default function LoginPage() {
               </Button>
             </form>
           ) : (
-            <form onSubmit={handleVerifyOTP}>
+            <Box component="form" onSubmit={handleVerifyOTP}>
               <TextField
                 margin="normal"
                 required
@@ -132,7 +161,22 @@ export default function LoginPage() {
               >
                 Verify OTP
               </Button>
-            </form>
+
+              <Button
+                fullWidth
+                variant="outlined"
+                color="primary"
+                onClick={handleResendOTP}
+                disabled={countdown > 0 || isResending}
+                sx={{ mb: 2 }}
+              >
+                {isResending
+                  ? "Resending..."
+                  : countdown > 0
+                  ? `Resend OTP in ${countdown}s`
+                  : "Resend OTP"}
+              </Button>
+            </Box>
           )}
 
           {message && (

@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { Alert, AlertTitle } from "@mui/material";
+import { Alert, AlertTitle, IconButton } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
 import { fetchVaccines } from "@/utils/supabase/api";
 
 export default function VaccineAlert() {
   const [vaccines, setVaccines] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showAlert, setShowAlert] = useState(true); // State to control visibility
 
   useEffect(() => {
     const fetchData = async () => {
@@ -30,12 +32,46 @@ export default function VaccineAlert() {
     .map((vaccine) => vaccine.Vaccine.vaccine_name)
     .join(", ");
 
+  const handleClose = () => {
+    setShowAlert(false); // Hide the alert when close button is clicked
+  };
+
   return (
     <>
       {loading && <p>Loading...</p>}
-      {error && <Alert severity="error">{error}</Alert>}
-      {!loading && outOfStockVaccines.length > 0 && (
-        <Alert severity="warning">
+      {error && showAlert && (
+        <Alert
+          severity="error"
+          onClose={handleClose}
+          action={
+            <IconButton
+              aria-label="close"
+              color="inherit"
+              size="small"
+              onClick={handleClose}
+            >
+              <CloseIcon fontSize="inherit" />
+            </IconButton>
+          }
+        >
+          {error}
+        </Alert>
+      )}
+      {!loading && outOfStockVaccines.length > 0 && showAlert && (
+        <Alert
+          severity="warning"
+          onClose={handleClose}
+          action={
+            <IconButton
+              aria-label="close"
+              color="inherit"
+              size="small"
+              onClick={handleClose}
+            >
+              <CloseIcon fontSize="inherit" />
+            </IconButton>
+          }
+        >
           <AlertTitle>No Vaccine Stocks</AlertTitle>
           The following vaccines are out of stock:{" "}
           <strong>{vaccineNames}</strong>.

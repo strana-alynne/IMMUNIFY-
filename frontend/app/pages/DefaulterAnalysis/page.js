@@ -25,6 +25,7 @@ export default function DefaulterAnalysis() {
 
   const [clusterData, setClusterData] = useState();
   const [topPuroks, setTopPuroks] = useState([]);
+  const [summary, setSummary] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -55,6 +56,35 @@ export default function DefaulterAnalysis() {
           .slice(0, 4);
 
         setTopPuroks(sortedPuroks);
+
+        // Get the names of the highest puroks
+        const highestPuroks = sortedPuroks
+          .map((purok) => purok.name)
+          .join(", ");
+
+        // Get the top defaulted vaccine
+        const defaultedVaccines = dbData.clusters[0].defaulted_vaccines;
+        const topVaccine = Object.entries(defaultedVaccines).sort(
+          ([, a], [, b]) => b - a
+        )[0];
+
+        const summaryText = `In the cluster centered around latitude <strong>${dbData.clusters[0].center.latitude.toFixed(
+          4
+        )}</strong> and longitude <strong>${dbData.clusters[0].center.longitude.toFixed(
+          4
+        )}</strong>, 
+          the Puroks <strong>${highestPuroks}</strong> exhibit the highest default rates, each recording up to <strong>${
+          sortedPuroks[0].count
+        }</strong> defaulters. 
+          Among the vaccines, the <strong>${
+            topVaccine[0]
+          }</strong> vaccine has the most significant number of defaulters in this cluster, 
+          with <strong>${
+            topVaccine[1]
+          }</strong> cases. These findings indicate substantial challenges, particularly in ensuring timely administration 
+          of the <strong>${topVaccine[0]}</strong> vaccine.`;
+
+        setSummary(summaryText);
       }
       setLoading(false);
     }
@@ -148,6 +178,18 @@ export default function DefaulterAnalysis() {
                 <Skeleton variant="rounded" height={400} />
               ) : (
                 <DefaultersTable clusters={clusterData.clusters} />
+              )}
+
+              {/* Cluster Summary Typography */}
+              {loading ? (
+                <Skeleton variant="text" width="100%" height={80} />
+              ) : (
+                <Typography
+                  variant={isMobile || isTablet ? "12px" : "14px"}
+                  color="text.primary"
+                  sx={{ fontWeight: 400, fontStyle: "italic", mb: 3 }}
+                  dangerouslySetInnerHTML={{ __html: summary }}
+                />
               )}
             </Stack>
           </Box>
