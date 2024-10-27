@@ -4,406 +4,346 @@ import {
   Grid,
   TextField,
   Typography,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
-  FormHelperText,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+  Autocomplete,
+  Box,
+  Alert,
 } from "@mui/material";
+import { motherService } from "@/utils/supabase/api";
 
 export default function Motherinfo({ setMotherData, triggerErrorCheck }) {
-  const [mother_email, setEmail] = useState("");
-  const [contact_number, setContactNumber] = useState();
-  const [mfirstname, setMFirstName] = useState("");
-  const [mlastname, setMLastname] = useState("");
-  const [mother_age, setMAge] = useState();
-  const [delivery_type, setBirthType] = useState("");
-  const [facility_type, setFacility] = useState("");
-  const [facility_name, setFacilityName] = useState("");
-  const [attending, setAttending] = useState("");
+  // States for form data
+  const [formData, setFormData] = useState({
+    mother_email: "",
+    contact_number: "",
+    mfirstname: "",
+    mlastname: "",
+  });
+  const [isExistingMother, setIsExistingMother] = useState(false);
+  const [searchResults, setSearchResults] = useState([]);
+  const [selectedMother, setSelectedMother] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
+
+  // Error states
   const [errors, setErrors] = useState({
     mother_email: "",
     contact_number: "",
     mfirstname: "",
     mlastname: "",
-    mother_age: "",
-    delivery_type: "",
-    facility_type: "",
-    facility_name: "",
-    attending: "",
+    search: "",
+    general: "",
   });
 
-  useEffect(() => {
-    if (triggerErrorCheck) {
-      validateFields();
-    }
-  }, [triggerErrorCheck]);
+  // Validation rules
+  const validationRules = {
+    mother_email: (value) => {
+      if (!value.trim()) return "Email is required";
+      if (!/\S+@\S+\.\S+/.test(value)) return "Invalid email format";
+      return "";
+    },
+    contact_number: (value) => {
+      if (!value) return "Contact number is required";
+      if (!/^[0-9]{11}$/.test(value)) return "Invalid contact number";
+      return "";
+    },
+    mfirstname: (value) =>
+      value.trim() === "" ? "First name is required" : "",
+    mlastname: (value) => (value.trim() === "" ? "Last name is required" : ""),
+  };
 
+  // Update parent component with initial mother data
   useEffect(() => {
-    const mother_name = `${mfirstname} ${mlastname}`;
-    setMotherData({
-      mother_name,
-      mother_age,
-      facility_name,
-      facility_type,
-      delivery_type,
-      attending,
-      mother_email,
-      contact_number,
+    updateParentMotherData();
+  }, [formData, selectedMother, isExistingMother]);
+
+  // Effect for error checking trigger
+  useEffect(() => {
+    if (!triggerErrorCheck) return;
+
+    if (!isExistingMother) {
+      validateAllFields();
+    } else if (!selectedMother) {
+      setErrors((prev) => ({
+        ...prev,
+        search: "Please select a mother from the search results",
+      }));
+    }
+  }, [triggerErrorCheck, isExistingMother, selectedMother]);
+
+  // Debounced search effect
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (isExistingMother && searchQuery) {
+        handleSearch(searchQuery);
+      }
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery, isExistingMother]);
+
+  const updateParentMotherData = () => {
+    if (isExistingMother) {
+      if (selectedMother) {
+        setMotherData({
+          mother_id: selectedMother.mother_id,
+          mother_name: selectedMother.mother_name,
+          mother_email: selectedMother.mother_email,
+          contact_number: selectedMother.contact_number,
+          isExisting: true,
+        });
+      } else {
+        setMotherData(null);
+      }
+    } else {
+      const fullName =
+        `${formData.mfirstname.trim()} ${formData.mlastname.trim()}`.trim();
+      if (formData.mother_email || formData.contact_number || fullName) {
+        setMotherData({
+          mother_name: fullName,
+          mother_email: formData.mother_email,
+          contact_number: formData.contact_number,
+          isExisting: false,
+        });
+      }
+    }
+  };
+
+  // Validate all fields
+  const validateAllFields = () => {
+    const newErrors = {};
+    Object.keys(validationRules).forEach((field) => {
+      newErrors[field] = validationRules[field](formData[field]);
     });
-  }, [
-    mfirstname,
-    mlastname,
-    mother_age,
-    facility_name,
-    facility_type,
-    delivery_type,
-    mother_email,
-    contact_number,
-    attending,
-  ]);
-
-  const validateFields = () => {
-    const newErrors = {
-      mother_email:
-        mother_email.trim() === ""
-          ? "Email is required"
-          : !/\S+@\S+\.\S+/.test(mother_email)
-          ? "Invalid email format"
-          : "",
-      contact_number:
-        contact_number === ""
-          ? "Contact number is required"
-          : !/^[0-9]{11}$/.test(contact_number)
-          ? "Invalid contact number"
-          : "",
-      mfirstname: mfirstname.trim() === "" ? "First name is required" : "",
-      mlastname: mlastname.trim() === "" ? "Last name is required" : "",
-      mother_age:
-        mother_age === ""
-          ? "Age is required"
-          : isNaN(mother_age) || mother_age <= 0
-          ? "Invalid age"
-          : "",
-      delivery_type: delivery_type === "" ? "Type of birth is required" : "",
-      facility_type: facility_type === "" ? "Type of facility is required" : "",
-      facility_name:
-        facility_name.trim() === "" ? "Facility name is required" : "",
-      attending: attending === "" ? "Attending personnel is required" : "",
-    };
-    setErrors(newErrors);
+    setErrors((prev) => ({ ...prev, ...newErrors }));
+    return !Object.values(newErrors).some((error) => error);
   };
 
-  const handleEmail = (event) => {
-    setEmail(event.target.value);
+  // Handle search
+  const handleSearch = async (query) => {
+    if (query.length < 2) {
+      setSearchResults([]);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const { data, error } = await motherService.searchMothers(query);
+
+      if (error) throw error;
+
+      setSearchResults(data || []);
+      setErrors((prev) => ({ ...prev, search: "" }));
+    } catch (error) {
+      console.error("Search error:", error);
+      setErrors((prev) => ({
+        ...prev,
+        search: "Failed to search mothers. Please try again.",
+        general: error.message,
+      }));
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Handle form input changes
+  const handleInputChange = (field) => (event) => {
+    const value =
+      field === "contact_number"
+        ? event.target.value.replace(/\D/g, "")
+        : event.target.value;
+
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+
     if (triggerErrorCheck) {
       setErrors((prev) => ({
         ...prev,
-        mother_email:
-          event.target.value.trim() === ""
-            ? "Email is required"
-            : !/\S+@\S+\.\S+/.test(event.target.value)
-            ? "Invalid email format"
-            : "",
+        [field]: validationRules[field](value),
       }));
     }
   };
 
-  const handleContactNumber = (event) => {
-    setContactNumber(event.target.value);
-    if (triggerErrorCheck) {
-      setErrors((prev) => ({
-        ...prev,
-        contact_number:
-          event.target.value.trim() === ""
-            ? "Contact number is required"
-            : !/^[0-9]{11}$/.test(event.target.value)
-            ? "Invalid contact number"
-            : "",
-      }));
+  // Handle mother type change
+  const handleMotherTypeChange = (e) => {
+    const isExisting = e.target.value === "true";
+    setIsExistingMother(isExisting);
+
+    // Reset states
+    setSelectedMother(null);
+    setSearchQuery("");
+    setSearchResults([]);
+    setErrors({});
+
+    if (!isExisting) {
+      setFormData({
+        mother_email: "",
+        contact_number: "",
+        mfirstname: "",
+        mlastname: "",
+      });
     }
   };
 
-  const handleMFirstName = (event) => {
-    setMFirstName(event.target.value);
-    if (triggerErrorCheck) {
-      setErrors((prev) => ({
-        ...prev,
-        mfirstname:
-          event.target.value.trim() === "" ? "First name is required" : "",
-      }));
-    }
+  // Handle mother selection
+  const handleMotherSelect = (event, mother) => {
+    setSelectedMother(mother);
   };
 
-  const handleMLastName = (event) => {
-    setMLastname(event.target.value);
-    if (triggerErrorCheck) {
-      setErrors((prev) => ({
-        ...prev,
-        mlastname:
-          event.target.value.trim() === "" ? "Last name is required" : "",
-      }));
-    }
-  };
-
-  const handleMAge = (event) => {
-    setMAge(event.target.value);
-    if (triggerErrorCheck) {
-      setErrors((prev) => ({
-        ...prev,
-        mother_age:
-          event.target.value === ""
-            ? "Age is required"
-            : isNaN(event.target.value) || event.target.value <= 0
-            ? "Invalid age"
-            : "",
-      }));
-    }
-  };
-
-  const handleFacilityName = (event) => {
-    setFacilityName(event.target.value);
-    if (triggerErrorCheck) {
-      setErrors((prev) => ({
-        ...prev,
-        facility_name:
-          event.target.value.trim() === "" ? "Facility name is required" : "",
-      }));
-    }
-  };
-
-  const handleBirthType = (event) => {
-    setBirthType(event.target.value);
-    if (triggerErrorCheck) {
-      setErrors((prev) => ({
-        ...prev,
-        delivery_type:
-          event.target.value === "" ? "Type of birth is required" : "",
-      }));
-    }
-  };
-
-  const handleFacility = (event) => {
-    setFacility(event.target.value);
-    if (triggerErrorCheck) {
-      setErrors((prev) => ({
-        ...prev,
-        facility_type:
-          event.target.value === "" ? "Type of facility is required" : "",
-      }));
-    }
-  };
-
-  const handleAttending = (event) => {
-    setAttending(event.target.value);
-    if (triggerErrorCheck) {
-      setErrors((prev) => ({
-        ...prev,
-        attending:
-          event.target.value === "" ? "Attending personnel is required" : "",
-      }));
-    }
-  };
   return (
-    <Grid container spacing={2}>
-      {/* EMAIL */}
-      <Grid item xs={4}>
-        <Typography variant="p" color="darker">
-          Email Address
-        </Typography>
-        <TextField
-          variant="filled"
-          size="small"
-          fullWidth
-          id="outlined-size-small"
-          label="e.g. name@email.com"
-          name="email"
-          autoFocus
-          type="email"
-          value={mother_email}
-          onChange={handleEmail}
-          error={!!errors.mother_email}
-          helperText={errors.mother_email}
-        />
-      </Grid>
+    <Box>
+      {errors.general && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {errors.general}
+        </Alert>
+      )}
 
-      {/* CONTACT NUMBER */}
-      <Grid item xs={4}>
-        <Typography variant="p" color="darker">
-          Contact Number
-        </Typography>
-        <TextField
-          variant="filled"
-          size="small"
-          fullWidth
-          id="outlined-size-small"
-          label="e.g. 09123456789"
-          name="contact_number"
-          autoFocus
-          type="tel"
-          inputProps={{
-            maxLength: 11,
-            pattern: "[0-9]*",
-          }}
-          onInput={(e) => {
-            e.target.value = e.target.value.slice(0, 11);
-          }}
-          value={contact_number}
-          onChange={handleContactNumber}
-          error={!!errors.contact_number}
-          helperText={errors.contact_number}
-        />
-      </Grid>
-
-      {/* FIRST NAME */}
-      <Grid item xs={5}>
-        <Typography variant="p" color="darker">
-          First Name
-        </Typography>
-        <TextField
-          variant="filled"
-          size="small"
-          fullWidth
-          id="outlined-size-small"
-          label="First Name"
-          name="firstname"
-          autoFocus
-          value={mfirstname}
-          onChange={handleMFirstName}
-          error={!!errors.mfirstname}
-          helperText={errors.mfirstname}
-        />
-      </Grid>
-
-      {/* LAST NAME */}
-      <Grid item xs={5}>
-        <Typography variant="p" color="darker">
-          Last Name
-        </Typography>
-        <TextField
-          variant="filled"
-          size="small"
-          fullWidth
-          id="outlined-size-small"
-          label="Last Name"
-          name="lastname"
-          autoFocus
-          value={mlastname}
-          onChange={handleMLastName}
-          error={!!errors.mlastname}
-          helperText={errors.mlastname}
-        />
-      </Grid>
-
-      {/* AGE */}
-      <Grid item xs={2}>
-        <Typography variant="p" color="darker">
-          Age
-        </Typography>
-        <TextField
-          variant="filled"
-          size="small"
-          fullWidth
-          id="outlined-size-small"
-          label="Age"
-          name="age"
-          autoFocus
-          type="number"
-          value={mother_age}
-          onChange={handleMAge}
-          error={!!errors.mother_age}
-          helperText={errors.mother_age}
-        />
-      </Grid>
-
-      {/* TYPE of BIRTH */}
-      <Grid item xs={4}>
-        <Typography variant="p" color="darker">
-          Type of Birth
-        </Typography>
-        <FormControl fullWidth variant="filled" error={!!errors.delivery_type}>
-          <InputLabel id="birth-type-label">Type of Birth</InputLabel>
-          <Select
-            labelId="birth-type-label"
-            id="birth-type"
-            value={delivery_type}
-            label="Type of Birth"
-            onChange={handleBirthType}
+      <Grid container spacing={2}>
+        <Grid item xs={12}>
+          <RadioGroup
+            row
+            value={isExistingMother}
+            onChange={handleMotherTypeChange}
           >
-            <MenuItem value="Normal Delivery">Normal Delivery</MenuItem>
-            <MenuItem value="C-section">C-section</MenuItem>
-          </Select>
-          {errors.delivery_type && (
-            <FormHelperText>{errors.delivery_type}</FormHelperText>
-          )}
-        </FormControl>
-      </Grid>
+            <FormControlLabel
+              value={false}
+              control={<Radio />}
+              label="New Mother"
+            />
+            <FormControlLabel
+              value={true}
+              control={<Radio />}
+              label="Existing Mother"
+            />
+          </RadioGroup>
+        </Grid>
 
-      {/* NAME OF FACILITY */}
-      <Grid item xs={4}>
-        <Typography variant="p" color="darker">
-          Name of the Facility
-        </Typography>
-        <TextField
-          variant="filled"
-          size="small"
-          fullWidth
-          id="outlined-size-small"
-          label="Name of Facility"
-          name="facility_name"
-          autoFocus
-          value={facility_name}
-          onChange={handleFacilityName}
-          error={!!errors.facility_name}
-          helperText={errors.facility_name}
-        />
-      </Grid>
+        {isExistingMother ? (
+          <Grid item xs={12}>
+            <Autocomplete
+              options={searchResults}
+              getOptionLabel={(option) =>
+                `${option.mother_name} (${option.mother_email})`
+              }
+              onChange={handleMotherSelect}
+              onInputChange={(_, newValue) => setSearchQuery(newValue)}
+              value={selectedMother}
+              loading={isSearching}
+              loadingText="Searching..."
+              noOptionsText={
+                searchQuery.length < 2
+                  ? "Type to search..."
+                  : "No mothers found"
+              }
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Search Mother"
+                  variant="filled"
+                  fullWidth
+                  error={!!errors.search}
+                  helperText={errors.search || "Search by name or email"}
+                />
+              )}
+            />
+            {selectedMother && (
+              <Alert severity="success" sx={{ mt: 2 }}>
+                <Typography>
+                  Selected Mother: {selectedMother.mother_name}
+                </Typography>
+                <Typography>Email: {selectedMother.mother_email}</Typography>
+                <Typography>
+                  Contact: {selectedMother.contact_number}
+                </Typography>
+              </Alert>
+            )}
+          </Grid>
+        ) : (
+          <>
+            <Grid item xs={12} md={6}>
+              <Typography variant="p" color="darker">
+                Email Address
+              </Typography>
+              <TextField
+                variant="filled"
+                size="small"
+                fullWidth
+                id="mother-email"
+                label="e.g. name@email.com"
+                type="email"
+                value={formData.mother_email}
+                onChange={handleInputChange("mother_email")}
+                error={!!errors.mother_email}
+                helperText={errors.mother_email}
+              />
+            </Grid>
 
-      {/* TPYE OF FACILITY */}
-      <Grid item xs={4}>
-        <Typography variant="p" color="darker">
-          Type of Facility
-        </Typography>
-        <FormControl fullWidth variant="filled" error={!!errors.facility_type}>
-          <InputLabel id="facility-type-label">Type of Facility</InputLabel>
-          <Select
-            labelId="facility-type-label"
-            id="facility-type"
-            value={facility_type}
-            label="Type of Facility"
-            onChange={handleFacility}
-          >
-            <MenuItem value="Government">Government</MenuItem>
-            <MenuItem value="Private">Private</MenuItem>
-          </Select>
-          {errors.facility_type && (
-            <FormHelperText>{errors.facility_type}</FormHelperText>
-          )}
-        </FormControl>
-      </Grid>
+            <Grid item xs={12} md={6}>
+              <Typography variant="p" color="darker">
+                Contact Number
+              </Typography>
+              <TextField
+                variant="filled"
+                size="small"
+                fullWidth
+                id="mother-contact"
+                label="e.g. 09123456789"
+                name="contact_number"
+                type="tel"
+                inputProps={{
+                  maxLength: 11,
+                  pattern: "[0-9]*",
+                }}
+                value={formData.contact_number}
+                onChange={handleInputChange("contact_number")}
+                error={!!errors.contact_number}
+                helperText={errors.contact_number}
+              />
+            </Grid>
 
-      {/* ATTENDING */}
-      <Grid item xs={4}>
-        <Typography variant="p" color="darker">
-          Attending Personnel
-        </Typography>
-        <FormControl fullWidth variant="filled" error={!!errors.attending}>
-          <InputLabel id="attending-label">Attending Personnel</InputLabel>
-          <Select
-            labelId="attending-label"
-            id="attending"
-            value={attending}
-            label="Attending Personnel"
-            onChange={handleAttending}
-          >
-            <MenuItem value="Doctor">Doctor</MenuItem>
-            <MenuItem value="Midwife">Midwife</MenuItem>
-          </Select>
-          {errors.attending && (
-            <FormHelperText>{errors.attending}</FormHelperText>
-          )}
-        </FormControl>
+            <Grid item xs={12} md={6}>
+              <Typography variant="p" color="darker">
+                First Name
+              </Typography>
+              <TextField
+                variant="filled"
+                size="small"
+                fullWidth
+                id="mother-firstname"
+                label="First Name"
+                name="firstname"
+                value={formData.mfirstname}
+                onChange={handleInputChange("mfirstname")}
+                error={!!errors.mfirstname}
+                helperText={errors.mfirstname}
+              />
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <Typography variant="p" color="darker">
+                Last Name
+              </Typography>
+              <TextField
+                variant="filled"
+                size="small"
+                fullWidth
+                id="mother-lastname"
+                label="Last Name"
+                name="lastname"
+                value={formData.mlastname}
+                onChange={handleInputChange("mlastname")}
+                error={!!errors.mlastname}
+                helperText={errors.mlastname}
+              />
+            </Grid>
+          </>
+        )}
       </Grid>
-    </Grid>
+    </Box>
   );
 }

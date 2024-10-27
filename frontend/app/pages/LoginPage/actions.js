@@ -21,7 +21,7 @@ export async function login(formData) {
     } else if (error.status === 401) {
       return "Incorrect password";
     } else {
-      return "An error occurred";
+      return error.message;
     }
   }
   // Login successful, redirect to dashboard

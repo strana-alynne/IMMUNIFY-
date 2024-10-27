@@ -3,6 +3,7 @@ import "./globals.css";
 import Theme from "./theme";
 import ClientLayout from "./ClientLayout";
 import { getUser } from "./lib/auth";
+import { Analytics } from "@vercel/analytics/react";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -106,6 +107,7 @@ export default async function RootLayout({ children }) {
       <Theme>
         <body className={inter.className}>
           <ClientLayout user={user}>{children}</ClientLayout>
+          <Analytics />
         </body>
       </Theme>
     </html>

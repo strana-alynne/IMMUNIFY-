@@ -1,4 +1,5 @@
 import { createClient } from "@/utils/supabase/client";
+import { stringify } from "postcss";
 
 const supabase = createClient();
 
@@ -290,94 +291,168 @@ export const updateMotherDetails = async (motherId, updatedData) => {
   return data;
 };
 
-export async function createMotherAccount(motherData) {
-  const {
-    mother_email,
-    mother_name,
-    mother_age,
-    facility_name,
-    facility_type,
-    delivery_type,
-    attending,
-    contact_number,
-  } = motherData;
-
-  try {
-    // Generate a temporary password
-    const tempPassword = Math.random().toString(36).slice(-8);
-
-    // Get the next available mother_id
-    const { data: lastMother, error: fetchError } = await supabase
-      .from("Mother")
-      .select("mother_id")
-      .order("mother_id", { ascending: false })
-      .limit(1)
-      .single();
-
-    if (fetchError && fetchError.code !== "PGRST116") {
-      throw fetchError;
+export const motherService = {
+  /**
+   * Search for mothers by name or email
+   * @param {string} query - Search query
+   * @returns {Promise<{data: Array, error: Error}>}
+   */
+  async searchMothers(query) {
+    if (!query || query.length < 2) {
+      return { data: [], error: null };
     }
 
-    let nextMotherId;
-    if (lastMother) {
-      const lastNumber = parseInt(lastMother.mother_id.slice(1), 10);
-      nextMotherId = `M${String(lastNumber + 1).padStart(3, "0")}`;
-    } else {
-      nextMotherId = "M001";
-    }
+    try {
+      const { data, error } = await supabase
+        .from("Mother")
+        .select("mother_id, mother_name, mother_email, contact_number")
+        .or(`mother_name.ilike.%${query}%,mother_email.ilike.%${query}%`)
+        .order("mother_name", { ascending: true })
+        .limit(10);
 
-    // Sign up the user with Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: mother_email,
-      password: tempPassword,
-      options: {
-        data: {
-          email_confirm: true,
-          role: "mother",
-          mother_id: nextMotherId, // Store the custom mother_id in user metadata
+      if (error) throw error;
+
+      // Format contact number for display
+      const formattedData = data.map((mother) => ({
+        ...mother,
+        contact_number: mother.contact_number
+          ? mother.contact_number.toString()
+          : "",
+      }));
+
+      return { data: formattedData, error: null };
+    } catch (error) {
+      console.error("Error searching mothers:", error);
+      return { data: [], error };
+    }
+  },
+
+  /**
+   * Create a new mother account
+   * @param {Object} motherData - Mother information
+   * @returns {Promise<{motherData: Object, tempPassword: string, error: Error}>}
+   */
+
+  async createMotherAccount(motherData) {
+    const { mother_email, mother_name, contact_number } = motherData;
+
+    try {
+      // Generate a temporary password
+      const tempPassword = Math.random().toString(36).slice(-8);
+
+      // Get the next available mother_id
+      const { data: lastMother, error: fetchError } = await supabase
+        .from("Mother")
+        .select("mother_id")
+        .order("mother_id", { ascending: false })
+        .limit(1)
+        .single();
+
+      if (fetchError && fetchError.code !== "PGRST116") {
+        throw fetchError;
+      }
+
+      // Generate next mother ID
+      let nextMotherId;
+      if (lastMother) {
+        const lastNumber = parseInt(lastMother.mother_id.slice(1), 10);
+        nextMotherId = `M${String(lastNumber + 1).padStart(3, "0")}`;
+      } else {
+        nextMotherId = "M001";
+      }
+
+      // Sign up the user with Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: mother_email,
+        password: tempPassword,
+        options: {
+          data: {
+            email_confirm: true,
+            role: "mother",
+            mother_id: nextMotherId,
+          },
         },
-      },
-    });
+      });
 
-    if (authError) throw authError;
+      if (authError) throw authError;
 
-    // Insert the mother data into the Mother table
-    const { data: motherRecord, error: motherError } = await supabase
-      .from("Mother")
-      .insert({
-        mother_id: nextMotherId,
-        mother_name,
-        mother_age,
-        facility_name,
-        facility_type,
-        delivery_type,
-        attending,
-        mother_email,
-        mother_password: tempPassword, // Consider hashing this or handling it differently
-        contact_number,
-        role: "mother",
-        auth_id: authData.user.id, // Store the Supabase Auth ID for reference
-      })
-      .select();
+      // Insert the mother data into the Mother table
+      const { data: motherRecord, error: motherError } = await supabase
+        .from("Mother")
+        .insert({
+          mother_id: nextMotherId,
+          mother_name,
+          mother_email,
+          contact_number,
+        })
+        .select()
+        .single();
 
-    if (motherError) throw motherError;
+      if (motherError) throw motherError;
 
-    // Send a magic link email
-    const { error: magicLinkError } = await supabase.auth.signInWithOtp({
-      email: mother_email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/pages/mobilePages/MobileLogIn`,
-      },
-    });
+      // Send magic link email
+      const { error: magicLinkError } = await supabase.auth.signInWithOtp({
+        email: mother_email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/pages/mobilePages/MobileLogIn`,
+        },
+      });
 
-    if (magicLinkError) throw magicLinkError;
+      if (magicLinkError) throw magicLinkError;
 
-    return { motherData: motherRecord, tempPassword };
-  } catch (error) {
-    console.error("Error creating mother account:", error);
-    return { error };
-  }
-}
+      return { motherData: motherRecord, tempPassword, error: null };
+    } catch (error) {
+      console.error("Error creating mother account:", error);
+      return { motherData: null, tempPassword: null, error };
+    }
+  },
+
+  /**
+   * Get a mother by ID
+   * @param {string} motherId
+   * @returns {Promise<{data: Object, error: Error}>}
+   */
+  async getMotherById(motherId) {
+    try {
+      const { data, error } = await supabase
+        .from("Mother")
+        .select("*")
+        .eq("mother_id", motherId)
+        .single();
+
+      if (error) throw error;
+
+      return { data, error: null };
+    } catch (error) {
+      console.error("Error fetching mother:", error);
+      return { data: null, error };
+    }
+  },
+
+  /**
+   * Update mother information
+   * @param {string} motherId
+   * @param {Object} updateData
+   * @returns {Promise<{data: Object, error: Error}>}
+   */
+  async updateMother(motherId, updateData) {
+    try {
+      const { data, error } = await supabase
+        .from("Mother")
+        .update(updateData)
+        .eq("mother_id", motherId)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return { data, error: null };
+    } catch (error) {
+      console.error("Error updating mother:", error);
+      return { data: null, error };
+    }
+  },
+};
 
 //========================== CHILD RECORDS =================================
 
@@ -389,23 +464,21 @@ export async function addChild(
   growthData,
   address
 ) {
-  console.log("motherIdjdhjdhj", motherId[0].mother_id);
+  console.log("motherId", motherId);
+  console.log("ChildData", childData);
+  console.log("purok", purokName[0]);
+  console.log("address", address);
   try {
     // Validate input data
     if (!motherId || !childData || !growthData || !purokName || !address) {
       throw new Error("Missing required data fields");
     }
 
-    // Ensure motherId is in the correct format (e.g., 'M001')
-    if (!motherId[0].mother_id.match(/^M\d{3}$/)) {
-      throw new Error("Invalid mother ID format");
-    }
-
     // Get purok ID from the purok name
     const { data: purok, error: purokError } = await supabase
       .from("Purok")
       .select("purok_id")
-      .eq("purok_name", purokName)
+      .eq("purok_name", purokName[0])
       .single();
 
     if (purokError)
@@ -421,7 +494,7 @@ export async function addChild(
         {
           ...childData,
           ...address,
-          mother_id: motherId[0].mother_id,
+          mother_id: motherId,
           purok_id: purokId,
         },
       ])
@@ -967,7 +1040,7 @@ export async function deleteRecord(delRecords) {
     .delete()
     .eq("record_id", delRecords.record_id);
 
-  if (error) {
+  if (delRccord) {
     console.error("Error updating vaccine stock:", error.message);
   }
 

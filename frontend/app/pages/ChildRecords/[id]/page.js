@@ -50,6 +50,7 @@ import MotherAccordion from "@/app/components/MotherAccordion";
 import ChildInfoSection from "@/app/components/ChildInfoSection";
 import EditMotherModal from "@/app/components/EditMotherModal";
 import ChildRecordSkeleton from "@/app/components/ChildRecordSkeleton";
+import { toast, Toaster } from "sonner";
 const ChildId = ({ params }) => {
   const child_id_params = params.id;
   const [childData, setChildData] = useState([]);
@@ -166,7 +167,8 @@ const ChildId = ({ params }) => {
 
   const handleSaveRecord = async () => {
     if (!selectedSchedule || !dateAdministered) {
-      alert("Please fill out all fields before saving.");
+      toast.error("Please fill out all fields before saving.");
+      // alert("Please fill out all fields before saving.");
       return;
     }
 
@@ -196,10 +198,9 @@ const ChildId = ({ params }) => {
         const stockAvailable = await checkVaccineStock(getVacId, vialsUsed);
 
         if (!stockAvailable) {
-          setModalContent(
+          toast.error(
             "Insufficient vaccine stock. Please check your vaccine inventory."
           );
-          setOpenModal(true);
           return;
         } else {
           const newRecord = {
@@ -208,15 +209,14 @@ const ChildId = ({ params }) => {
             completion_status: "Completed",
           };
           await newImmunizationRecord(newRecord);
-          alert("Record saved successfully!");
+          toast.success("Record saved successfully!");
         }
       } else {
         const stockAvailable = await checkVaccineStock(getVacId, vialsUsed);
         if (!stockAvailable) {
-          setModalContent(
+          toast.error(
             "Insufficient vaccine stock. Please check your vaccine inventory."
           );
-          setOpenModal(true);
           return;
         } else {
           const newRecord = {
@@ -225,7 +225,7 @@ const ChildId = ({ params }) => {
             completion_status: "Completed",
           };
           await newImmunizationRecord(newRecord);
-          alert("Record saved successfully!");
+          toast.success("Record saved successfully!");
 
           // Update the inventory
           await addVaccineStock({
@@ -308,9 +308,11 @@ const ChildId = ({ params }) => {
       // Add this function to your api.js file
       await updateMotherDetails(childData[0].Mother.mother_id, editedData);
       await refreshChildData();
-      alert("Mother's details updated successfully!");
+      toast.success("Mother's details updated successfully!");
+      // alert("Mother's details updated successfully!");
     } catch (error) {
-      alert("Failed to update mother's details. Please try again.");
+      toast.error("Failed to update mother's details. Please try again.");
+      // alert("Failed to update mother's details. Please try again.");
     }
   };
 
@@ -318,9 +320,11 @@ const ChildId = ({ params }) => {
     try {
       await updateChildDetails(params.id, editedData);
       await refreshChildData();
-      alert("Child details updated successfully!");
+      toast.success("Child details updated successfully!");
+      // alert("Child details updated successfully!");
     } catch (error) {
-      alert("Failed to update child details. Please try again.");
+      toast.error("Failed to update child details. Please try again.");
+      // alert("Failed to update child details. Please try again.");
     }
   };
 
@@ -330,6 +334,12 @@ const ChildId = ({ params }) => {
 
   return (
     <Box sx={{ display: "flex" }}>
+      <Toaster
+        richColors
+        position="top-right"
+        severity="error"
+        autoHideDuration={3000}
+      />
       <Container fixed>
         <Stack spacing={4}>
           <Stack direction="column">

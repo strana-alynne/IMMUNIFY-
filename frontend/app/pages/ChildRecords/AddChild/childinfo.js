@@ -331,16 +331,15 @@ export default function childinfo({
             label="Birthdate"
             value={birthdate}
             onChange={handleBirthDate}
-            renderInput={(params) => <TextField {...params} />}
-            slotProps={{
-              textField: {
-                fullWidth: true,
-                required: true,
-                variant: "filled",
-                error: !!errors.birthdate,
-                helperText: errors.birthdate,
-              },
-            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                variant="filled"
+                fullWidth
+                error={!!errors.birthdate}
+                helperText={errors.birthdate}
+              />
+            )}
           />
         </LocalizationProvider>
       </Grid>
@@ -354,13 +353,11 @@ export default function childinfo({
           variant="filled"
           size="small"
           fullWidth
-          id="outlined-size-small"
-          label="age in months"
-          name="age"
-          autoFocus
-          type="number"
-          value={child_age}
+          value={child_age || ""}
           onChange={handleAge}
+          error={!!errors.child_age}
+          helperText={errors.child_age}
+          inputProps={{ readOnly: true }}
         />
       </Grid>
 

@@ -23,7 +23,8 @@ import { useState } from "react";
 import * as React from "react";
 // Importing signup function from the actions module
 import { signup } from "./actions";
-import Image from "next/image";
+import { toast, Toaster } from "sonner";
+import { useRouter } from "next/navigation";
 
 // Define the RegisterPage component
 export default function RegisterPage() {
@@ -38,6 +39,7 @@ export default function RegisterPage() {
   const handleMouseDownPassword = (event) => {
     event.preventDefault();
   };
+  const router = useRouter();
   // Create a reference to the form element
   const formRef = React.createRef();
   // Function to handle the form submission
@@ -45,6 +47,8 @@ export default function RegisterPage() {
     e.preventDefault();
     // Check if the password and confirm password match
     if (password !== confirmPassword) {
+      console.log("Passwords do not match");
+      toast.error("Passwords do not match"); // Error message if they don't match
       setError("Passwords do not match"); // Error message if they don't match
       setSuccess(null);
     } else {
@@ -64,21 +68,29 @@ export default function RegisterPage() {
         setError(null); // Clear any previous error messages
         setLoading(true); // Set the loading state to true
         const response = await signup(formData);
-        console.log(response);
         setLoading(false);
         if (response.success) {
-          setSuccess(response.message);
+          toast.success(response.message); // If successful, show success message
+          router.replace("/pages/LoginPage"); // Redirect to the login page
         }
         // Check if the signup was successful
         if (response.success) {
-          setSuccess(response.message);
+          toast.success(response.message, {
+            duration: 900000, // Show toast for 2 seconds
+            onDismiss: () => {
+              router.replace("/pages/LoginPage");
+            },
+          }); // If successful, show success message
         } else {
           if (response.message === "The email is already used") {
+            toast.error(
+              "Email already exists. Please use a different email address."
+            );
             setError(
               "Email already exists. Please use a different email address."
             );
           } else {
-            setError(response.message); // If not, error message
+            toast.error(response.message); // If not, error message
           }
         }
       }
@@ -182,8 +194,27 @@ export default function RegisterPage() {
               <FormHelperText>Select your role</FormHelperText>
             </FormControl>
 
-            {error && <Typography color="error">{error}</Typography>}
-            {success && <Typography color="success">{success}</Typography>}
+            {
+              (error && console.log(error),
+              (
+                <Toaster
+                  richColors
+                  position="top-center"
+                  severity="error"
+                  autoHideDuration={3000}
+                />
+              ))
+            }
+            {success &&
+              (console.log(success),
+              (
+                <Toaster
+                  richColors
+                  position="top-center"
+                  severity="error"
+                  autoHideDuration={3000}
+                />
+              ))}
 
             <Button
               type="submit"

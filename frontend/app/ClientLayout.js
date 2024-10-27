@@ -106,19 +106,5 @@ export default function ClientLayout({ children, user }) {
     }
   };
 
-  return (
-    <>
-      {renderContent()}
-      <footer
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100px",
-        }}
-      >
-        @BalsomoPagueVillacis 2024
-      </footer>
-    </>
-  );
+  return <>{renderContent()}</>;
 }

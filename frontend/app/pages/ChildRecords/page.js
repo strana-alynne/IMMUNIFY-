@@ -180,7 +180,6 @@ export default function ChildRecords() {
           filteredChildren = fetchedChildren.filter((child) =>
             scheduledIds.includes(child.child_id)
           );
-          console.log("Filtered children:", filteredChildren);
         } else if (activeFilter === "vaccinated") {
           filteredChildren = fetchedChildren.filter((child) =>
             vaccinatedId.includes(child.child_id)

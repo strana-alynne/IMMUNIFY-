@@ -16,7 +16,7 @@ import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { useState } from "react";
 import * as React from "react";
 import { login } from "./actions";
-import Image from "next/image";
+import { toast, Toaster } from "sonner";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -51,7 +51,10 @@ export default function LoginPage() {
       const formData = new FormData(formRef.current);
       const error = await login(formData, "web");
       if (error) {
+        toast.error(error);
         setLoginError(error);
+      } else {
+        toast.success("Login Successful", { duration: 60000 });
       }
     }
   };
@@ -72,6 +75,7 @@ export default function LoginPage() {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-2 sm:p-4 md:p-8">
+      <Toaster richColors position="top-center" autoHideDuration={60000} />
       <Paper sx={{ p: 4, width: "90%", maxWidth: "400px" }}>
         <Stack
           alignItems="center" // Center contents horizontally
@@ -135,9 +139,6 @@ export default function LoginPage() {
                 ),
               }}
             />
-            <Link href="/pages/ForgotPass" variant="body2">
-              Forgot password?
-            </Link>
 
             <Button
               type="submit"
@@ -150,11 +151,16 @@ export default function LoginPage() {
               Log in
             </Button>
 
-            {loginError && (
-              <Typography variant="body2" color="error">
-                {loginError}
-              </Typography>
-            )}
+            {loginError &&
+              (console.log(loginError),
+              (
+                <Toaster
+                  richColors
+                  position="top-center"
+                  severity="error"
+                  autoHideDuration={3000}
+                />
+              ))}
 
             <Grid container justifyContent="center">
               <Grid item>
