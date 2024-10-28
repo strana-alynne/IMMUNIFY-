@@ -14,7 +14,6 @@ import {
   FormControl,
   MenuItem,
   Grid,
-  CircularProgress,
 } from "@mui/material";
 import {
   Face as FaceIcon,
@@ -51,7 +50,6 @@ import ChildInfoSection from "@/app/components/ChildInfoSection";
 import EditMotherModal from "@/app/components/EditMotherModal";
 import ChildRecordSkeleton from "@/app/components/ChildRecordSkeleton";
 import { toast, Toaster } from "sonner";
-import { ContinuousColorLegend } from "@mui/x-charts";
 const ChildId = ({ params }) => {
   const child_id_params = params.id;
   const [childData, setChildData] = useState([]);

@@ -56,7 +56,7 @@ const ChatInterface = ({ params }) => {
   // Set up subscription whenever conversationId changes
   useEffect(() => {
     if (!conversationId) return;
-
+    console.log("kfjkfjfk", conversationId);
     const cleanup = setupMessagesSubscription(conversationId);
     return () => cleanup();
   }, [conversationId]);
@@ -117,7 +117,6 @@ const ChatInterface = ({ params }) => {
         },
         (payload) => {
           setMessages((prev) => {
-            // Check if message already exists to prevent duplicates
             const messageExists = prev.some((msg) => msg.id === payload.new.id);
             if (messageExists) return prev;
             return [...prev, payload.new];

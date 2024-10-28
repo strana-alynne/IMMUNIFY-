@@ -25,6 +25,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleClickShowPassword = () => setShowPassword((show) => !show);
 
@@ -48,13 +49,21 @@ export default function LoginPage() {
         setPasswordError("");
       }
     } else {
-      const formData = new FormData(formRef.current);
-      const error = await login(formData, "web");
-      if (error) {
-        toast.error(error);
-        setLoginError(error);
-      } else {
-        toast.success("Login Successful", { duration: 60000 });
+      setIsLoading(true);
+      try {
+        const formData = new FormData(formRef.current);
+        const error = await login(formData, "web");
+        if (error) {
+          toast.error(error);
+          setLoginError(error);
+        } else {
+          toast.success("Login Successful", { duration: 60000 });
+        }
+      } catch (error) {
+        toast.error("An unexpected error occurred");
+        setLoginError("An unexpected error occurred");
+      } finally {
+        setIsLoading(false);
       }
     }
   };
@@ -77,17 +86,13 @@ export default function LoginPage() {
     <main className="flex min-h-screen flex-col items-center justify-center p-2 sm:p-4 md:p-8">
       <Toaster richColors position="top-center" autoHideDuration={60000} />
       <Paper sx={{ p: 4, width: "90%", maxWidth: "400px" }}>
-        <Stack
-          alignItems="center" // Center contents horizontally
-          justifyContent="center" // Center contents vertically
-          spacing={2}
-        >
+        <Stack alignItems="center" justifyContent="center" spacing={2}>
           <Typography
             variant="h2"
             sx={{
               fontSize: {
-                xs: 36, // Font size for extra-small screens
-                sm: 40, // Font size for small screens and up
+                xs: 36,
+                sm: 40,
               },
             }}
           >
@@ -110,6 +115,7 @@ export default function LoginPage() {
               onChange={handleEmailChange}
               error={emailError !== ""}
               helperText={emailError}
+              disabled={isLoading}
             />
             <TextField
               margin="normal"
@@ -124,6 +130,7 @@ export default function LoginPage() {
               onChange={handlePasswordChange}
               error={passwordError !== ""}
               helperText={passwordError}
+              disabled={isLoading}
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
@@ -132,6 +139,7 @@ export default function LoginPage() {
                       onClick={handleClickShowPassword}
                       onMouseDown={handleMouseDownPassword}
                       edge="end"
+                      disabled={isLoading}
                     >
                       {showPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
@@ -147,24 +155,27 @@ export default function LoginPage() {
               color="primary"
               sx={{ mt: 3, mb: 2 }}
               onClick={handleSubmit}
+              disabled={isLoading}
             >
-              Log in
+              {isLoading ? "Logging in..." : "Log in"}
             </Button>
 
-            {loginError &&
-              (console.log(loginError),
-              (
-                <Toaster
-                  richColors
-                  position="top-center"
-                  severity="error"
-                  autoHideDuration={3000}
-                />
-              ))}
+            {loginError && (
+              <Toaster
+                richColors
+                position="top-center"
+                severity="error"
+                autoHideDuration={3000}
+              />
+            )}
 
             <Grid container justifyContent="center">
               <Grid item>
-                <Link href="/pages/SignupPage" variant="body2">
+                <Link
+                  href="/pages/SignupPage"
+                  variant="body2"
+                  tabIndex={isLoading ? -1 : 0}
+                >
                   {"Do not have an account? Sign Up"}
                 </Link>
               </Grid>

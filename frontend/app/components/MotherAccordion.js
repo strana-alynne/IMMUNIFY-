@@ -37,22 +37,6 @@ const MotherAccordion = ({ motherData }) => {
               </Typography>
             </Stack>
           </Grid>
-          <Grid item xs={12} md={6}>
-            <Stack spacing={1}>
-              <Typography>
-                <strong>Delivery Type:</strong> {motherData.delivery_type}
-              </Typography>
-              <Typography>
-                <strong>Attending:</strong> {motherData.attending}
-              </Typography>
-              <Typography>
-                <strong>Facility Name:</strong> {motherData.facility_name}
-              </Typography>
-              <Typography>
-                <strong>Facility Type:</strong> {motherData.facility_type}
-              </Typography>
-            </Stack>
-          </Grid>
         </Grid>
       </AccordionDetails>
     </Accordion>

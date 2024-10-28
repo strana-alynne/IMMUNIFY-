@@ -55,10 +55,15 @@ const ChatInterface = () => {
   useEffect(() => {
     const initChat = async () => {
       setUser(mother_id);
-      const convId = await fetchConversation("BHW", mother_id);
+      let convId = await fetchConversation("BHW", mother_id);
+      console.log("ddjhdkjdh", convId);
       if (convId) {
         setConversationId(convId);
         setupMessagesSubscription(convId); // Move subscription setup here
+      } else {
+        convId = await createNewConversation("BHW", mother_id);
+        console.log("HEHHEHEH", convId.conversation_id);
+        setConversationId(convId.conversation_id);
       }
       setIsLoading(false);
     };
@@ -73,6 +78,16 @@ const ChatInterface = () => {
     };
   }, [mother_id]);
 
+  const createNewConversation = async (userId, motherId) => {
+    const { data: newConversation, error: insertError } = await supabase
+      .from("conversations")
+      .insert({ bhw_id: userId, mother_id: motherId })
+      .select()
+      .single();
+
+    if (insertError) throw insertError;
+    return newConversation;
+  };
   const fetchConversation = async (userId, motherId) => {
     try {
       let { data: conversation, error } = await supabase
