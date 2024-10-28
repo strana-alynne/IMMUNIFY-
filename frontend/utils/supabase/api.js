@@ -368,6 +368,7 @@ export const motherService = {
         options: {
           data: {
             email_confirm: true,
+            email_verified: true,
             role: "mother",
             mother_id: nextMotherId,
           },

@@ -17,10 +17,6 @@ export async function sendOTP(formData) {
     return `Error checking email: ${error.message}`;
   }
 
-  if (!data || data.length === 0) {
-    return "No account found with this email address.";
-  }
-
   // If the user exists and has the correct role, send the OTP
   const { error: signError } = await supabase.auth.signInWithOtp({
     email,
