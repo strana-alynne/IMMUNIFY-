@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Box,
   Typography,
@@ -8,9 +8,8 @@ import {
   Stack,
   Chip,
   useTheme,
-  useMediaQuery,
 } from "@mui/material";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import MobileSideBar from "@/app/components/MobileSideBar";
 import AppBarMobile from "@/app/components/AppBarMobile";
 import { fetchChild } from "@/utils/supabase/api";
@@ -24,6 +23,7 @@ const ChildDetails = ({ params }) => {
   const [childData, setChildData] = useState([]);
   const [schedules, setSchedules] = useState([]);
   const theme = useTheme();
+  const [childStatus, setChildStatus] = useState([]);
 
   const getChipColor = (status) => {
     switch (status) {
@@ -33,7 +33,7 @@ const ChildDetails = ({ params }) => {
           color: "primary.dark",
           fontWeight: "bold",
         };
-      case "Partially Completed":
+      case "Partially Complete":
         return {
           backgroundColor: "secondary.light",
           color: "secondary.dark",
@@ -83,6 +83,7 @@ const ChildDetails = ({ params }) => {
             ),
           }));
           setSchedules(fetchedSchedules);
+          updateChildStatus(fetchedSchedules);
         }
       } catch (error) {
         console.error(error);
@@ -90,6 +91,30 @@ const ChildDetails = ({ params }) => {
     }
     loadChild();
   }, [params.id]);
+
+  const updateChildStatus = (schedules) => {
+    const totalSchedules = schedules.length;
+    const completedSchedules = schedules.filter((schedule) =>
+      schedule.immunization_records.some(
+        (record) => record.completion_status === "Completed"
+      )
+    ).length;
+    const missedSchedules = schedules.filter((schedule) =>
+      schedule.immunization_records.some(
+        (record) => record.completion_status === "Missed"
+      )
+    ).length;
+    console.log("completedSchedules", completedSchedules);
+    console.log("missed", missedSchedules);
+
+    if (missedSchedules) {
+      setChildStatus("Missed");
+    } else if (completedSchedules === totalSchedules) {
+      setChildStatus("Complete");
+    } else if (completedSchedules > 0) {
+      setChildStatus("Partially Complete");
+    }
+  };
 
   return (
     <Box
@@ -139,10 +164,7 @@ const ChildDetails = ({ params }) => {
                 <Box />
                 <div>
                   <Typography variant="body2">Immunization Status</Typography>
-                  <Chip
-                    label={row.overallStatus}
-                    sx={getChipColor(row.overallStatus)}
-                  />
+                  <Chip label={childStatus} sx={getChipColor(childStatus)} />
                 </div>
               </Stack>
             </CardContent>

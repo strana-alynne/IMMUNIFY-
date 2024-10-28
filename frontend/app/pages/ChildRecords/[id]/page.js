@@ -51,10 +51,11 @@ import ChildInfoSection from "@/app/components/ChildInfoSection";
 import EditMotherModal from "@/app/components/EditMotherModal";
 import ChildRecordSkeleton from "@/app/components/ChildRecordSkeleton";
 import { toast, Toaster } from "sonner";
+import { ContinuousColorLegend } from "@mui/x-charts";
 const ChildId = ({ params }) => {
   const child_id_params = params.id;
   const [childData, setChildData] = useState([]);
-  const [childStatus, setChildStatus] = useState("Missed");
+  const [childStatus, setChildStatus] = useState("");
   const [schedules, setSchedules] = useState([]);
   const [selectedSchedule, setSelectedSchedule] = useState("");
   const [dateAdministered, setDateAdministered] = useState(dayjs());
@@ -88,27 +89,27 @@ const ChildId = ({ params }) => {
     { id: "V007", name: "MMR", nextDose: 12 * 4 * 7, totalDoses: 2 },
   ];
 
-  // Style logic for the chip depending on the child status
-  const getChipColor = (status) => {
-    const colors = {
-      Complete: {
-        backgroundColor: "primary.light",
-        color: "primary.dark",
-        fontWeight: "bold",
-      },
-      "Partially Complete": {
-        backgroundColor: "secondary.light",
-        color: "secondary.dark",
-        fontWeight: "bold",
-      },
-      Missed: {
-        backgroundColor: "error.light",
-        color: "error.dark",
-        fontWeight: "bold",
-      },
-    };
-    return colors[status] || {};
-  };
+  // // Style logic for the chip depending on the child status
+  // const getChipColor = (status) => {
+  //   const colors = {
+  //     Complete: {
+  //       backgroundColor: "primary.light",
+  //       color: "primary.dark",
+  //       fontWeight: "bold",
+  //     },
+  //     "Partially Complete": {
+  //       backgroundColor: "secondary.light",
+  //       color: "secondary.dark",
+  //       fontWeight: "bold",
+  //     },
+  //     Missed: {
+  //       backgroundColor: "error.light",
+  //       color: "error.dark",
+  //       fontWeight: "bold",
+  //     },
+  //   };
+  //   return colors[status] || {};
+  // };
 
   const refreshChildData = async () => {
     const data = await fetchChild(params.id);
@@ -151,13 +152,20 @@ const ChildId = ({ params }) => {
         (record) => record.completion_status === "Completed"
       )
     ).length;
+    const missedSchedules = schedules.filter((schedule) =>
+      schedule.immunization_records.some(
+        (record) => record.completion_status === "Missed"
+      )
+    ).length;
+    console.log("completedSchedules", completedSchedules);
+    console.log("missed", missedSchedules);
 
-    if (completedSchedules === totalSchedules) {
+    if (missedSchedules) {
+      setChildStatus("Missed");
+    } else if (completedSchedules === totalSchedules) {
       setChildStatus("Complete");
     } else if (completedSchedules > 0) {
       setChildStatus("Partially Complete");
-    } else {
-      setChildStatus("Missed");
     }
   };
 

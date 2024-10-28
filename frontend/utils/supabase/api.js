@@ -646,6 +646,7 @@ export async function fetchAllChildren() {
 
   const processedData = data.map((child) => {
     let overallStatus = "No Records";
+    let scheduleDate = child.Schedule.length;
 
     // Process the data to determine overall status
     if (child.Schedule && child.Schedule.length > 0) {
@@ -654,8 +655,7 @@ export async function fetchAllChildren() {
       let hasScheduled = false;
 
       child.Schedule.forEach((schedule) => {
-        const currentDate = new Date();
-        const scheduleDate = new Date(schedule.scheduled_date);
+        const currentDate = schedule.ImmunizationRecords.length;
 
         if (
           !schedule.ImmunizationRecords ||
@@ -1424,24 +1424,22 @@ export async function motherChild(mother_id) {
     return [];
   }
 
+  console.log("Mother's children:", data);
+
   const processedData = data.map((child) => {
     let overallStatus = "No Records";
+    let scheduleDate = child.Schedule.length;
+    // console.log("Mother's children length:", child.Schedule.length);
 
-    // Check if Schedule exists and is an array
-    if (
-      child.Schedule &&
-      Array.isArray(child.Schedule) &&
-      child.Schedule.length > 0
-    ) {
+    // Process the data to determine overall status
+    if (child.Schedule && child.Schedule.length > 0) {
       let allCompleted = true;
       let hasMissed = false;
       let hasScheduled = false;
 
       child.Schedule.forEach((schedule) => {
-        const currentDate = new Date();
-        const scheduleDate = new Date(schedule.scheduled_date);
-
-        // Check if schedule and ImmunizationRecords exist
+        const currentDate = schedule.ImmunizationRecords.length;
+        // console.log("Schedule date:", schedule.ImmunizationRecords);
         if (
           !schedule.ImmunizationRecords ||
           schedule.ImmunizationRecords.length === 0
@@ -1474,14 +1472,12 @@ export async function motherChild(mother_id) {
       } else if (allCompleted) {
         overallStatus = "Complete";
       } else if (hasScheduled) {
-        overallStatus = "Partially Complete";
+        overallStatus = "Partially Completed";
       }
     }
 
     return { ...child, overallStatus };
   });
-
-  console.log("Processed child data:", processedData);
 
   return processedData;
 }

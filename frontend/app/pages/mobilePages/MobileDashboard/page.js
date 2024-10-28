@@ -60,7 +60,6 @@ export default function MobileDashboard() {
     async function loadChild() {
       try {
         const childInfo = await motherChild(SampleMotherId);
-        console.log(childInfo);
         setChildData(childInfo);
       } catch (error) {
         console.error(error);
