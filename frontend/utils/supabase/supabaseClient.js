@@ -59,6 +59,7 @@ export const viewReminders = async () => {
     return { success: false, data: [], error };
   }
 
+  console.log("data", data);
   return { success: true, data };
 };
 

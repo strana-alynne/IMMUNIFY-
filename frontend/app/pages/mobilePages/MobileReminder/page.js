@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { viewReminders } from "@/utils/supabase/supabaseClient";
 import {
   Box,
@@ -16,74 +16,37 @@ import MobileSideBar from "@/app/components/MobileSideBar";
 import AppBarMobile from "@/app/components/AppBarMobile";
 import { BellDotIcon } from "lucide-react";
 import { useUser } from "@/app/lib/UserContext";
+import { createClient } from "@/utils/supabase/client";
 
 export default function ReminderPage() {
   const [reminders, setReminders] = useState([]);
   const [open, setOpen] = useState(false);
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
   const previousRemindersRef = useRef([]);
+  const supabase = createClient();
   const user = useUser();
 
   const toggleDrawer = (open) => (event) => {
     if (
-      event &&
-      event.type === "keydown" &&
+      event?.type === "keydown" &&
       (event.key === "Tab" || event.key === "Shift")
     ) {
       return;
     }
-
     setOpen(open);
   };
 
   // Function to fetch reminders from Supabase
   const refreshReminders = async () => {
-    const response = await viewReminders();
-    if (response.success) {
-      // Check for new reminders
-      const newReminders = response.data.filter(
-        (newReminder) =>
-          !previousRemindersRef.current.some(
-            (prevReminder) => prevReminder.id === newReminder.id
-          )
-      );
-
-      // Filter new reminders to only include those created today
-      const today = new Date();
-      const startOfDay = new Date(
-        today.getFullYear(),
-        today.getMonth(),
-        today.getDate()
-      );
-      const endOfDay = new Date(
-        today.getFullYear(),
-        today.getMonth(),
-        today.getDate() + 1
-      );
-
-      const todaysReminders = newReminders.filter((reminder) => {
-        const createdAt = new Date(reminder.created_at);
-        return createdAt >= startOfDay && createdAt < endOfDay;
-      });
-
-      // Trigger notifications for today's new reminders
-      if (todaysReminders.length > 0) {
-        todaysReminders.forEach((reminder) => {
-          triggerNotification(reminder);
-        });
-      }
-
-      // Update previous reminders reference
-      previousRemindersRef.current = response.data;
-
-      // Only set reminders if they changed
-      if (
-        JSON.stringify(previousRemindersRef.current) !==
-        JSON.stringify(reminders)
-      ) {
-        setReminders(response.data);
-      }
+    const { data, error } = await viewReminders();
+    if (error) {
+      console.error("Error viewing reminders:", error.message, error.details);
+      return;
     }
+
+    previousRemindersRef.current = data;
+    setReminders(data);
   };
 
   // Trigger Browser Push Notification
@@ -91,14 +54,14 @@ export default function ReminderPage() {
     if (Notification.permission === "granted") {
       new Notification(reminder.title, {
         body: reminder.description,
-        icon: BellDotIcon, // Customize your notification icon
+        icon: BellDotIcon,
       });
     } else if (Notification.permission !== "denied") {
       Notification.requestPermission().then((permission) => {
         if (permission === "granted") {
           new Notification(reminder.title, {
             body: reminder.description,
-            icon: BellDotIcon, // Customize your notification icon
+            icon: BellDotIcon,
           });
         }
       });
@@ -106,19 +69,48 @@ export default function ReminderPage() {
   };
 
   useEffect(() => {
-    // Request notification permission on component mount
-    if (Notification.permission === "default") {
-      Notification.requestPermission();
-    }
+    const initReminders = async () => {
+      await refreshReminders();
+      setIsLoading(false);
+    };
 
-    refreshReminders(); // Fetch reminders on initial load
-    const intervalId = setInterval(refreshReminders, 200); // Example: Refresh every minute
+    initReminders();
 
-    return () => clearInterval(intervalId); // Clear interval on component unmount
-  }, []); // Empty dependency array ensures this runs once on mount
+    // Set up real-time subscription for reminders
+    const channel = supabase
+      .channel(`realtime:reminders`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "reminders" },
+        async (payload) => {
+          console.log("Real-time event received:", payload);
+
+          // Trigger notification for new reminders
+          if (payload.eventType === "INSERT") {
+            triggerNotification(payload.new);
+          }
+
+          // Refresh the entire page using router.refresh()
+          router.refresh();
+
+          // Additionally refresh the reminders data
+          await refreshReminders();
+        }
+      )
+      .subscribe((status, err) => {
+        if (err) console.error("Subscription error:", err);
+        console.log("Subscription status:", status);
+      });
+
+    // Clean up the subscription on component unmount
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [router]);
 
   const handleRowClick = (id) => {
-    router.push(`/pages/mobilePages/MobileReadR/${id}`);
+    console.log("id", id);
+    router.push(`/pages/mobilePages/MobileReminder/${id}`);
   };
 
   return (
@@ -162,7 +154,7 @@ export default function ReminderPage() {
                             {new Date(reminder.created_at).toDateString()}
                           </Typography>
                           <Typography variant="body2">
-                            {reminder?.content?.length > 500
+                            {reminder.content?.length > 500
                               ? `${reminder.content.substring(0, 500)}...`
                               : reminder.content || ""}
                           </Typography>
