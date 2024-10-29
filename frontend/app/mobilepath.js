@@ -16,20 +16,13 @@ const mobilepath = () => [
   },
   {
     id: 2,
-    label: "Appointments",
-    img: <CalendarMonthIcon />,
-    component: <AppointmentPage />,
-    path: "/pages/mobilePages/MobileAppointments",
-  },
-  {
-    id: 3,
     label: "Reminders",
     img: <Notifications />,
     component: <ReminderPage />,
     path: "/pages/mobilePages/MobileReminder",
   },
   {
-    id: 4,
+    id: 3,
     label: "Inbox",
     img: <InboxRounded />,
     component: <InboxPage />,
