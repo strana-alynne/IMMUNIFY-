@@ -42,8 +42,10 @@ import {
   getInventoryTotal,
   checkVaccineStock,
   delVaccine,
+  subscribeToVaccineTransactions,
 } from "@/utils/supabase/api";
 import ExportDialog from "@/app/components/ExportDialog";
+import { createClient } from "@/utils/supabase/client";
 
 const VACCINE_COVERAGE = {
   "BCG (Bacillus-Calmette-Guerin)": 10,
@@ -76,6 +78,7 @@ const Details = ({ params }) => {
     ],
   });
   const [babiesCovered, setBabiesCovered] = useState(0);
+  const [subscription, setSubscription] = useState(null);
 
   const router = useRouter();
   const theme = useTheme();
@@ -87,18 +90,46 @@ const Details = ({ params }) => {
       const storedVaccineName = localStorage.getItem("selectedVaccineName");
       const storeInventoryId = localStorage.getItem("inventoryID");
       const fetchTotal = localStorage.getItem("vaccineID");
+
+      // Initial data fetch
       const fetchedVaccines = await fetchVaccineStock(storeInventoryId);
       const fetchInventory = await getInventoryTotal(fetchTotal);
       const coverageRatio = VACCINE_COVERAGE[storedVaccineName] || 0;
       const calculatedBabiesCovered = fetchInventory * coverageRatio;
+
       setVacId(fetchTotal);
       setVaccineName(storedVaccineName);
       setInventoryID(storeInventoryId);
       setVaccines(fetchedVaccines);
       setTotal(fetchInventory);
       setBabiesCovered(calculatedBabiesCovered);
+
+      // Set up real-time subscription
+      const sub = subscribeToVaccineTransactions(
+        storeInventoryId,
+        async (payload) => {
+          // Refresh data when changes occur
+          const updatedVaccines = await fetchVaccineStock(storeInventoryId);
+          const updatedInventory = await getInventoryTotal(fetchTotal);
+          const updatedBabiesCovered = updatedInventory * coverageRatio;
+
+          setVaccines(updatedVaccines);
+          setTotal(updatedInventory);
+          setBabiesCovered(updatedBabiesCovered);
+        }
+      );
+
+      setSubscription(sub);
     }
+
     loadVaccines();
+
+    // Cleanup subscription when component unmounts
+    return () => {
+      if (subscription) {
+        subscription.unsubscribe();
+      }
+    };
   }, [params.id]);
 
   const handleCloseModal = () => setOpenModal(false);
@@ -109,13 +140,15 @@ const Details = ({ params }) => {
   const [title, setTitle] = useState("");
   const [modeIcon, setModeIcon] = useState("");
   const handleEdit = (transaction) => {
+    console.log("Edit", transaction);
     setEditingTransaction({
-      transaction_id: transaction.id,
+      transaction_id: transaction.transaction_id,
       transaction_date: dayjs(transaction.transaction_date),
       transaction_type: transaction.transaction_type,
       transaction_quantity: transaction.transaction_quantity,
       batch_number: transaction.batch_number,
       expiration_date: dayjs(transaction.expiration_date),
+      inventory_id: transaction.inventory_id,
     });
     setOpenEditModal(true);
   };
@@ -132,24 +165,12 @@ const Details = ({ params }) => {
     setOpenModal(false);
   };
   const handleDelete = async (delTransaction) => {
-    console.log(
-      "Transaction",
-      inventoryID,
-      delTransaction.transaction_id,
-      delTransaction.transaction_type,
-      delTransaction.transaction_quantity
-    );
-
     await delVaccine(
       inventoryID,
       delTransaction.transaction_id,
       delTransaction.transaction_type,
       delTransaction.transaction_quantity
     );
-    const fetchInventory = await getInventoryTotal(VacId);
-    const updatedVaccines = await fetchVaccineStock(inventoryID);
-    setVaccines(updatedVaccines);
-    setTotal(fetchInventory);
     setOpenModal(false);
   };
 
@@ -219,9 +240,7 @@ const Details = ({ params }) => {
     // Proceed to add transaction since stock is sufficient
     const result = await addVaccineStock(vaccineStockDetails);
     if (!result) {
-      // Success: stock added
-      const updatedVaccines = await fetchVaccineStock(inventoryID);
-      setVaccines(updatedVaccines);
+      // Success adding stock
       setOpenAddModal(false);
       setModalContent("Vaccine stock added successfully.");
       setModeIcon(<CheckCircle color="primary" sx={{ fontSize: 80 }} />);

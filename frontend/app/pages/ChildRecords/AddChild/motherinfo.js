@@ -244,7 +244,7 @@ export default function Motherinfo({ setMotherData, triggerErrorCheck }) {
                 <TextField
                   {...params}
                   label="Search Mother"
-                  variant="filled"
+                  variant="outlined"
                   fullWidth
                   error={!!errors.search}
                   helperText={errors.search || "Search by name or email"}
@@ -270,8 +270,7 @@ export default function Motherinfo({ setMotherData, triggerErrorCheck }) {
                 Email Address
               </Typography>
               <TextField
-                variant="filled"
-                size="small"
+                variant="outlined"
                 fullWidth
                 id="mother-email"
                 label="e.g. name@email.com"
@@ -288,8 +287,7 @@ export default function Motherinfo({ setMotherData, triggerErrorCheck }) {
                 Contact Number
               </Typography>
               <TextField
-                variant="filled"
-                size="small"
+                variant="outlined"
                 fullWidth
                 id="mother-contact"
                 label="e.g. 09123456789"
@@ -311,8 +309,7 @@ export default function Motherinfo({ setMotherData, triggerErrorCheck }) {
                 First Name
               </Typography>
               <TextField
-                variant="filled"
-                size="small"
+                variant="outlined"
                 fullWidth
                 id="mother-firstname"
                 label="First Name"
@@ -329,8 +326,7 @@ export default function Motherinfo({ setMotherData, triggerErrorCheck }) {
                 Last Name
               </Typography>
               <TextField
-                variant="filled"
-                size="small"
+                variant="outlined"
                 fullWidth
                 id="mother-lastname"
                 label="Last Name"

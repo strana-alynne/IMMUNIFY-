@@ -5,6 +5,26 @@ const supabase = createClient();
 
 //========================== ABOUT INVENTORY =================================
 
+export const subscribeToVaccineTransactions = (inventoryId, callback) => {
+  const subscription = supabase
+    .channel(`vaccine-transactions-${inventoryId}`)
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "VaccineTransaction",
+        filter: `inventory_id=eq.${inventoryId}`,
+      },
+      (payload) => {
+        callback(payload);
+      }
+    )
+    .subscribe();
+
+  return subscription;
+};
+
 //DELETE VACCINE
 export async function delVaccine(inventory, id, type, qtty) {
   // Fetch the current vaccine quantity in the inventory
@@ -179,7 +199,23 @@ export async function getInventoryId(vaccine_id) {
 
 // UPDATE VACCINE STOCK AND ADJUST INVENTORY QUANTITY
 export async function updateVaccineStock(updatedTransaction) {
+  const { data: originalTransaction, error: originalError } = await supabase
+    .from("VaccineTransaction")
+    .select("transaction_type, transaction_quantity")
+    .eq("transaction_id", updatedTransaction.transaction_id)
+    .single();
+
+  if (originalError) {
+    console.error(
+      "Error fetching original transaction:",
+      originalError.message
+    );
+    return null;
+  }
+
+  console.log("originalTransaction", originalTransaction);
   // Update the VaccineTransaction record with the new details
+  console.log("updatedTransactidjdjhon", updatedTransaction.inventory_id);
   const { data, error } = await supabase
     .from("VaccineTransaction")
     .update({
@@ -190,7 +226,6 @@ export async function updateVaccineStock(updatedTransaction) {
       expiration_date: updatedTransaction.expiration_date,
     })
     .eq("transaction_id", updatedTransaction.transaction_id);
-
   if (error) {
     console.error("Error updating vaccine stock:", error.message);
     return null;
@@ -212,21 +247,8 @@ export async function updateVaccineStock(updatedTransaction) {
   }
 
   let currentQuantity = inventoryData.vaccine_quantity;
-
+  console.log("currentQuantity", currentQuantity);
   // Fetch the original transaction to adjust the inventory correctly
-  const { data: originalTransaction, error: originalError } = await supabase
-    .from("VaccineTransaction")
-    .select("transaction_type, transaction_quantity")
-    .eq("transaction_id", updatedTransaction.transaction_id)
-    .single();
-
-  if (originalError) {
-    console.error(
-      "Error fetching original transaction:",
-      originalError.message
-    );
-    return null;
-  }
 
   // Adjust the inventory quantity based on the differences between the original and updated transaction
   if (originalTransaction.transaction_type === "STOCK IN") {
@@ -241,6 +263,7 @@ export async function updateVaccineStock(updatedTransaction) {
     currentQuantity -= updatedTransaction.transaction_quantity;
   }
 
+  console.log("currentQuantity", currentQuantity);
   // Update the vaccine inventory with the new quantity
   const { error: updateError } = await supabase
     .from("VaccineInventory")

@@ -27,7 +27,7 @@ export const metadata = {
     // Add these for better iOS support
     startupImage: [
       {
-        url: "/icons/apple-splash-2048-2732.jpg",
+        url: "/logo.svg",
         media:
           "(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2)",
       },
@@ -57,13 +57,13 @@ export const metadata = {
   // Add these meta tags
   icons: {
     icon: [
-      { url: "/icons/favicon-16x16.png", sizes: "16x16", type: "image/png" },
-      { url: "/icons/favicon-32x32.png", sizes: "32x32", type: "image/png" },
-      { url: "/icons/favicon.ico", sizes: "48x48", type: "image/x-icon" },
+      { url: "/favicon.ico", sizes: "16x16", type: "image/x-icon" },
+      { url: "/favicon.ico", sizes: "32x32", type: "image/x-icon" },
+      { url: "/favicon.ico", sizes: "48x48", type: "image/x-icon" },
     ],
     apple: [
       {
-        url: "/icons/apple-touch-icon.png",
+        url: "/icon512_rounded.png",
         sizes: "180x180",
         type: "image/png",
       },
@@ -71,7 +71,7 @@ export const metadata = {
     other: [
       {
         rel: "mask-icon",
-        url: "/icons/safari-pinned-tab.svg",
+        url: "/icon512_rounded.svg",
       },
     ],
   },

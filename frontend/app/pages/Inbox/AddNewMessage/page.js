@@ -107,7 +107,7 @@ export default function AddNewMessage() {
 
         console.log("Message sent successfully!");
         // Optional: Navigate to chat or reset form
-        router.replace(`/page/Inbox/${recipient.mother_id}`);
+        router.replace(`/pages/Inbox/${recipient.mother_id}`);
       } catch (error) {
         console.error("Error handling message:", error);
       }

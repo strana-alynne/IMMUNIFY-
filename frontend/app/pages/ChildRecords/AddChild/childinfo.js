@@ -14,6 +14,8 @@ import {
   FormControlLabel,
   Radio,
   FormHelperText,
+  OutlinedInput,
+  Stack,
 } from "@mui/material";
 import dayjs from "dayjs";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -56,6 +58,8 @@ export default function childinfo({
     "Don Lorenzo",
     "Espino Kalayaan",
   ];
+  const [middleInitial, setMiddleInitial] = useState("");
+  const [suffix, setSuffix] = useState("");
   const [firstname, setFirstName] = useState("");
   const [lastname, setLastName] = useState("");
   const [child_age, setAge] = useState();
@@ -70,6 +74,8 @@ export default function childinfo({
   const [errors, setErrors] = useState({
     firstname: "",
     lastname: "",
+    middleInitial: "",
+    suffix: "",
     child_age: "",
     gender: "",
     birthdate: "",
@@ -86,7 +92,9 @@ export default function childinfo({
   }, [triggerErrorCheck]);
 
   useEffect(() => {
-    const child_name = `${firstname} ${lastname}`;
+    const child_name = `${firstname}  ${
+      middleInitial ? middleInitial + "." : ""
+    } ${lastname}${suffix ? " " + suffix : ""}`.trim();
     const formattedBirthdate = birthdate
       ? dayjs(birthdate).format("YYYY-MM-DD")
       : null;
@@ -121,7 +129,9 @@ export default function childinfo({
     });
   }, [
     firstname,
+    middleInitial,
     lastname,
+    suffix,
     child_age,
     gender,
     birthdate,
@@ -163,6 +173,26 @@ export default function childinfo({
       target: { value },
     } = event;
     setPurokName(typeof value === "string" ? value.split(",") : value);
+  };
+
+  const handleMiddleInitial = (event) => {
+    setMiddleInitial(event.target.value);
+    if (triggerErrorCheck) {
+      setErrors((prev) => ({
+        ...prev,
+        middleInitial: "", // Add validation if needed
+      }));
+    }
+  };
+
+  const handleSuffix = (event) => {
+    setSuffix(event.target.value);
+    if (triggerErrorCheck) {
+      setErrors((prev) => ({
+        ...prev,
+        suffix: "", // Add validation if needed
+      }));
+    }
   };
 
   const handleFirstName = (event) => {
@@ -219,15 +249,52 @@ export default function childinfo({
   const handleBirthDate = (newDate) => {
     setBirthDateVal(newDate);
     if (newDate) {
-      const ageInMonths = dayjs().diff(dayjs(newDate), "month"); // Calculate age in months
-      setAge(ageInMonths); // Update the age state
+      const today = dayjs();
+      const birthDate = dayjs(newDate);
+
+      // Calculate the difference in months
+      let months = today.diff(birthDate, "month");
+
+      // Check if we need to subtract a month based on the day of the month
+      const dayOfMonth = today.date();
+      const birthDayOfMonth = birthDate.date();
+
+      if (dayOfMonth < birthDayOfMonth) {
+        months--;
+      }
+
+      console.log("Months:", months);
+      setAge(months >= 0 ? months : 0); // Ensure age is not negative
     }
+
     if (triggerErrorCheck) {
       setErrors((prev) => ({
         ...prev,
         birthdate: !newDate ? "Birthdate is required" : "",
       }));
     }
+  };
+
+  // Function to display age with appropriate unit
+  const displayAge = () => {
+    if (!birthdate) return "";
+
+    const today = dayjs();
+    const birth = dayjs(birthdate);
+    const days = today.diff(birth, "day");
+    console.log("Days:", days);
+
+    if (days < 30) {
+      return {
+        age: days,
+        unit: "days",
+      };
+    }
+
+    return {
+      age: child_age,
+      unit: "months",
+    };
   };
 
   const handleWeight = (event) => {
@@ -261,16 +328,15 @@ export default function childinfo({
   return (
     <Grid container spacing={2}>
       {/* FIRST NAME */}
-      <Grid item xs={6}>
+      <Grid item xs={4}>
         <Typography variant="p" color="darker">
           First Name
         </Typography>
         <TextField
-          variant="filled"
-          size="small"
+          variant="outlined"
           fullWidth
           id="outlined-size-small"
-          label="First Name"
+          label="e.g., Juan, Maria Fe"
           name="firstname"
           autoFocus
           value={firstname}
@@ -280,17 +346,34 @@ export default function childinfo({
         />
       </Grid>
 
+      {/* MIDDLE INITIAL */}
+      <Grid item xs={1}>
+        <Typography variant="p" color="darker">
+          M.I.
+        </Typography>
+        <TextField
+          variant="outlined"
+          fullWidth
+          id="outlined-size-small"
+          label="M.I."
+          name="middleInitial"
+          value={middleInitial}
+          onChange={handleMiddleInitial}
+          error={!!errors.middleInitial}
+          helperText={errors.middleInitial}
+        />
+      </Grid>
+
       {/* LAST NAME */}
-      <Grid item xs={6}>
+      <Grid item xs={4}>
         <Typography variant="p" color="darker">
           Last Name
         </Typography>
         <TextField
-          variant="filled"
-          size="small"
+          variant="outlined"
           fullWidth
           id="outlined-size-small"
-          label="Last Name"
+          label="e.g., Dela Cruz, Santos"
           name="lastname"
           autoFocus
           value={lastname}
@@ -300,18 +383,36 @@ export default function childinfo({
         />
       </Grid>
 
+      {/* NAME SUFFIX */}
+      <Grid item xs={3}>
+        <Typography variant="p" color="darker">
+          Suffix
+        </Typography>
+        <TextField
+          variant="outlined"
+          fullWidth
+          id="outlined-size-small"
+          label="e.g., Jr., Sr., III"
+          name="suffix"
+          value={suffix}
+          onChange={handleSuffix}
+          error={!!errors.suffix}
+          helperText={errors.suffix}
+        />
+      </Grid>
+
       {/* GENDER */}
       <Grid item xs={4}>
         <Typography variant="p" color="darker">
           Gender
         </Typography>
-        <FormControl fullWidth variant="filled" error={!!errors.gender}>
-          <InputLabel id="gender-label">Gender</InputLabel>
+        <FormControl fullWidth variant="outlined" error={!!errors.gender}>
+          <InputLabel id="gender-label">Choose a gender</InputLabel>
           <Select
             labelId="gender-label"
             id="gender"
             value={gender}
-            label="Gender"
+            label="Choose a gender"
             onChange={handleGender}
           >
             <MenuItem value="Female">Female</MenuItem>
@@ -323,25 +424,27 @@ export default function childinfo({
 
       {/* BIRTHDATE */}
       <Grid item xs={4}>
-        <Typography variant="p" color="darker">
-          Birthdate
-        </Typography>
-        <LocalizationProvider dateAdapter={AdapterDayjs}>
-          <DatePicker
-            label="Birthdate"
-            value={birthdate}
-            onChange={handleBirthDate}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                variant="filled"
-                fullWidth
-                error={!!errors.birthdate}
-                helperText={errors.birthdate}
-              />
-            )}
-          />
-        </LocalizationProvider>
+        <Stack>
+          <Typography variant="p" color="darker">
+            Birthdate
+          </Typography>
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DatePicker
+              label="Birthdate"
+              value={birthdate}
+              onChange={handleBirthDate}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  variant="outlined"
+                  fullWidth
+                  error={!!errors.birthdate}
+                  helperText={errors.birthdate}
+                />
+              )}
+            />
+          </LocalizationProvider>
+        </Stack>
       </Grid>
 
       {/* AGE */}
@@ -350,14 +453,20 @@ export default function childinfo({
           Age
         </Typography>
         <TextField
-          variant="filled"
-          size="small"
+          variant="outlined"
           fullWidth
-          value={child_age || ""}
+          value={displayAge().age || ""}
           onChange={handleAge}
           error={!!errors.child_age}
           helperText={errors.child_age}
           inputProps={{ readOnly: true }}
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                {displayAge().unit}
+              </InputAdornment>
+            ),
+          }}
         />
       </Grid>
 
@@ -367,11 +476,10 @@ export default function childinfo({
           Complete Address
         </Typography>
         <TextField
-          variant="filled"
-          size="small"
+          variant="outlined"
           fullWidth
           id="outlined-size-small"
-          label="Complete Address"
+          label="e.g., Block and Lot Number, Street Name, Barangay, City, State/Province/Region, Postal/ZIP Code"
           name="address"
           autoFocus
           value={address}
@@ -386,13 +494,13 @@ export default function childinfo({
         <Typography variant="p" color="darker">
           Purok
         </Typography>
-        <FormControl fullWidth variant="filled" error={!!errors.purokName}>
+        <FormControl fullWidth variant="outlined" error={!!errors.purokName}>
           <InputLabel id="purok-label">Select Purok</InputLabel>
           <Select
             labelId="purok-label"
             id="purok"
             value={purokName}
-            label="Purok"
+            label="Choose a Purok"
             onChange={handlePurokChange}
           >
             {purok.map((name) => (
@@ -412,9 +520,8 @@ export default function childinfo({
         <Typography variant="p" color="darker">
           Height
         </Typography>
-        <FormControl fullWidth variant="filled" error={!!errors.height}>
-          <FilledInput
-            size="small"
+        <FormControl fullWidth variant="outlined" error={!!errors.height}>
+          <OutlinedInput
             id="outlined-size-small"
             label="Height"
             name="height"
@@ -432,9 +539,8 @@ export default function childinfo({
         <Typography variant="p" color="darker">
           Weight
         </Typography>
-        <FormControl fullWidth variant="filled" error={!!errors.weight}>
-          <FilledInput
-            size="small"
+        <FormControl fullWidth variant="outlined" error={!!errors.weight}>
+          <OutlinedInput
             id="outlined-size-small"
             label="Weight"
             name="weight"
@@ -446,7 +552,7 @@ export default function childinfo({
           {errors.weight && <FormHelperText>{errors.weight}</FormHelperText>}
         </FormControl>
       </Grid>
-      <Grid item sx={{ mt: 2 }}>
+      <Grid item sx={{ mt: 2 }} xs={6}>
         <FormControl component="fieldset">
           <Typography variant="p" color="darker">
             Has the baby already received the <strong>BCG vaccine</strong>? *
@@ -470,7 +576,7 @@ export default function childinfo({
           </RadioGroup>
         </FormControl>
       </Grid>
-      <Grid item sx={{ mt: 2 }}>
+      <Grid item sx={{ mt: 2 }} xs={6}>
         <FormControl component="fieldset">
           <Typography variant="p" color="darker">
             Has the baby already received the{" "}

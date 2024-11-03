@@ -28,9 +28,12 @@ export default function EditModal({
   const [expirationDate, setExpirationDate] = useState(dayjs());
   const [quantity, setQuantity] = useState("");
   const [batchNumber, setBatchNumber] = useState("");
-
+  const [transactionId, setTransactionId] = useState("");
+  const [inventoryID, setInventoryID] = useState("");
   useEffect(() => {
     if (transaction) {
+      setInventoryID(transaction.inventory_id);
+      setTransactionId(transaction.transaction_id);
       setTransactionType(transaction.transaction_type);
       setSelectedDate(dayjs(transaction.transaction_date));
       setExpirationDate(dayjs(transaction.expiration_date));
@@ -42,12 +45,15 @@ export default function EditModal({
   const handleUpdate = () => {
     const updatedTransaction = {
       ...transaction,
+      inventory_id: inventoryID,
+      transaction_id: transactionId,
       transaction_date: selectedDate.format("YYYY-MM-DD"),
       transaction_type: transactionType,
       transaction_quantity: parseInt(quantity, 10),
       batch_number: batchNumber,
       expiration_date: expirationDate.format("YYYY-MM-DD"),
     };
+    console.log("jkjkd", updatedTransaction);
     onUpdate(updatedTransaction);
     onClose();
   };
