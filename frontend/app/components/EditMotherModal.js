@@ -8,6 +8,9 @@ import {
   TextField,
   Grid,
   MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
 } from "@mui/material";
 
 const EditMotherModal = ({ open, onClose, motherData, onSave }) => {
@@ -16,11 +19,20 @@ const EditMotherModal = ({ open, onClose, motherData, onSave }) => {
     mother_age: motherData?.mother_age || "",
     contact_number: motherData?.contact_number || "",
     mother_email: motherData?.mother_email || "",
-    // delivery_type: motherData?.delivery_type || "",
-    // attending: motherData?.attending || "",
-    // facility_name: motherData?.facility_name || "",
-    // facility_type: motherData?.facility_type || "",
+    relationship: motherData?.relationship || "",
   });
+
+  // Relationship options
+  const relationshipOptions = [
+    "Mother",
+    "Father",
+    "Guardian",
+    "Grandmother",
+    "Grandfather",
+    "Aunt",
+    "Uncle",
+    "Other",
+  ];
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -37,13 +49,13 @@ const EditMotherModal = ({ open, onClose, motherData, onSave }) => {
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>Edit Mother's Information</DialogTitle>
+      <DialogTitle>Edit Guardian's Information</DialogTitle>
       <DialogContent>
         <Grid container spacing={2} sx={{ mt: 1 }}>
           <Grid item xs={12} md={6}>
             <TextField
               fullWidth
-              label="Mother's Name"
+              label="Guardian's Name"
               name="mother_name"
               value={editedData.mother_name}
               onChange={handleChange}
@@ -53,13 +65,32 @@ const EditMotherModal = ({ open, onClose, motherData, onSave }) => {
           <Grid item xs={12} md={6}>
             <TextField
               fullWidth
-              label="Mother's Age"
+              label="Guardian's Age"
               name="mother_age"
               value={editedData.mother_age}
               onChange={handleChange}
               type="number"
               margin="dense"
             />
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <FormControl fullWidth margin="dense">
+              <InputLabel id="relationship-label">Relationship</InputLabel>
+              <Select
+                labelId="relationship-label"
+                id="relationship"
+                name="relationship"
+                value={editedData.relationship}
+                onChange={handleChange}
+                label="Relationship"
+              >
+                {relationshipOptions.map((option) => (
+                  <MenuItem key={option} value={option}>
+                    {option}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
           </Grid>
           <Grid item xs={12} md={6}>
             <TextField
@@ -82,54 +113,6 @@ const EditMotherModal = ({ open, onClose, motherData, onSave }) => {
               margin="dense"
             />
           </Grid>
-          {/* <Grid item xs={12} md={6}>
-            <TextField
-              fullWidth
-              select
-              label="Delivery Type"
-              name="delivery_type"
-              value={editedData.delivery_type}
-              onChange={handleChange}
-              margin="dense"
-            >
-              <MenuItem value="Normal Delivery">Normal Delivery</MenuItem>
-              <MenuItem value="Caesarean Section">Caesarean Section</MenuItem>
-            </TextField>
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <TextField
-              fullWidth
-              label="Attending Doctor/Midwife"
-              name="attending"
-              value={editedData.attending}
-              onChange={handleChange}
-              margin="dense"
-            />
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <TextField
-              fullWidth
-              label="Facility Name"
-              name="facility_name"
-              value={editedData.facility_name}
-              onChange={handleChange}
-              margin="dense"
-            />
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <TextField
-              fullWidth
-              select
-              label="Facility Type"
-              name="facility_type"
-              value={editedData.facility_type}
-              onChange={handleChange}
-              margin="dense"
-            >
-              <MenuItem value="Government">Government</MenuItem>
-              <MenuItem value="Private">Private</MenuItem>
-            </TextField>
-          </Grid> */}
         </Grid>
       </DialogContent>
       <DialogActions>

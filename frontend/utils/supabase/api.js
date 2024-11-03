@@ -24,7 +24,6 @@ export const subscribeToVaccineTransactions = (inventoryId, callback) => {
 
   return subscription;
 };
-
 //DELETE VACCINE
 export async function delVaccine(inventory, id, type, qtty) {
   // Fetch the current vaccine quantity in the inventory
@@ -364,8 +363,6 @@ export const motherService = {
       relationship,
       mother_age,
     } = motherData;
-
-    console.log("dkdjkd", motherData);
 
     try {
       // Generate a temporary password

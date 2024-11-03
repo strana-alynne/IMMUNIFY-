@@ -300,9 +300,6 @@ export default function Motherinfo({ setMotherData, triggerErrorCheck }) {
                 <Typography>
                   Contact: {selectedMother.contact_number}
                 </Typography>
-                <Typography>
-                  Relationship: {selectedMother.relationship}
-                </Typography>
               </Alert>
             )}
           </Grid>

@@ -77,7 +77,7 @@ const ChildInfoSection = ({ childData, childStatus }) => {
         <Grid item xs={12} md={4}>
           <Stack spacing={1}>
             <Typography variant="p">
-              <strong>Mother's Name: </strong> {childData.Mother.mother_name}
+              <strong>Guardian's Name: </strong> {childData.Mother.mother_name}
             </Typography>
             <Typography variant="p">
               <strong>Contact Number: </strong>{" "}

@@ -11,6 +11,8 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
+  Grid,
+  Container,
 } from "@mui/material";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -90,61 +92,81 @@ const EditChildModal = ({ open, onClose, childData, onSave }) => {
   };
 
   return (
-    <Dialog open={open} onClose={onClose}>
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>Edit Child Details</DialogTitle>
       <DialogContent>
-        <TextField
-          margin="dense"
-          label="Child Name"
-          fullWidth
-          value={editedData.child_name}
-          onChange={handleChangeName("child_name")}
-        />
-        <FormControl fullWidth margin="dense">
-          <InputLabel>Gender</InputLabel>
-          <Select
-            value={editedData.gender}
-            onChange={handleGenderChange("gender")}
-            label="Gender"
-          >
-            <MenuItem value="Male">Male</MenuItem>
-            <MenuItem value="Female">Female</MenuItem>
-          </Select>
-        </FormControl>
-        <LocalizationProvider dateAdapter={AdapterDayjs}>
-          <DatePicker
-            label="Birthdate"
-            value={editedData.birthdate}
-            onChange={handleDateChange}
-            renderInput={(params) => (
-              <TextField {...params} fullWidth margin="dense" />
-            )}
-          />
-        </LocalizationProvider>
-        <TextField
-          margin="dense"
-          label="Address"
-          fullWidth
-          value={editedData.address}
-          onChange={handleAddressChnage("address")}
-        />
+        <Container sx={{ mt: 2 }}>
+          <Grid container spacing={2}>
+            {/* Child Name - Full width */}
+            <Grid item xs={12}>
+              <TextField
+                label="Child Name"
+                fullWidth
+                value={editedData.child_name}
+                onChange={handleChangeName("child_name")}
+              />
+            </Grid>
 
-        <FormControl fullWidth margin="dense">
-          <InputLabel>Purok</InputLabel>
-          <Select
-            value={editedData.purok}
-            onChange={handlePurokChange("purok")}
-            label="Purok"
-          >
-            {purok.map((name) => (
-              <MenuItem key={name} value={name}>
-                {name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+            {/* Gender and Birthdate - Half width each */}
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth>
+                <InputLabel>Gender</InputLabel>
+                <Select
+                  value={editedData.gender}
+                  onChange={handleGenderChange("gender")}
+                  label="Gender"
+                >
+                  <MenuItem value="Male">Male</MenuItem>
+                  <MenuItem value="Female">Female</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <DatePicker
+                  label="Birthdate"
+                  value={editedData.birthdate}
+                  onChange={handleDateChange}
+                  renderInput={(params) => <TextField {...params} fullWidth />}
+                  slotProps={{
+                    textField: {
+                      fullWidth: true,
+                    },
+                  }}
+                />
+              </LocalizationProvider>
+            </Grid>
+
+            {/* Address and Purok - Full width each */}
+            <Grid item xs={8}>
+              <TextField
+                label="Address"
+                fullWidth
+                value={editedData.address}
+                onChange={handleAddressChnage("address")}
+              />
+            </Grid>
+
+            <Grid item xs={4}>
+              <FormControl fullWidth>
+                <InputLabel>Purok</InputLabel>
+                <Select
+                  value={editedData.purok}
+                  onChange={handlePurokChange("purok")}
+                  label="Purok"
+                >
+                  {purok.map((name) => (
+                    <MenuItem key={name} value={name}>
+                      {name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+          </Grid>
+        </Container>
       </DialogContent>
-      <DialogActions>
+      <DialogActions sx={{ p: 2 }}>
         <Button onClick={onClose}>Cancel</Button>
         <Button onClick={handleSave} variant="contained" color="primary">
           Save Changes

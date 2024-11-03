@@ -17,7 +17,7 @@ const MotherAccordion = ({ motherData }) => {
         aria-controls="mother-content"
         id="mother-header"
       >
-        <Typography variant="h6">Mother's Information</Typography>
+        <Typography variant="h6">Gaurdian's Information</Typography>
       </AccordionSummary>
       <AccordionDetails>
         <Grid container spacing={2}>
@@ -34,6 +34,9 @@ const MotherAccordion = ({ motherData }) => {
               </Typography>
               <Typography>
                 <strong>Email:</strong> {motherData.mother_email}
+              </Typography>
+              <Typography>
+                <strong>Relationship:</strong> {motherData.relationship}
               </Typography>
             </Stack>
           </Grid>
