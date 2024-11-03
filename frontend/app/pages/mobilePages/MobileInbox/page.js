@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Box,
   Container,
@@ -11,7 +11,6 @@ import {
   CircularProgress,
   IconButton,
   Stack,
-  Snackbar,
 } from "@mui/material";
 import { ArrowBackIos, Send } from "@mui/icons-material";
 import { createClient } from "@/utils/supabase/client";

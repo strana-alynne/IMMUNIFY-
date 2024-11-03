@@ -379,7 +379,7 @@ const ChildId = ({ params }) => {
               startIcon={<Edit />}
               onClick={handleEditMotherClick}
             >
-              Edit Mother's Details
+              Edit Gaurdian's Details
             </Button>
           </Stack>
 

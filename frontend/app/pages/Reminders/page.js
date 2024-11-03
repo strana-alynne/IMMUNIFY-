@@ -25,13 +25,7 @@ import {
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import ReminderCard from "@/app/components/ReminderCard";
-import {
-  Notifications,
-  NewReleases,
-  Campaign,
-  Send,
-  Delete,
-} from "@mui/icons-material";
+import { NewReleases, Campaign, Send, Delete } from "@mui/icons-material";
 import {
   addReminder,
   fetchReminders,

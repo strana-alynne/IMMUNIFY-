@@ -85,7 +85,8 @@ export async function fetchVaccines() {
     .from("VaccineInventory")
     .select(
       `inventory_id, current_update, vaccine_quantity, Vaccine(vaccine_id, vaccine_name, vials_per_baby)`
-    );
+    )
+    .order("vaccine_id", { ascending: true });
   if (error) {
     console.error("Error fetching vaccines:", error.message);
     return [];
@@ -114,9 +115,10 @@ export async function fetchVaccineStock(inventory_id) {
   const { data, error } = await supabase
     .from("VaccineTransaction")
     .select(
-      `transaction_id, transaction_date, transaction_type, transaction_quantity, batch_number, expiration_date, inventory_id)`
+      `transaction_id, transaction_date, transaction_type, transaction_quantity, batch_number, expiration_date, inventory_id, remarks)`
     )
-    .eq("inventory_id", inventory_id);
+    .eq("inventory_id", inventory_id)
+    .order("created_at", { ascending: true });
 
   if (error) {
     console.error("Error fetching vaccines:", error.message);
@@ -136,6 +138,8 @@ export async function addVaccineStock(addDetails) {
       batch_number: addDetails.batch_number,
       expiration_date: addDetails.expiration_date,
       inventory_id: addDetails.inventory_id,
+      remarks: addDetails.remarks,
+      created_at: new Date().toISOString(),
     },
   ]);
 

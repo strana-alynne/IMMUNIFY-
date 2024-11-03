@@ -128,12 +128,16 @@ const Details = ({ params }) => {
   }, [params.id]);
 
   const handleCloseModal = () => setOpenModal(false);
-  const handleCloseAddModal = () => setOpenAddModal(false);
+  const handleCloseAddModal = () => {
+    resetFormFields();
+    setOpenAddModal(false);
+  };
   const handleCloseEditModal = () => setOpenEditModal(false);
   const handleOpenAddModal = () => setOpenAddModal(true);
   const [modalContent, setModalContent] = useState("");
   const [title, setTitle] = useState("");
   const [modeIcon, setModeIcon] = useState("");
+  const [remarks, setRemarks] = useState("");
   const handleEdit = (transaction) => {
     console.log("Edit", transaction);
     setEditingTransaction({
@@ -156,6 +160,15 @@ const Details = ({ params }) => {
 
   const handleClose = () => {
     setOpenModal(false);
+  };
+
+  const resetFormFields = () => {
+    setSelectedDate(dayjs());
+    setExpirationDate(dayjs());
+    setQuantity("");
+    setBatchNumber("");
+    setRemarks("");
+    setTransactionType("");
   };
 
   const handleDelete = async (delTransaction) => {
@@ -225,7 +238,6 @@ const Details = ({ params }) => {
   };
 
   const handleAddTransaction = async () => {
-    console.log("click");
     const formattedDate = selectedDate.format("YYYY-MM-DD");
     const exFormattedDate = expirationDate.format("YYYY-MM-DD");
     const vaccineStockDetails = {
@@ -235,6 +247,7 @@ const Details = ({ params }) => {
       batch_number: batchNumber,
       expiration_date: exFormattedDate,
       inventory_id: inventoryID,
+      remarks: remarks,
     };
 
     if (transactionType === "STOCK OUT") {
@@ -286,6 +299,7 @@ const Details = ({ params }) => {
     { field: "batch_number", headerName: "Batch Number", flex: 1 },
     { field: "expiration_date", headerName: "Expiration Date", flex: 1 },
     { field: "transaction_type", headerName: "Transaction Type", flex: 1 },
+    { field: "remarks", headerName: "Remarks", flex: 1 },
     {
       field: "actions",
       headerName: "Actions",
@@ -431,6 +445,15 @@ const Details = ({ params }) => {
                 label="Batch Number"
                 value={batchNumber}
                 onChange={(e) => setBatchNumber(e.target.value)}
+              />
+              <TextField
+                fullWidth
+                label="Remarks"
+                multiline
+                rows={3}
+                value={remarks}
+                onChange={(e) => setRemarks(e.target.value)}
+                placeholder="Enter any additional notes or comments"
               />
               <LocalizationProvider dateAdapter={AdapterDayjs}>
                 <DatePicker
