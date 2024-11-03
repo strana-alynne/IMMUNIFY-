@@ -16,10 +16,10 @@ const EditMotherModal = ({ open, onClose, motherData, onSave }) => {
     mother_age: motherData?.mother_age || "",
     contact_number: motherData?.contact_number || "",
     mother_email: motherData?.mother_email || "",
-    delivery_type: motherData?.delivery_type || "",
-    attending: motherData?.attending || "",
-    facility_name: motherData?.facility_name || "",
-    facility_type: motherData?.facility_type || "",
+    // delivery_type: motherData?.delivery_type || "",
+    // attending: motherData?.attending || "",
+    // facility_name: motherData?.facility_name || "",
+    // facility_type: motherData?.facility_type || "",
   });
 
   const handleChange = (e) => {
@@ -82,7 +82,7 @@ const EditMotherModal = ({ open, onClose, motherData, onSave }) => {
               margin="dense"
             />
           </Grid>
-          <Grid item xs={12} md={6}>
+          {/* <Grid item xs={12} md={6}>
             <TextField
               fullWidth
               select
@@ -129,7 +129,7 @@ const EditMotherModal = ({ open, onClose, motherData, onSave }) => {
               <MenuItem value="Government">Government</MenuItem>
               <MenuItem value="Private">Private</MenuItem>
             </TextField>
-          </Grid>
+          </Grid> */}
         </Grid>
       </DialogContent>
       <DialogActions>

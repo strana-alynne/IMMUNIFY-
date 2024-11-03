@@ -123,11 +123,14 @@ export default function AddChild() {
         console.log("mothederIDdhfjhf", motherData.mother_id);
         finalMotherData = motherData.mother_id;
       } else {
+        console.log("fgjfshjlfshjij", motherData);
         // Create new mother account
         const motherResult = await motherService.createMotherAccount({
           mother_name: motherData.mother_name,
           mother_email: motherData.mother_email,
           contact_number: motherData.contact_number,
+          relationship: motherData.relationship,
+          mother_age: motherData.mother_age,
         });
 
         console.log("motherResult", motherResult);
@@ -231,7 +234,7 @@ export default function AddChild() {
 
           <Paper sx={{ p: 4 }}>
             <Typography variant="h6" color="primary.darker" sx={{ mb: 4 }}>
-              Mother's Personal Information
+              Gaurdian's Personal Information
             </Typography>
             <Motherinfo
               setMotherData={(data) => updateFormData("motherData", data)}

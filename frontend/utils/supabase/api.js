@@ -357,7 +357,15 @@ export const motherService = {
    */
 
   async createMotherAccount(motherData) {
-    const { mother_email, mother_name, contact_number } = motherData;
+    const {
+      mother_email,
+      mother_name,
+      contact_number,
+      relationship,
+      mother_age,
+    } = motherData;
+
+    console.log("dkdjkd", motherData);
 
     try {
       // Generate a temporary password
@@ -408,6 +416,8 @@ export const motherService = {
           mother_name,
           mother_email,
           contact_number,
+          relationship,
+          mother_age,
         })
         .select()
         .single();

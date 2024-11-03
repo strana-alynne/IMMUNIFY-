@@ -10,6 +10,7 @@ import {
   Autocomplete,
   Box,
   Alert,
+  MenuItem,
 } from "@mui/material";
 import { motherService } from "@/utils/supabase/api";
 
@@ -19,20 +20,41 @@ export default function Motherinfo({ setMotherData, triggerErrorCheck }) {
     mother_email: "",
     contact_number: "",
     mfirstname: "",
+    mmiddlename: "",
     mlastname: "",
+    mAge: "",
+    msuffix: "",
+    relationship: "",
   });
+
   const [isExistingMother, setIsExistingMother] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
   const [selectedMother, setSelectedMother] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
 
+  // Relationship options
+  const relationshipOptions = [
+    "Mother",
+    "Father",
+    "Guardian",
+    "Grandmother",
+    "Grandfather",
+    "Aunt",
+    "Uncle",
+    "Other",
+  ];
+
   // Error states
   const [errors, setErrors] = useState({
     mother_email: "",
     contact_number: "",
     mfirstname: "",
+    mmiddlename: "",
     mlastname: "",
+    msuffix: "",
+    relationship: "",
+    mAge: "",
     search: "",
     general: "",
   });
@@ -51,7 +73,12 @@ export default function Motherinfo({ setMotherData, triggerErrorCheck }) {
     },
     mfirstname: (value) =>
       value.trim() === "" ? "First name is required" : "",
+    mmiddlename: (value) => "", // Optional field
+    mAge: (value) => (value.trim() === "" ? "Age is required" : ""),
     mlastname: (value) => (value.trim() === "" ? "Last name is required" : ""),
+    msuffix: (value) => "", // Optional field
+    relationship: (value) =>
+      value.trim() === "" ? "Relationship is required" : "",
   };
 
   // Update parent component with initial mother data
@@ -68,7 +95,7 @@ export default function Motherinfo({ setMotherData, triggerErrorCheck }) {
     } else if (!selectedMother) {
       setErrors((prev) => ({
         ...prev,
-        search: "Please select a mother from the search results",
+        search: "Please select a guardian from the search results",
       }));
     }
   }, [triggerErrorCheck, isExistingMother, selectedMother]);
@@ -92,19 +119,29 @@ export default function Motherinfo({ setMotherData, triggerErrorCheck }) {
           mother_name: selectedMother.mother_name,
           mother_email: selectedMother.mother_email,
           contact_number: selectedMother.contact_number,
+          relationship: selectedMother.relationship,
           isExisting: true,
         });
       } else {
         setMotherData(null);
       }
     } else {
-      const fullName =
-        `${formData.mfirstname.trim()} ${formData.mlastname.trim()}`.trim();
+      const fullName = [
+        formData.mfirstname.trim(),
+        formData.mmiddlename.trim(),
+        formData.mlastname.trim(),
+        formData.msuffix.trim(),
+      ]
+        .filter(Boolean)
+        .join(" ");
+
       if (formData.mother_email || formData.contact_number || fullName) {
         setMotherData({
           mother_name: fullName,
           mother_email: formData.mother_email,
           contact_number: formData.contact_number,
+          relationship: formData.relationship,
+          mother_age: formData.mAge,
           isExisting: false,
         });
       }
@@ -140,7 +177,7 @@ export default function Motherinfo({ setMotherData, triggerErrorCheck }) {
       console.error("Search error:", error);
       setErrors((prev) => ({
         ...prev,
-        search: "Failed to search mothers. Please try again.",
+        search: "Failed to search guardians. Please try again.",
         general: error.message,
       }));
       setSearchResults([]);
@@ -185,7 +222,10 @@ export default function Motherinfo({ setMotherData, triggerErrorCheck }) {
         mother_email: "",
         contact_number: "",
         mfirstname: "",
+        mmiddlename: "",
         mlastname: "",
+        msuffix: "",
+        relationship: "",
       });
     }
   };
@@ -213,12 +253,12 @@ export default function Motherinfo({ setMotherData, triggerErrorCheck }) {
             <FormControlLabel
               value={false}
               control={<Radio />}
-              label="New Mother"
+              label="New Guardian"
             />
             <FormControlLabel
               value={true}
               control={<Radio />}
-              label="Existing Mother"
+              label="Existing Guardian"
             />
           </RadioGroup>
         </Grid>
@@ -238,12 +278,12 @@ export default function Motherinfo({ setMotherData, triggerErrorCheck }) {
               noOptionsText={
                 searchQuery.length < 2
                   ? "Type to search..."
-                  : "No mothers found"
+                  : "No guardian found"
               }
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  label="Search Mother"
+                  label="Search Guardian"
                   variant="outlined"
                   fullWidth
                   error={!!errors.search}
@@ -254,11 +294,14 @@ export default function Motherinfo({ setMotherData, triggerErrorCheck }) {
             {selectedMother && (
               <Alert severity="success" sx={{ mt: 2 }}>
                 <Typography>
-                  Selected Mother: {selectedMother.mother_name}
+                  Selected Guardian: {selectedMother.mother_name}
                 </Typography>
                 <Typography>Email: {selectedMother.mother_email}</Typography>
                 <Typography>
                   Contact: {selectedMother.contact_number}
+                </Typography>
+                <Typography>
+                  Relationship: {selectedMother.relationship}
                 </Typography>
               </Alert>
             )}
@@ -304,7 +347,7 @@ export default function Motherinfo({ setMotherData, triggerErrorCheck }) {
               />
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12} md={4}>
               <Typography variant="p" color="darker">
                 First Name
               </Typography>
@@ -321,7 +364,24 @@ export default function Motherinfo({ setMotherData, triggerErrorCheck }) {
               />
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12} md={1}>
+              <Typography variant="p" color="darker">
+                M.I.
+              </Typography>
+              <TextField
+                variant="outlined"
+                fullWidth
+                id="mother-middlename"
+                label="M.I."
+                name="middlename"
+                value={formData.mmiddlename}
+                onChange={handleInputChange("mmiddlename")}
+                error={!!errors.mmiddlename}
+                helperText={errors.mmiddlename}
+              />
+            </Grid>
+
+            <Grid item xs={12} md={4}>
               <Typography variant="p" color="darker">
                 Last Name
               </Typography>
@@ -336,6 +396,64 @@ export default function Motherinfo({ setMotherData, triggerErrorCheck }) {
                 error={!!errors.mlastname}
                 helperText={errors.mlastname}
               />
+            </Grid>
+
+            <Grid item xs={12} md={3}>
+              <Typography variant="p" color="darker">
+                Suffix
+              </Typography>
+              <TextField
+                variant="outlined"
+                fullWidth
+                id="mother-suffix"
+                label="e.g., Jr., Sr., III"
+                name="suffix"
+                value={formData.msuffix}
+                onChange={handleInputChange("msuffix")}
+                error={!!errors.msuffix}
+                helperText={errors.msuffix}
+              />
+            </Grid>
+
+            <Grid item xs={12} md={4}>
+              <Typography variant="p" color="darker">
+                Age
+              </Typography>
+              <TextField
+                variant="outlined"
+                fullWidth
+                id="mother-lastname"
+                label="Age"
+                name="age"
+                value={formData.mAge}
+                onChange={handleInputChange("mAge")}
+                error={!!errors.mAge}
+                helperText={errors.mAge}
+              />
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <Typography variant="p" color="darker">
+                Relationship
+              </Typography>
+              <TextField
+                select
+                variant="outlined"
+                fullWidth
+                id="mother-relationship"
+                label="Relationship"
+                name="relationship"
+                value={formData.relationship}
+                onChange={handleInputChange("relationship")}
+                error={!!errors.relationship}
+                helperText={errors.relationship}
+              >
+                {relationshipOptions.map((option) => (
+                  <MenuItem key={option} value={option}>
+                    {option}
+                  </MenuItem>
+                ))}
+              </TextField>
             </Grid>
           </>
         )}
