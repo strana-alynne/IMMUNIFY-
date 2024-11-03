@@ -21,6 +21,7 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  Paper,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import ReminderCard from "@/app/components/ReminderCard";
@@ -144,77 +145,70 @@ export default function Reminders() {
   return (
     <Box sx={{ display: "flex", marginTop: "50px" }}>
       <Container fixed>
-        <Stack spacing={4}>
-          <Stack direction="row" spacing={4}>
-            <Notifications sx={{ fontSize: 40 }} color="primary" />
-            <Typography variant="h2" color="primary">
-              Reminders
-            </Typography>
-          </Stack>
-
-          <Stack direction="row" spacing={2}>
-            <Box flex={1} sx={{ px: 4 }}>
-              {/* SearchBar */}
-              <Stack spacing={4}>
-                <TextField
-                  size="small"
-                  fullWidth
-                  id="outlined-size-small"
-                  label="Search..."
-                  name="search"
-                  value={searchTerm}
-                  onChange={handleSearch} // Update search term on change
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <SearchIcon />
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-                {/* LIST OF REMINDERS */}
-                <Box
-                  spacing={2}
-                  sx={{
-                    maxHeight: "500px",
-                    overflow: "auto",
-                  }}
-                >
-                  {Array.isArray(filteredReminders) &&
-                    filteredReminders.map((reminder) => (
-                      <Stack
-                        key={reminder.id}
-                        direction="row"
-                        alignItems="center"
-                        justifyContent="space-between" // Align icon to the right
-                        sx={{ mb: 2 }}
+        <Stack direction="row" spacing={2}>
+          <Box flex={1} sx={{ px: 4 }}>
+            {/* SearchBar */}
+            <Stack spacing={4}>
+              <TextField
+                size="small"
+                fullWidth
+                id="outlined-size-small"
+                label="Search..."
+                name="search"
+                value={searchTerm}
+                onChange={handleSearch} // Update search term on change
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <SearchIcon />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+              {/* LIST OF REMINDERS */}
+              <Box
+                spacing={2}
+                sx={{
+                  maxHeight: "500px",
+                  overflow: "auto",
+                }}
+              >
+                {Array.isArray(filteredReminders) &&
+                  filteredReminders.map((reminder) => (
+                    <Stack
+                      key={reminder.id}
+                      direction="row"
+                      alignItems="center"
+                      justifyContent="space-between" // Align icon to the right
+                      sx={{ mb: 2 }}
+                    >
+                      <ReminderCard
+                        icon={
+                          reminder.reminder_type === "Announcement"
+                            ? NewReleases
+                            : Campaign
+                        }
+                        title={reminder.title}
+                        description={reminder.description}
+                        time={new Date(reminder.created_at).toLocaleString()}
+                      />
+                      <IconButton
+                        onClick={() => handleDeleteClick(reminder)} // Open delete confirmation
+                        color="error"
                       >
-                        <ReminderCard
-                          icon={
-                            reminder.reminder_type === "Announcement"
-                              ? NewReleases
-                              : Campaign
-                          }
-                          title={reminder.title}
-                          description={reminder.description}
-                          time={new Date(reminder.created_at).toLocaleString()}
-                        />
-                        <IconButton
-                          onClick={() => handleDeleteClick(reminder)} // Open delete confirmation
-                          color="error"
-                        >
-                          <Delete />
-                        </IconButton>
-                      </Stack>
-                    ))}
-                </Box>
-              </Stack>
-            </Box>
-            {/* CREATE REMINDER HERE */}
-            <Box flex={2}>
-              <Stack spacing={2} sx={{ justifyContent: "start" }}>
-                {/* HEADER */}
-                <Grid container direction="row">
+                        <Delete />
+                      </IconButton>
+                    </Stack>
+                  ))}
+              </Box>
+            </Stack>
+          </Box>
+          {/* CREATE REMINDER HERE */}
+          <Box flex={2}>
+            <Stack spacing={2} sx={{ justifyContent: "start" }}>
+              {/* HEADER */}
+              <Paper elevation={0}>
+                <Grid container direction="row" spacing={2}>
                   <Grid item xs={8}>
                     <TextField
                       size="small"
@@ -252,29 +246,29 @@ export default function Reminders() {
                     </FormControl>
                   </Grid>
                 </Grid>
-                {/* DESCRIPTION TEXTAREA */}
-                <TextField
-                  fullWidth
-                  id="outlined-multiline-static"
-                  placeholder="Create an Announcement..."
-                  multiline
-                  rows={18}
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                />
-                {/* BUTTON TO CREATE */}
-                <Button
-                  variant="contained"
-                  color="primary"
-                  size="large"
-                  endIcon={<Send />}
-                  onClick={handleAddReminder}
-                >
-                  Send Reminder
-                </Button>
-              </Stack>
-            </Box>
-          </Stack>
+              </Paper>
+              {/* DESCRIPTION TEXTAREA */}
+              <TextField
+                fullWidth
+                id="outlined-multiline-static"
+                placeholder="Create an Announcement..."
+                multiline
+                rows={18}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+              {/* BUTTON TO CREATE */}
+              <Button
+                variant="contained"
+                color="primary"
+                size="large"
+                endIcon={<Send />}
+                onClick={handleAddReminder}
+              >
+                Send Reminder
+              </Button>
+            </Stack>
+          </Box>
         </Stack>
 
         {/* Confirmation Dialog */}

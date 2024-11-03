@@ -4,7 +4,7 @@ import { Typography, Stack } from "@mui/material";
 
 export default function ReminderCard({ icon: Icon, title, description, time }) {
   return (
-    <Card>
+    <Card elevation={0}>
       <CardContent>
         <Stack direction="row" spacing={4}>
           <Stack direction="row" spacing={2}>
