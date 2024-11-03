@@ -79,52 +79,47 @@ const Details = ({ params }) => {
   });
   const [babiesCovered, setBabiesCovered] = useState(0);
   const [subscription, setSubscription] = useState(null);
+  const [deletingTransaction, setDeletingTransaction] = useState(null);
 
   const router = useRouter();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [VacId, setVacId] = useState("");
 
+  const loadData = async (storeInventoryId, vaccineId, storedVaccineName) => {
+    const fetchedVaccines = await fetchVaccineStock(storeInventoryId);
+    const fetchInventory = await getInventoryTotal(vaccineId);
+    const coverageRatio = VACCINE_COVERAGE[storedVaccineName] || 0;
+    const calculatedBabiesCovered = fetchInventory * coverageRatio;
+
+    setVaccines(fetchedVaccines);
+    setTotal(fetchInventory);
+    setBabiesCovered(calculatedBabiesCovered);
+  };
+
   useEffect(() => {
-    async function loadVaccines() {
+    async function initializeData() {
       const storedVaccineName = localStorage.getItem("selectedVaccineName");
       const storeInventoryId = localStorage.getItem("inventoryID");
       const fetchTotal = localStorage.getItem("vaccineID");
 
-      // Initial data fetch
-      const fetchedVaccines = await fetchVaccineStock(storeInventoryId);
-      const fetchInventory = await getInventoryTotal(fetchTotal);
-      const coverageRatio = VACCINE_COVERAGE[storedVaccineName] || 0;
-      const calculatedBabiesCovered = fetchInventory * coverageRatio;
-
       setVacId(fetchTotal);
       setVaccineName(storedVaccineName);
       setInventoryID(storeInventoryId);
-      setVaccines(fetchedVaccines);
-      setTotal(fetchInventory);
-      setBabiesCovered(calculatedBabiesCovered);
+
+      // Initial data load
+      await loadData(storeInventoryId, fetchTotal, storedVaccineName);
 
       // Set up real-time subscription
-      const sub = subscribeToVaccineTransactions(
-        storeInventoryId,
-        async (payload) => {
-          // Refresh data when changes occur
-          const updatedVaccines = await fetchVaccineStock(storeInventoryId);
-          const updatedInventory = await getInventoryTotal(fetchTotal);
-          const updatedBabiesCovered = updatedInventory * coverageRatio;
-
-          setVaccines(updatedVaccines);
-          setTotal(updatedInventory);
-          setBabiesCovered(updatedBabiesCovered);
-        }
-      );
+      const sub = subscribeToVaccineTransactions(storeInventoryId, async () => {
+        await loadData(storeInventoryId, fetchTotal, storedVaccineName);
+      });
 
       setSubscription(sub);
     }
 
-    loadVaccines();
+    initializeData();
 
-    // Cleanup subscription when component unmounts
     return () => {
       if (subscription) {
         subscription.unsubscribe();
@@ -160,18 +155,40 @@ const Details = ({ params }) => {
   };
 
   const handleClose = () => {
-    console.log(window.location.pathname);
-    window.location.reload();
     setOpenModal(false);
   };
+
   const handleDelete = async (delTransaction) => {
-    await delVaccine(
-      inventoryID,
-      delTransaction.transaction_id,
-      delTransaction.transaction_type,
-      delTransaction.transaction_quantity
-    );
-    setOpenModal(false);
+    try {
+      setDeletingTransaction(delTransaction);
+      await delVaccine(
+        inventoryID,
+        delTransaction.transaction_id,
+        delTransaction.transaction_type,
+        delTransaction.transaction_quantity
+      );
+
+      // Immediately refresh data after deletion
+      const storedVaccineName = localStorage.getItem("selectedVaccineName");
+      await loadData(inventoryID, VacId, storedVaccineName);
+
+      setModalContent("Transaction deleted successfully");
+      setModeIcon(<CheckCircle color="success" sx={{ fontSize: 80 }} />);
+      setTitle("Success");
+      setActions(
+        <Button variant="contained" color="primary" onClick={handleClose}>
+          Ok
+        </Button>
+      );
+    } catch (error) {
+      console.error("Error deleting transaction:", error);
+      setModalContent("Failed to delete transaction");
+      setModeIcon(<Inventory2 color="error" sx={{ fontSize: 64 }} />);
+      setTitle("Error");
+    } finally {
+      setDeletingTransaction(null);
+      setOpenModal(false);
+    }
   };
 
   const handleDelModal = async (transaction) => {
@@ -260,7 +277,6 @@ const Details = ({ params }) => {
       setModeIcon(<Inventory2 color="error" sx={{ fontSize: 64 }} />);
       setTitle("Error Adding Stock");
     }
-    router.refresh();
   };
 
   const columns = [

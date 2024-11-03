@@ -34,6 +34,7 @@ const RecordsLineChart = () => {
   useEffect(() => {
     const loadData = async () => {
       const stats = await getImmunizationStats();
+      console.log("stats", stats);
       setData(stats);
 
       // Extract unique years from the data
@@ -44,6 +45,7 @@ const RecordsLineChart = () => {
       ].sort((a, b) => b - a); // Sort years in descending order
 
       setAvailableYears(years);
+      console.log("years", years);
       // Set the most recent year as default
       if (years.length > 0 && !selectedYear) {
         setSelectedYear(years[0]);
