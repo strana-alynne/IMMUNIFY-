@@ -13,15 +13,24 @@ import React, { useEffect, useState } from "react";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import DashBoardCard from "@/app/components/DashBoardCard";
 import ReminderCard from "@/app/components/ReminderCard";
-import { Group, Face, EventBusy, NewReleases, Chat } from "@mui/icons-material";
+import {
+  Group,
+  Face,
+  EventBusy,
+  NewReleases,
+  Chat,
+  Campaign,
+} from "@mui/icons-material";
 import Map from "@/app/components/Map";
 import { createClient } from "@/utils/supabase/client";
 import VaccineAlert from "@/app/components/VaccineAlert";
 import { countMissedChildren, totalChildren } from "@/utils/supabase/api";
 import RecordsLineChart from "@/app/components/RecordsLineChart";
+import { fetchReminders } from "@/utils/supabase/supabaseClient";
 
 export default function Dashboard() {
   const theme = useTheme();
+  const [filteredReminders, setFilteredReminders] = useState([]);
   const [user, setUser] = useState(null);
   const [motherNames, setMotherNames] = useState({});
   const router = useRouter();
@@ -32,6 +41,18 @@ export default function Dashboard() {
   const supabase = createClient();
 
   useEffect(() => {
+    const getReminders = async () => {
+      const response = await fetchReminders();
+      if (response.success) {
+        setFilteredReminders(response.data); // Initialize filtered reminders
+      } else {
+        console.error("Failed to fetch reminders:", response.error);
+        setReminders([]);
+        setFilteredReminders([]);
+      }
+    };
+    getReminders();
+
     async function loadChild() {
       try {
         const totalDef = await countMissedChildren();
@@ -183,30 +204,19 @@ export default function Dashboard() {
                     overflow: "auto",
                   }}
                 >
-                  <ReminderCard
-                    icon={NewReleases}
-                    title="Vaccine Schedule"
-                    description="This is to remind you that your baby Angelo is ..."
-                    time="3hr"
-                  />
-                  <ReminderCard
-                    icon={NewReleases}
-                    title="Vaccine Schedule"
-                    description="This is to remind you that your baby Angelo is ..."
-                    time="3hr"
-                  />
-                  <ReminderCard
-                    icon={NewReleases}
-                    title="Vaccine Schedule"
-                    description="This is to remind you that your baby Angelo is ..."
-                    time="3hr"
-                  />
-                  <ReminderCard
-                    icon={NewReleases}
-                    title="Vaccine Schedule"
-                    description="This is to remind you that your baby Angelo is ..."
-                    time="3hr"
-                  />
+                  {Array.isArray(filteredReminders) &&
+                    filteredReminders.map((reminder) => (
+                      <ReminderCard
+                        icon={
+                          reminder.reminder_type === "Announcement"
+                            ? NewReleases
+                            : Campaign
+                        }
+                        title={reminder.title}
+                        description={reminder.description}
+                        time={new Date(reminder.created_at).toLocaleString()}
+                      />
+                    ))}
                 </Box>
               </Typography>
             </Grid>
