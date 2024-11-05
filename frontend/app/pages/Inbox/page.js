@@ -17,6 +17,7 @@ import {
 import { Add, Delete, ChevronRight } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
+import { deleteChat } from "@/utils/supabase/chatapi";
 
 export default function MainPage() {
   const [conversations, setConversations] = useState([]);
@@ -109,10 +110,19 @@ export default function MainPage() {
     }
   };
 
-  const handleDelete = (id) => {
-    setMessages(
-      messages.map((msg) => (msg.id === id ? { ...msg, deleted: true } : msg))
-    );
+  const handleDelete = async (id, e) => {
+    try {
+      e.stopPropagation();
+      await deleteChat(id);
+      setConversations((prevConversations) =>
+        prevConversations.filter((conversation) => conversation.id !== id)
+      );
+      if (user) {
+        await fetchConversations(user);
+      }
+    } catch (error) {
+      console.error("Error deleting chat:", error);
+    }
   };
 
   const handleAddNewMessage = () => {
@@ -159,7 +169,7 @@ export default function MainPage() {
                     />
                     <ListItemSecondaryAction>
                       <IconButton
-                        onClick={() => handleDelete(message.id)}
+                        onClick={(e) => handleDelete(message.id, e)}
                         aria-label="delete"
                         color="error"
                       >
