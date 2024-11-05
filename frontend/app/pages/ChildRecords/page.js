@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   Box,
   Container,
@@ -9,7 +9,6 @@ import {
   Button,
   TextField,
   Grid,
-  IconButton,
   InputAdornment,
   FormControl,
   InputLabel,
@@ -22,6 +21,7 @@ import {
   useTheme,
   Skeleton,
   Paper,
+  IconButton,
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import {
@@ -32,19 +32,24 @@ import {
   fetchScheduledChildId,
   fetchScheduledChildTom,
   fetchSchedTomChildId,
+  deleteChild,
 } from "@/utils/supabase/api";
 import {
   AddCircle,
   CalendarMonth,
+  Delete,
   EventBusy,
   Face,
   Face2,
+  Warning,
 } from "@mui/icons-material";
-import EditIcon from "@mui/icons-material/Edit";
 import SearchIcon from "@mui/icons-material/Search";
 import { useRouter } from "next/navigation";
 import VaccineAlert from "@/app/components/VaccineAlert";
 import ChildRecordCard from "@/app/components/ChildRecordCard";
+import GeneralModals from "@/app/components/Modals/Modals";
+import { toast, Toaster } from "sonner";
+
 //Chip Color
 const getChipColor = (status) => {
   switch (status) {
@@ -127,11 +132,15 @@ export default function ChildRecords() {
   const [pageSize, setPageSize] = useState(5); // Page size for pagination
   const [page, setPage] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [scheduledToday, SetScheduledToday] = useState();
   const [childToday, setChildToday] = useState();
   const [scheduledTomorrow, setScheduledTomorrow] = useState();
   const today = new Date();
   const [activeFilter, setActiveFilter] = useState(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [childToDelete, setChildToDelete] = useState(null);
+  const [deleteInProgress, setDeleteInProgress] = useState(false);
   const formattedToday = today.toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
@@ -151,30 +160,83 @@ export default function ChildRecords() {
   };
 
   useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300); // 300ms delay
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Search Handler with Type Safety
+  const handleSearch = useCallback((searchValue) => {
+    setSearchTerm(searchValue);
+    setPage(0); // Reset to first page when search changes
+  }, []);
+
+  // Modified handle delete to open modal first
+  const handleDeleteClick = (childId, childName) => {
+    setChildToDelete({ id: childId, name: childName });
+    setDeleteModalOpen(true);
+  };
+
+  // Actual delete function
+  const handleConfirmDelete = async () => {
+    if (!childToDelete) return;
+
+    setDeleteInProgress(true);
+    try {
+      await deleteChild(childToDelete.id);
+
+      // Show success toast
+      toast.success("Record Deleted Successfully", {
+        description: `${childToDelete.name}'s record has been deleted.`,
+        duration: 3000,
+      });
+
+      // Refresh the data after deletion
+      const fetchedChildren = await fetchAllChildren();
+      setChild(fetchedChildren);
+    } catch (error) {
+      console.error("Error deleting child:", error);
+      // Show error toast
+      toast.error("Delete Failed", {
+        description:
+          "There was an error deleting the record. Please try again.",
+        duration: 3000,
+      });
+    } finally {
+      setDeleteInProgress(false);
+      setDeleteModalOpen(false);
+      setChildToDelete(null);
+    }
+  };
+
+  useEffect(() => {
     async function loadChild() {
       try {
+        setLoading(true);
         const fetchedChildren = await fetchAllChildren();
 
+        // Fetch all necessary data
         const scheduledIdsObjects = await fetchScheduledChildId();
-        // Extract child_ids from the objects and store them in state
         const scheduledIds = scheduledIdsObjects.map((obj) => obj.child_id);
         const totalScheduledToday = await fetchScheduledChild();
-
         const totalChildToday = await fetchImmunizedChild();
         const vaccinatedIsObj = await fetchImmunizedChildId();
         const vaccinatedId = vaccinatedIsObj.map((obj) => obj.child_id);
-
         const totalScheduledTomorrow = await fetchScheduledChildTom();
         const schedTomisObj = await fetchSchedTomChildId();
         const schedTomId = schedTomisObj.map((obj) => obj.child_id);
 
+        // Update states
         SetScheduledToday(totalScheduledToday);
         setChildToday(totalChildToday);
         setScheduledTomorrow(totalScheduledTomorrow);
-        // Filter the children based on all criteria
+
+        // Apply filters
         let filteredChildren = fetchedChildren;
 
-        // Apply scheduled filter if active
+        // Active filter logic
         if (activeFilter === "scheduled") {
           filteredChildren = fetchedChildren.filter((child) =>
             scheduledIds.includes(child.child_id)
@@ -188,16 +250,20 @@ export default function ChildRecords() {
             schedTomId.includes(child.child_id)
           );
         }
-        // Apply other filters
+
+        // Search and filter logic
         filteredChildren = filteredChildren.filter((child) => {
-          const matchesSearchTerm =
-            child.child_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            child.Purok?.purok_name
-              ?.toLowerCase()
-              .includes(searchTerm.toLowerCase()) ||
-            child.Mother?.mother_name
-              .toLowerCase()
-              .includes(searchTerm.toLowerCase());
+          const matchesSearchTerm = debouncedSearchTerm
+            ? child.child_name
+                .toLowerCase()
+                .includes(debouncedSearchTerm.toLowerCase()) ||
+              child.Purok?.purok_name
+                ?.toLowerCase()
+                .includes(debouncedSearchTerm.toLowerCase()) ||
+              child.Mother?.mother_name
+                .toLowerCase()
+                .includes(debouncedSearchTerm.toLowerCase())
+            : true;
 
           const matchesPurok =
             purokName.length === 0 ||
@@ -216,9 +282,9 @@ export default function ChildRecords() {
         setLoading(false);
       }
     }
-    loadChild();
-  }, [searchTerm, purokName, statusName, activeFilter]);
 
+    loadChild();
+  }, [debouncedSearchTerm, purokName, statusName, activeFilter]);
   const handleRowClick = (params) => {
     localStorage.setItem("childStatus", params.row.overallStatus);
     router.push(`/pages/ChildRecords/${params.id}`);
@@ -302,17 +368,17 @@ export default function ChildRecords() {
     },
     {
       field: "actions",
-      headerName: "Action",
+      headerName: "Actions",
       width: 100,
-      hide: isMobile || isTablet,
       renderCell: (params) => (
-        <IconButton
-          aria-label="edit"
-          color="primary"
-          onClick={() => handleEdit(params.row.id)}
-        >
-          <EditIcon />
-        </IconButton>
+        <div onClick={(event) => event.stopPropagation()}>
+          <IconButton
+            onClick={() => handleDeleteClick(params.id)}
+            color="error"
+          >
+            <Delete />
+          </IconButton>
+        </div>
       ),
     },
   ];
@@ -320,6 +386,7 @@ export default function ChildRecords() {
   return (
     <Box sx={{ display: "flex" }}>
       <Container fixed>
+        <Toaster richColors position="top-right" />
         <Stack spacing={4}>
           <VaccineAlert />
           <Paper elevation={0}>
@@ -431,7 +498,7 @@ export default function ChildRecords() {
                   <TextField
                     fullWidth
                     label="Search..."
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={(e) => handleSearch(e.target.value)}
                     InputProps={{
                       endAdornment: (
                         <InputAdornment position="end">
@@ -519,6 +586,41 @@ export default function ChildRecords() {
             </Box>
           </Stack>
         </Stack>
+        <GeneralModals
+          open={deleteModalOpen}
+          onClose={() => {
+            if (!deleteInProgress) {
+              setDeleteModalOpen(false);
+              setChildToDelete(null);
+            }
+          }}
+          title="Delete Confirmation"
+          content={`Are you sure you want to delete ${childToDelete?.name}'s record? This action cannot be undone.`}
+          color="error"
+          icon={<Warning sx={{ fontSize: 40, color: "error.main", mb: 1 }} />}
+          actions={
+            <Box sx={{ display: "flex", gap: 2 }}>
+              <Button
+                variant="outlined"
+                onClick={() => {
+                  setDeleteModalOpen(false);
+                  setChildToDelete(null);
+                }}
+                disabled={deleteInProgress}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="contained"
+                color="error"
+                onClick={handleConfirmDelete}
+                disabled={deleteInProgress}
+              >
+                {deleteInProgress ? "Deleting..." : "Delete"}
+              </Button>
+            </Box>
+          }
+        />
       </Container>
     </Box>
   );
