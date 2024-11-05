@@ -54,20 +54,41 @@ const ChatInterface = () => {
   const initChat = async () => {
     setUser(mother_id);
 
+    // Step 1: Fetch or create conversation
     let convId = await fetchConversation("BHW", mother_id);
 
     if (!convId) {
-      // Only create new conversation if it doesn't exist
       const newConv = await createNewConversation("BHW", mother_id);
       convId = newConv?.conversation_id;
     }
 
     if (convId) {
       setConversationId(convId);
-      setupMessagesSubscription(convId); // Setup subscription after setting conversationId
+
+      // Step 2: Fetch existing messages
+      await loadExistingMessages(convId);
+
+      // Step 3: Setup Realtime subscription after messages are loaded
+      setupMessagesSubscription(convId);
     }
 
     setIsLoading(false);
+  };
+
+  // New function to load existing messages
+  const loadExistingMessages = async (convId) => {
+    const { data: fetchedMessages, error } = await supabase
+      .from("messages")
+      .select("*")
+      .eq("conversation_id", convId)
+      .order("created_at", { ascending: true });
+
+    if (error) {
+      console.error("Error fetching existing messages:", error.message);
+      return;
+    }
+
+    setMessages(fetchedMessages || []);
   };
 
   useEffect(() => {
