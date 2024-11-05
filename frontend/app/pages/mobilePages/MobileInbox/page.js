@@ -51,21 +51,26 @@ const ChatInterface = () => {
 
   const mother_id = localStorage.getItem("motherId");
 
+  const initChat = async () => {
+    setUser(mother_id);
+
+    let convId = await fetchConversation("BHW", mother_id);
+
+    if (!convId) {
+      // Only create new conversation if it doesn't exist
+      const newConv = await createNewConversation("BHW", mother_id);
+      convId = newConv?.conversation_id;
+    }
+
+    if (convId) {
+      setConversationId(convId);
+      setupMessagesSubscription(convId); // Setup subscription after setting conversationId
+    }
+
+    setIsLoading(false);
+  };
+
   useEffect(() => {
-    const initChat = async () => {
-      setUser(mother_id);
-      let convId = await fetchConversation("BHW", mother_id);
-      console.log("ddjhdkjdh", convId);
-      if (convId) {
-        setConversationId(convId);
-        setupMessagesSubscription(convId); // Move subscription setup here
-      } else {
-        convId = await createNewConversation("BHW", mother_id);
-        console.log("HEHHEHEH", convId.conversation_id);
-        setConversationId(convId.conversation_id);
-      }
-      setIsLoading(false);
-    };
     initChat();
 
     return () => {
@@ -94,38 +99,20 @@ const ChatInterface = () => {
         .select("conversation_id")
         .eq("bhw_id", userId)
         .eq("mother_id", motherId)
-        .single();
+        .single(); // Fetch only one conversation
 
-      if (error) throw error;
-
-      if (!conversation) {
-        const { data: newConversation, error: insertError } = await supabase
-          .from("conversations")
-          .insert({ bhw_id: userId, mother_id: motherId })
-          .select()
-          .single();
-
-        if (insertError) throw insertError;
-        conversation = newConversation;
+      if (error && error.code !== "PGRST116") {
+        // Ignore "No rows found" error
+        throw error;
       }
 
-      // Fetch messages for the conversation
-      const { data: fetchedMessages, error: messagesError } = await supabase
-        .from("messages")
-        .select("*")
-        .eq("conversation_id", conversation.conversation_id)
-        .order("created_at", { ascending: true });
-
-      if (messagesError) throw messagesError;
-
-      setMessages(fetchedMessages || []);
-      return conversation.conversation_id;
+      // Return conversation_id if found
+      return conversation ? conversation.conversation_id : null;
     } catch (error) {
-      console.error("Error in fetchConversation:", error.message);
+      console.error("Error fetching conversation:", error.message);
       return null;
     }
   };
-
   const setupMessagesSubscription = (convId) => {
     const channel = supabase
       .channel(`realtime:messages:${convId}`)
