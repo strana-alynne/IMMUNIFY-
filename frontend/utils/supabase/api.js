@@ -304,8 +304,6 @@ export async function checkVaccineStock(vaccine_id, quantity) {
   }
 }
 
-//========================== ACCOUNTS =================================
-
 //========================== MOTHER ACCOUNT=================================
 export const updateMotherDetails = async (motherId, updatedData) => {
   const { data, error } = await supabase
@@ -490,6 +488,56 @@ export const motherService = {
 };
 
 //========================== CHILD RECORDS =================================
+export const searchChildren = async (
+  searchTerm,
+  purokFilter = [],
+  statusFilter = []
+) => {
+  let query = supabase.from("Child").select(`
+      child_id,
+      child_name,
+      child_age,
+      birthdate,
+      gender,
+      overallStatus,
+      Purok (
+        purok_name
+      ),
+      Mother (
+        mother_name
+      )
+    `);
+
+  // Apply search filter if search term exists
+  if (searchTerm) {
+    query = query.or(`
+      child_name.ilike.%${searchTerm}%,
+      Purok.purok_name.ilike.%${searchTerm}%,
+      Mother.mother_name.ilike.%${searchTerm}%
+    `);
+  }
+
+  // Apply purok filter if selected
+  if (purokFilter.length > 0) {
+    query = query.in("Purok.purok_name", purokFilter);
+  }
+
+  // Apply status filter if selected
+  if (statusFilter.length > 0) {
+    query = query.in("overallStatus", statusFilter);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error("Error searching children:", error);
+    throw error;
+  }
+
+  return data;
+};
+
+export async function deleteChild(child) {}
 
 // ADD CHILD AND MOTHER RECORDS
 export async function addChild(

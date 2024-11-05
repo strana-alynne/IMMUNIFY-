@@ -31,7 +31,6 @@ import {
   Inventory2,
   Delete,
   DeleteForever,
-  WindowRounded,
 } from "@mui/icons-material";
 import EditModal from "@/app/components/Modals/EditModal";
 import GeneralModals from "@/app/components/Modals/Modals";
@@ -45,7 +44,6 @@ import {
   subscribeToVaccineTransactions,
 } from "@/utils/supabase/api";
 import ExportDialog from "@/app/components/ExportDialog";
-import { createClient } from "@/utils/supabase/client";
 
 const VACCINE_COVERAGE = {
   "BCG (Bacillus-Calmette-Guerin)": 10,
@@ -111,9 +109,13 @@ const Details = ({ params }) => {
       await loadData(storeInventoryId, fetchTotal, storedVaccineName);
 
       // Set up real-time subscription
-      const sub = subscribeToVaccineTransactions(storeInventoryId, async () => {
-        await loadData(storeInventoryId, fetchTotal, storedVaccineName);
-      });
+      const sub = subscribeToVaccineTransactions(
+        storeInventoryId,
+        async (payload) => {
+          console.log("Realtime update payload:", payload);
+          await loadData(storeInventoryId, fetchTotal, storedVaccineName);
+        }
+      );
 
       setSubscription(sub);
     }
@@ -271,6 +273,7 @@ const Details = ({ params }) => {
     const result = await addVaccineStock(vaccineStockDetails);
     if (!result) {
       // Success adding stock
+      await loadData(inventoryID, VacId, vaccineName);
       setOpenAddModal(false);
       setModalContent("Vaccine stock added successfully.");
       setModeIcon(<CheckCircle color="primary" sx={{ fontSize: 80 }} />);
@@ -368,7 +371,6 @@ const Details = ({ params }) => {
                 pageSize={5}
                 getRowId={(row) => row.transaction_id}
                 rowsPerPageOptions={[5, 10, 20]}
-                checkboxSelection
                 disableSelectionOnClick
                 components={{ Toolbar: GridToolbar }}
                 filterModel={filterModel}
