@@ -4,6 +4,7 @@ import Theme from "./theme";
 import ClientLayout from "./ClientLayout";
 import { getUser } from "./lib/auth";
 import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -108,6 +109,7 @@ export default async function RootLayout({ children }) {
         <body className={inter.className}>
           <ClientLayout user={user}>{children}</ClientLayout>
           <Analytics />
+          <SpeedInsights />
         </body>
       </Theme>
     </html>

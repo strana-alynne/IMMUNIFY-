@@ -537,7 +537,51 @@ export const searchChildren = async (
   return data;
 };
 
-export async function deleteChild(child) {}
+export async function deleteChild(childId) {
+  // Step 1: Delete ImmunizationRecords related to the Schedule(s) for this child
+  // 1. First, get all schedule IDs associated with the child
+  const { data: schedules, error: scheduleError } = await supabase
+    .from("Schedule")
+    .select("sched_id")
+    .eq("child_id", childId);
+
+  if (scheduleError) throw scheduleError;
+
+  const scheduleIds = schedules.map((schedule) => schedule.sched_id);
+
+  // 2. Delete ImmunizationRecords linked to the schedules
+  if (scheduleIds.length > 0) {
+    const { error: immunizationError } = await supabase
+      .from("ImmunizationRecords")
+      .delete()
+      .in("sched_id", scheduleIds);
+
+    if (immunizationError) throw immunizationError;
+  }
+
+  // 3. Delete Schedules
+  const { error: scheduleDeleteError } = await supabase
+    .from("Schedule")
+    .delete()
+    .eq("child_id", childId);
+
+  if (scheduleDeleteError) throw scheduleDeleteError;
+
+  const { error: GrowthErr } = await supabase
+    .from("Growth")
+    .delete()
+    .eq("child_id", childId);
+
+  if (GrowthErr) throw GrowthErr;
+
+  // 4. Delete Child record
+  const { error: childDeleteError } = await supabase
+    .from("Child")
+    .delete()
+    .eq("child_id", childId);
+
+  if (childDeleteError) throw childDeleteError;
+}
 
 // ADD CHILD AND MOTHER RECORDS
 export async function addChild(
