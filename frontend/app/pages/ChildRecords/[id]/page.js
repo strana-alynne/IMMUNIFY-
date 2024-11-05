@@ -371,7 +371,7 @@ const ChildId = ({ params }) => {
               xs={2}
               onClick={handleEditClick}
             >
-              Edit Record
+              Edit Child Details
             </Button>
             <Button
               variant="contained"
