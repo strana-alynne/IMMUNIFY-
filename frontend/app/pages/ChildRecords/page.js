@@ -373,7 +373,7 @@ export default function ChildRecords() {
       renderCell: (params) => (
         <div onClick={(event) => event.stopPropagation()}>
           <IconButton
-            onClick={() => handleDeleteClick(params.id)}
+            onClick={() => handleDeleteClick(params.id, params.row.child_name)}
             color="error"
           >
             <Delete />
