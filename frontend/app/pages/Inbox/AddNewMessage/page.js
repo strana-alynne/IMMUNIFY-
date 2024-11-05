@@ -23,19 +23,10 @@ export default function AddNewMessage() {
   const [errors, setErrors] = useState({ recipient: false, message: false });
   const [isLoading, setIsLoading] = useState(false);
   const supabase = createClient();
-  const [user, setUser] = useState(null);
+  const user = "BHW"; // Hardcoded for now
 
   // Fetch user and available mothers on component mount
   useEffect(() => {
-    const getUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (user) {
-        setUser(user.id); // Store the user ID
-      }
-    };
-    getUser();
     fetchAvailableMothers();
   }, []);
 
@@ -96,7 +87,8 @@ export default function AddNewMessage() {
   const handleSendMessage = async () => {
     if (validateFields()) {
       try {
-        // Step 1: Create a new conversation or get an existing one
+        // Step 1: Create a new conversation or get an existing on
+
         const conversation_id = await startNewConversation(
           user,
           recipient.mother_id
