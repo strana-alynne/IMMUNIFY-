@@ -9,7 +9,6 @@ import {
   useMediaQuery,
   Skeleton,
 } from "@mui/material";
-import { Assessment } from "@mui/icons-material";
 import DefaulterCard from "@/app/components/DefaulterCard";
 import Map from "@/app/components/Map";
 import DefaultersTable from "./tables/DefaultersTable";
@@ -32,8 +31,8 @@ export default function DefaulterAnalysis() {
     async function fetchData() {
       const data = await fecthChildrenData();
       const dbData = await DBSCAN(data);
+      console.log(dbData);
       setClusterData(dbData);
-      console.log("counts", clusterData);
 
       // Process top puroks when cluster data is available
       if (dbData && dbData.clusters) {

@@ -1,5 +1,4 @@
 import { createClient } from "@/utils/supabase/client";
-import { stringify } from "postcss";
 
 const supabase = createClient();
 
@@ -1167,7 +1166,7 @@ export async function deleteRecord(delRecords) {
     .delete()
     .eq("record_id", delRecords.record_id);
 
-  if (delRccord) {
+  if (deleRecord) {
     console.error("Error updating vaccine stock:", error.message);
   }
 

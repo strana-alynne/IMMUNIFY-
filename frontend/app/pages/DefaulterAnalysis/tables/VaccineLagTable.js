@@ -22,20 +22,14 @@ const VACCINE_COVERAGE = {
 const VaccineLagTable = ({ clusterData }) => {
   // More detailed checking
   if (!clusterData) {
-    console.log("clusterData is undefined or null");
     return <Typography>No cluster data available</Typography>;
   }
 
   if (!clusterData.clusters) {
-    console.log("clusterData.clusters is undefined or null");
     return <Typography>No clusters available in data</Typography>;
   }
 
   if (!Array.isArray(clusterData.clusters)) {
-    console.log(
-      "clusterData.clusters is not an array:",
-      typeof clusterData.clusters
-    );
     return <Typography>Invalid clusters data format</Typography>;
   }
 

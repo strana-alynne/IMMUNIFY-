@@ -3,9 +3,7 @@
 import { useState, useEffect } from "react";
 import {
   Box,
-  Container,
-  Typography,
-  Stack,
+  Container, Stack,
   TableContainer,
   TableCell,
   TableHead,
@@ -16,9 +14,8 @@ import {
   Button,
   useTheme,
   useMediaQuery,
-  Skeleton,
+  Skeleton
 } from "@mui/material";
-import VaccinesIcon from "@mui/icons-material/Vaccines";
 import { useRouter } from "next/navigation";
 import { fetchVaccines } from "@/utils/supabase/api";
 import VaccineAlert from "@/app/components/VaccineAlert";
