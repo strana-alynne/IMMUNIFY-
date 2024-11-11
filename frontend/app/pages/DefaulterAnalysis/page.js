@@ -23,7 +23,7 @@ export default function DefaulterAnalysis() {
   const isTablet = useMediaQuery(theme.breakpoints.down("md"));
 
   const [clusterData, setClusterData] = useState();
-  const [topPuroks, setTopPuroks] = useState([]);
+  const [topPuroksOverall, setTopPuroksOverall] = useState([]);
   const [summary, setSummary] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -34,54 +34,75 @@ export default function DefaulterAnalysis() {
       console.log(dbData);
       setClusterData(dbData);
 
-      // Process top puroks when cluster data is available
       if (dbData && dbData.clusters) {
-        const purokCounts = {};
-
-        // Combine all points from all clusters
+        // Calculate overall purok counts across all clusters
+        const overallPurokCounts = {};
         dbData.clusters.forEach((cluster) => {
           cluster.points.forEach((point) => {
             if (point.purok_name) {
-              purokCounts[point.purok_name] =
-                (purokCounts[point.purok_name] || 0) + 1;
+              overallPurokCounts[point.purok_name] =
+                (overallPurokCounts[point.purok_name] || 0) + 1;
             }
           });
         });
 
-        // Sort and get top 4 puroks
-        const sortedPuroks = Object.entries(purokCounts)
+        // Get top 4 puroks overall for the cards
+        const sortedOverallPuroks = Object.entries(overallPurokCounts)
           .map(([name, count]) => ({ name, count }))
           .sort((a, b) => b.count - a.count)
           .slice(0, 4);
 
-        setTopPuroks(sortedPuroks);
+        setTopPuroksOverall(sortedOverallPuroks);
 
-        // Get the names of the highest puroks
-        const highestPuroks = sortedPuroks
-          .map((purok) => purok.name)
-          .join(", ");
+        // Find cluster with highest number of defaulters
+        const highestCluster = dbData.clusters.reduce((prev, current) =>
+          prev.total_defaulters > current.total_defaulters ? prev : current
+        );
+        // Calculate purok counts for the highest cluster only
+        const clusterPurokCounts = {};
+        highestCluster.points.forEach((point) => {
+          if (point.purok_name) {
+            clusterPurokCounts[point.purok_name] =
+              (clusterPurokCounts[point.purok_name] || 0) + 1;
+          }
+        });
 
-        // Get the top defaulted vaccine
-        const defaultedVaccines = dbData.clusters[0].defaulted_vaccines;
-        const topVaccine = Object.entries(defaultedVaccines).sort(
+        // Get top 3 puroks for this specific cluster
+        const topClusterPuroks = Object.entries(clusterPurokCounts)
+          .map(([name, count]) => ({ name, count }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 3);
+
+        // Get the top defaulted vaccines from the highest cluster
+        const defaultedVaccines = highestCluster.defaulted_vaccines;
+        const sortedVaccines = Object.entries(defaultedVaccines).sort(
           ([, a], [, b]) => b - a
-        )[0];
+        );
+        const topVaccine = sortedVaccines[0];
 
-        const summaryText = `In the cluster centered around latitude <strong>${dbData.clusters[0].center.latitude.toFixed(
-          4
-        )}</strong> and longitude <strong>${dbData.clusters[0].center.longitude.toFixed(
+        const summaryText = `Analysis of  <strong> Cluster ${
+          highestCluster.cluster + 1
+        }</strong>, which has the highest concentration of defaulters with <strong>${
+          highestCluster.total_defaulters
+        }</strong> cases, 
+          reveals significant patterns. This cluster, centered at latitude <strong>${highestCluster.center.latitude.toFixed(
+            4
+          )}</strong> and longitude <strong>${highestCluster.center.longitude.toFixed(
           4
         )}</strong>, 
-          the Puroks <strong>${highestPuroks}</strong> exhibit the highest default rates, each recording up to <strong>${
-          sortedPuroks[0].count
-        }</strong> defaulters. 
-          Among the vaccines, the <strong>${
+          shows concentrated defaulter cases in three key areas: <strong>${topClusterPuroks
+            .map((p) => `${p.name} (${p.count} cases)`)
+            .join(", ")}</strong>. 
+          Within this cluster, the <strong>${
             topVaccine[0]
-          }</strong> vaccine has the most significant number of defaulters in this cluster, 
-          with <strong>${
-            topVaccine[1]
-          }</strong> cases. These findings indicate substantial challenges, particularly in ensuring timely administration 
-          of the <strong>${topVaccine[0]}</strong> vaccine.`;
+          }</strong> has the highest number of defaulters with <strong>${
+          topVaccine[1]
+        }</strong> cases, 
+          followed by <strong>${sortedVaccines[1][0]} (${
+          sortedVaccines[1][1]
+        } cases)</strong> and <strong>${sortedVaccines[2][0]} (${
+          sortedVaccines[2][1]
+        } cases)</strong>.`;
 
         setSummary(summaryText);
       }
@@ -110,7 +131,7 @@ export default function DefaulterAnalysis() {
                       <Skeleton variant="rounded" height={118} />
                     </Grid>
                   ))
-                : topPuroks.map((purok) => (
+                : topPuroksOverall.map((purok) => (
                     <Grid key={purok.name} item xs={12} sm={6} md={3}>
                       <DefaulterCard
                         title={purok.name}
