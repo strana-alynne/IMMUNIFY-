@@ -170,13 +170,16 @@ export default function LoginPage() {
             )}
 
             <Grid container justifyContent="center">
-              <Grid item>
+              <Grid item alignItems="center" justifyItems="center">
+                <Typography variant="body2">
+                  Track your child’s vaccinations with ease.
+                </Typography>
                 <Link
-                  href="/pages/SignupPage"
+                  href="/pages/mobilePages/MobileLogIn"
                   variant="body2"
                   tabIndex={isLoading ? -1 : 0}
                 >
-                  {"Do not have an account? Sign Up"}
+                  {"👉 Parents, log in here"}
                 </Link>
               </Grid>
             </Grid>
