@@ -6,12 +6,9 @@ import {
   Box,
   TextField,
   Button,
-  Link,
   Stack,
-  Grid,
 } from "@mui/material";
 import { useState, useEffect } from "react";
-import * as React from "react";
 import { sendOTP, verifyOTP } from "./actions";
 import { useRouter } from "next/navigation";
 
@@ -24,6 +21,8 @@ export default function LoginPage() {
   const [isOtpSent, setIsOtpSent] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [isResending, setIsResending] = useState(false);
+  const [isSendingOTP, setIsSendingOTP] = useState(false);
+  const [isVerifyingOTP, setIsVerifyingOTP] = useState(false);
 
   const router = useRouter();
 
@@ -44,6 +43,7 @@ export default function LoginPage() {
     }
 
     setEmailError("");
+    setIsSendingOTP(true);
 
     const formData = new FormData();
     formData.append("email", email);
@@ -51,8 +51,10 @@ export default function LoginPage() {
     setMessage(result);
     if (result === "OTP sent. Please check your email.") {
       setIsOtpSent(true);
-      setCountdown(60); // Start countdown after successful OTP send
+      setCountdown(10); // Start countdown after successful OTP send
     }
+
+    setIsSendingOTP(false);
   };
 
   const handleResendOTP = async () => {
@@ -80,6 +82,7 @@ export default function LoginPage() {
     }
 
     setOtpError("");
+    setIsVerifyingOTP(true);
 
     const formData = new FormData();
     formData.append("email", email);
@@ -91,6 +94,8 @@ export default function LoginPage() {
     } else {
       setMessage(result);
     }
+
+    setIsVerifyingOTP(false);
   };
 
   return (
@@ -133,8 +138,9 @@ export default function LoginPage() {
                 variant="contained"
                 color="primary"
                 sx={{ mt: 3, mb: 2 }}
+                disabled={isSendingOTP}
               >
-                Send OTP
+                {isSendingOTP ? "Loading..." : "Send OTP"}
               </Button>
             </form>
           ) : (
@@ -158,8 +164,9 @@ export default function LoginPage() {
                 variant="contained"
                 color="primary"
                 sx={{ mt: 3, mb: 2 }}
+                disabled={isVerifyingOTP}
               >
-                Verify OTP
+                {isVerifyingOTP ? "Loading..." : "Verify OTP"}
               </Button>
 
               <Button
