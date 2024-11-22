@@ -18,6 +18,7 @@ export async function getImmunizationStats() {
     `
     )
     .eq("completion_status", "Completed")
+    .gte("date_administered", "2021-01-01")
     .order("date_administered", { ascending: true });
 
   console.log("data", data.length);
