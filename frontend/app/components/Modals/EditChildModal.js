@@ -47,6 +47,7 @@ const purok = [
   "Dacoville 2",
   "Don Lorenzo",
   "Espino Kalayaan",
+  "Outside Dumoy",
 ];
 
 const EditChildModal = ({ open, onClose, childData, onSave }) => {
