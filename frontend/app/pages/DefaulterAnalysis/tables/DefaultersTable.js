@@ -1,4 +1,3 @@
-import React from "react";
 import {
   Table,
   TableBody,
@@ -11,7 +10,6 @@ import {
   Chip,
   Box,
 } from "@mui/material";
-import LocationOnIcon from "@mui/icons-material/LocationOn";
 
 const DefaultersTable = ({ clusters }) => {
   return (
