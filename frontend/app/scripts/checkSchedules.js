@@ -68,7 +68,7 @@ async function processSchedules() {
       if (emailTemplate) {
         try {
           await resend.emails.send({
-            from: "Vaccination Reminder <noreply@yourdomain.com>",
+            from: "Vaccination Reminder <team@immunify.info>",
             to: schedule.Child.Mother.mother_email,
             subject: subject,
             html: emailTemplate,
