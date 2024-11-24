@@ -1,31 +1,28 @@
-name: Vaccination Schedule Reminder
+name: Schedule Email Reminders
 
 on:
   schedule:
-    - cron: "*/5 * * * *" # Runs at midnight UTC daily
-  workflow_dispatch: # Allows manual trigger from GitHub UI
-
-env:
-  SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-  SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-  RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+    - cron: "0 8 * * *" # Run daily at 8:00 AM UTC
 
 jobs:
-  send-reminders:
+  send-emails:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
         with:
-          node-version: "20"
-          cache: "npm"
+          node-version: "18"
 
-      - name: Install dependencies
+      - name: Install Dependencies
         run: npm install
 
-      - name: Run reminder script
-        run: node /app/scripts/checkSchedules.js
+      - name: Run Reminder Script
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+        run: node app/api/send-reminders.js
