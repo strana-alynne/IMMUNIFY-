@@ -2,7 +2,7 @@ name: Vaccination Schedule Reminder
 
 on:
   schedule:
-    - cron: "5 1 * * *" # Runs at midnight UTC daily
+    - cron: "/5 * * * *" # Runs at midnight UTC daily
   workflow_dispatch: # Allows manual trigger from GitHub UI
 
 env:
@@ -28,4 +28,4 @@ jobs:
         run: npm install
 
       - name: Run reminder script
-        run: node scripts/checkSchedules.js
+        run: node /app/scripts/checkSchedules.js
