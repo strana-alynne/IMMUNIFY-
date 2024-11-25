@@ -2,7 +2,9 @@ name: Send Reminder Emails
 
 on:
   schedule:
-    - cron: "5 0 * * *" # Runs daily at midnight
+    - cron: "5 0 * * *"  # Runs daily at 00:05 UTC
+  # Optional: Add manual trigger for testing
+  workflow_dispatch:
 
 jobs:
   send-emails:
@@ -10,14 +12,18 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
-
+      
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: "18"
-
+          
       - name: Install Dependencies
         run: npm install
-
+        
       - name: Trigger Email API
-        run: curl -X POST http://localhost:3000/pages/api/send-emails
+        env:
+          API_URL: ${{ secrets.RESEND_API_KEY }}  # Add this to your repo secrets
+        run: |
+          curl -X POST $API_URL/api/send-emails \
+          -H "Content-Type: application/json" \
