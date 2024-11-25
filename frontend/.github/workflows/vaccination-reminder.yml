@@ -1,4 +1,4 @@
-name: Vaccination Schedule Reminder
+name: Schedule Email Reminders
 
 on:
   schedule:
@@ -11,21 +11,20 @@ env:
   RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
 
 jobs:
-  send-reminders:
+  send-emails:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
         with:
-          node-version: "20"
-          cache: "npm"
+          node-version: "18"
 
-      - name: Install dependencies
+      - name: Install Dependencies
         run: npm install
-
+        
       - name: Run reminder script
         run: node /app/scripts/checkSchedules.js

@@ -44,6 +44,7 @@ import {
   subscribeToVaccineTransactions,
 } from "@/utils/supabase/api";
 import ExportDialog from "@/app/components/ExportDialog";
+import CollapsibleVaccineTable from "@/app/components/CollapsibleVaccineTable";
 
 const VACCINE_COVERAGE = {
   "BCG (Bacillus-Calmette-Guerin)": 10,
@@ -244,7 +245,7 @@ const Details = ({ params }) => {
     const exFormattedDate = expirationDate.format("YYYY-MM-DD");
     const vaccineStockDetails = {
       transaction_date: formattedDate,
-      transaction_type: transactionType,
+      transaction_type: "STOCK IN",
       transaction_quantity: parseInt(quantity, 10),
       batch_number: batchNumber,
       expiration_date: exFormattedDate,
@@ -350,7 +351,7 @@ const Details = ({ params }) => {
               startIcon={<Add />}
               onClick={handleOpenAddModal}
             >
-              Add Transaction
+              Add Batch
             </Button>
             <ExportDialog vaccines={vaccines} vaccineName={vaccineName} />
           </Box>
@@ -365,26 +366,61 @@ const Details = ({ params }) => {
             }}
           >
             <Box sx={{ flex: 1, overflow: "auto" }}>
-              <DataGrid
-                rows={vaccines}
-                columns={isMobile ? mobileColumns : columns}
-                pageSize={5}
-                getRowId={(row) => row.transaction_id}
-                rowsPerPageOptions={[5, 10, 20]}
-                disableSelectionOnClick
-                components={{ Toolbar: GridToolbar }}
-                filterModel={filterModel}
-                onFilterModelChange={(newModel) => setFilterModel(newModel)}
-                autoHeight
-                sx={{
-                  "& .MuiDataGrid-main": { overflow: "auto" },
-                  "& .MuiDataGrid-columnHeaders": {
-                    backgroundColor: "lightgray", // Keeping original styling
-                  },
-                  "& .MuiDataGrid-cell": {
-                    whiteSpace: "normal",
-                    wordWrap: "break-word",
-                  },
+              <CollapsibleVaccineTable
+                vaccines={vaccines}
+                onAddTransaction={async (transactionDetails) => {
+                  const vaccineStockDetails = {
+                    ...transactionDetails,
+                    inventory_id: inventoryID,
+                    expiration_date: expirationDate.format("YYYY-MM-DD"),
+                  };
+
+                  if (transactionDetails.transaction_type === "STOCK OUT") {
+                    const stock = await checkVaccineStock(
+                      VacId,
+                      parseInt(transactionDetails.transaction_quantity, 10)
+                    );
+                    if (!stock) {
+                      setModalContent(
+                        "Insufficient vaccine stock. Please check your vaccine inventory."
+                      );
+                      setOpenModal(true);
+                      setModeIcon(
+                        <Inventory2 color="error" sx={{ fontSize: 64 }} />
+                      );
+                      setTitle("No Stock Available");
+                      return;
+                    }
+                  }
+
+                  const result = await addVaccineStock(vaccineStockDetails);
+                  if (!result) {
+                    await loadData(inventoryID, VacId, vaccineName);
+                    setModalContent("Transaction added successfully.");
+                    setModeIcon(
+                      <CheckCircle color="primary" sx={{ fontSize: 80 }} />
+                    );
+                    setOpenModal(true);
+                    setTitle("Transaction Added");
+                    setActions(
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={handleClose}
+                      >
+                        Ok
+                      </Button>
+                    );
+                  } else {
+                    setModalContent(
+                      "Failed to add transaction for unknown reasons."
+                    );
+                    setOpenModal(true);
+                    setModeIcon(
+                      <Inventory2 color="error" sx={{ fontSize: 64 }} />
+                    );
+                    setTitle("Error Adding Transaction");
+                  }
                 }}
               />
             </Box>
@@ -465,19 +501,14 @@ const Details = ({ params }) => {
                   renderInput={(params) => <TextField {...params} fullWidth />}
                 />
               </LocalizationProvider>
-              <FormControl fullWidth>
-                <InputLabel>Transaction Type</InputLabel>
-                <Select
-                  value={transactionType}
-                  label="Transaction Type"
-                  onChange={(e) => setTransactionType(e.target.value)}
-                >
-                  <MenuItem value="STOCK IN">STOCK IN</MenuItem>
-                  <MenuItem value="STOCK OUT">STOCK OUT</MenuItem>
-                </Select>
-              </FormControl>
+              <TextField
+                disabled
+                fullWidth
+                label="Transaction Type"
+                value="STOCK IN"
+              />
               <Button variant="contained" onClick={handleAddTransaction}>
-                Add Transaction
+                Add Batch
               </Button>
             </Stack>
           </Box>

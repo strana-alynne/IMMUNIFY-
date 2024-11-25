@@ -27,6 +27,8 @@
     "date-fns": "^3.6.0",
     "dayjs": "^1.11.13",
     "js-cookie": "^3.0.5",
+    "jspdf": "^2.5.2",
+    "jspdf-autotable": "^3.8.4",
     "lucide-react": "^0.447.0",
     "next": "^14.2.14",
     "next-pwa": "^5.6.0",
