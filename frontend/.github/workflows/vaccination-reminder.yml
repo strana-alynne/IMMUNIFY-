@@ -1,18 +1,17 @@
-name: Schedule Email Reminders
+name: Send Reminder Emails
 
 on:
   schedule:
-    - cron: "0 /5 * * *" # Run daily at 8:00 AM UTC
+    - cron: "7 11 * * *" # Runs daily at midnight
 
 jobs:
   send-emails:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout Repository
+      - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Set up Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: "18"
@@ -20,9 +19,5 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      - name: Run Reminder Script
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
-          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-        run: node app/api/send-reminders.js
+      - name: Trigger Email API
+        run: curl -X POST http://localhost:3000/pages/api/send-emails
