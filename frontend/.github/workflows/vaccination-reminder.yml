@@ -2,7 +2,13 @@ name: Schedule Email Reminders
 
 on:
   schedule:
-    - cron: "0 /5 * * *" # Run daily at 8:00 AM UTC
+    - cron: "50 14 * * * *" # Runs at midnight UTC daily
+  workflow_dispatch: # Allows manual trigger from GitHub UI
+
+env:
+  SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+  SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+  RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
 
 jobs:
   send-emails:
@@ -19,10 +25,6 @@ jobs:
 
       - name: Install Dependencies
         run: npm install
-
-      - name: Run Reminder Script
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
-          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-        run: node app/api/send-reminders.js
+        
+      - name: Run reminder script
+        run: node /app/scripts/checkSchedules.js
