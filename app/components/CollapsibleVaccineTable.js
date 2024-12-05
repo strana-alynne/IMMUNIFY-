@@ -135,6 +135,10 @@ const BatchRow = ({ batch, transactions, onAddTransaction }) => {
   const [open, setOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
 
+  const sortedTransactions = [...transactions].sort((a, b) =>
+    dayjs(b.transaction_date).diff(dayjs(a.transaction_date))
+  );
+  
   const totalQuantity = transactions.reduce((sum, transaction) => {
     return (
       sum +
@@ -203,7 +207,7 @@ const BatchRow = ({ batch, transactions, onAddTransaction }) => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {transactions.map((transaction) => (
+                  {sortedTransactions.map((transaction) => (
                     <TableRow key={transaction.transaction_id}>
                       <TableCell component="th" scope="row">
                         {transaction.transaction_date}
