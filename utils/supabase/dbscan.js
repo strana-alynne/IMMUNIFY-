@@ -84,7 +84,7 @@ export async function fecthChildrenData() {
 
 export async function DBSCAN(data) {
   try {
-    const response = await fetch("http://127.0.0.1:8000/dbscan", {
+    const response = await fetch("inner-tricia-immunify-284d2a41.koyeb.app/dbscan", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
