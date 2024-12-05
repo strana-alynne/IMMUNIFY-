@@ -243,6 +243,7 @@ const BatchRow = ({ batch, transactions, onAddTransaction }) => {
 
 const CollapsibleVaccineTable = ({ vaccines, onAddTransaction }) => {
   const [groupedVaccines, setGroupedVaccines] = useState({});
+  const [sortedBatches, setSortedBatches] = useState([]);
 
   useEffect(() => {
     // Group vaccines by batch number
@@ -255,6 +256,23 @@ const CollapsibleVaccineTable = ({ vaccines, onAddTransaction }) => {
       return acc;
     }, {});
     setGroupedVaccines(grouped);
+
+    // Sort batches by expiration date
+    const batchesWithExpiration = Object.entries(grouped)
+      .map(([batchNumber, transactions]) => ({
+        batchNumber,
+        transactions,
+        latestExpiration: dayjs(
+          transactions.reduce((latest, transaction) => {
+            return latest > transaction.expiration_date
+              ? latest
+              : transaction.expiration_date;
+          }, transactions[0].expiration_date)
+        ),
+      }))
+      .sort((a, b) => a.latestExpiration.diff(b.latestExpiration));
+
+    setSortedBatches(batchesWithExpiration);
   }, [vaccines]);
 
   return (
@@ -281,16 +299,14 @@ const CollapsibleVaccineTable = ({ vaccines, onAddTransaction }) => {
           </TableRow>
         </TableHead>
         <TableBody>
-          {Object.entries(groupedVaccines).map(
-            ([batchNumber, transactions]) => (
-              <BatchRow
-                key={batchNumber}
-                batch={batchNumber}
-                transactions={transactions}
-                onAddTransaction={onAddTransaction}
-              />
-            )
-          )}
+          {sortedBatches.map(({ batchNumber, transactions }) => (
+            <BatchRow
+              key={batchNumber}
+              batch={batchNumber}
+              transactions={transactions}
+              onAddTransaction={onAddTransaction}
+            />
+          ))}
         </TableBody>
       </Table>
     </TableContainer>
