@@ -38,6 +38,7 @@ import {
   updateChildDetails,
   updateMotherDetails,
 } from "@/utils/supabase/api";
+import { administeredVaccine } from "@/utils/supabase/vaccine";
 import { useRouter } from "next/navigation";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -234,11 +235,12 @@ const ChildId = ({ params }) => {
           toast.success("Record saved successfully!");
 
           // Update the inventory
-          await addVaccineStock({
+          await administeredVaccine({
             transaction_date: dateVac,
             transaction_type: "STOCK OUT",
             transaction_quantity: vialsUsed,
             inventory_id: inventory_id,
+            remarks: "Administered Vaccine",
           });
         }
       }
