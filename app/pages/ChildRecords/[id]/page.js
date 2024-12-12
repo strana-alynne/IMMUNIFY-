@@ -37,6 +37,7 @@ import {
   checkRecordsBCGandHb,
   updateChildDetails,
   updateMotherDetails,
+  updateImmunizationRecordStatus,
 } from "@/utils/supabase/api";
 import { administeredVaccine } from "@/utils/supabase/vaccine";
 import { useRouter } from "next/navigation";
@@ -88,28 +89,6 @@ const ChildId = ({ params }) => {
     { id: "V007", name: "MMR", nextDose: 12 * 4 * 7, totalDoses: 2 },
   ];
 
-  // // Style logic for the chip depending on the child status
-  // const getChipColor = (status) => {
-  //   const colors = {
-  //     Complete: {
-  //       backgroundColor: "primary.light",
-  //       color: "primary.dark",
-  //       fontWeight: "bold",
-  //     },
-  //     "Partially Complete": {
-  //       backgroundColor: "secondary.light",
-  //       color: "secondary.dark",
-  //       fontWeight: "bold",
-  //     },
-  //     Missed: {
-  //       backgroundColor: "error.light",
-  //       color: "error.dark",
-  //       fontWeight: "bold",
-  //     },
-  //   };
-  //   return colors[status] || {};
-  // };
-
   const refreshChildData = async () => {
     const data = await fetchChild(params.id);
     setChildData(data || []);
@@ -127,13 +106,15 @@ const ChildId = ({ params }) => {
       }));
 
       setSchedules(fetchedSchedules);
+
+      // Modified to include both empty and missed records
       const filteredOptions = fetchedSchedules.filter(
-        (s) => s.immunization_records.length === 0
+        (s) =>
+          s.immunization_records.length === 0 ||
+          s.immunization_records.some((r) => r.completion_status === "Missed")
       );
 
-      setDropdownOptions(
-        fetchedSchedules.filter((s) => s.immunization_records.length === 0)
-      );
+      setDropdownOptions(filteredOptions);
       setChildAge(calculateAgeInWeeks(data[0].birthdate));
       updateChildStatus(fetchedSchedules);
     }
@@ -187,94 +168,40 @@ const ChildId = ({ params }) => {
       const dateVac = dateAdministered.format("YYYY-MM-DD");
       const getVacId = selectedScheduleData.vaccine_id;
 
-      // Fetch existing immunization records for the day
-      const existingRecords = await fetchExistingRecords(getVacId, dateVac);
+      // Check if this is a previously missed record
+      const missedRecord = selectedScheduleData.immunization_records.find(
+        (r) => r.completion_status === "Missed"
+      );
 
-      const babiesAdministeredToday = existingRecords.length;
-      const totalBabiesToAdminister = babiesAdministeredToday + 1;
+      if (missedRecord) {
+        // If it's a missed record, just update the status
+        await updateImmunizationRecordStatus(missedRecord.record_id, {
+          date_administered: dateVac,
+          completion_status: "Completed",
+        });
 
-      // Fetch vaccine details
-      const vaccineData = await fetchVaccineDetails(getVacId);
-      const vialsPerBaby = vaccineData.vials_per_baby;
-
-      // Calculate vials needed
-      const vialsUsed = totalBabiesToAdminister / vialsPerBaby;
-      const inventory_id = await getInventoryId(getVacId);
-
-      if (!Number.isInteger(vialsUsed)) {
-        const stockAvailable = await checkVaccineStock(getVacId, vialsUsed);
-
-        if (!stockAvailable) {
-          toast.error(
-            "Insufficient vaccine stock. Please check your vaccine inventory."
-          );
-          return;
-        } else {
-          const newRecord = {
-            sched_id: selectedSchedule,
-            date_administered: dateVac,
-            completion_status: "Completed",
-          };
-          await newImmunizationRecord(newRecord);
-          toast.success("Record saved successfully!");
-        }
-      } else {
-        const stockAvailable = await checkVaccineStock(getVacId, vialsUsed);
-        if (!stockAvailable) {
-          toast.error(
-            "Insufficient vaccine stock. Please check your vaccine inventory."
-          );
-          return;
-        } else {
-          const newRecord = {
-            sched_id: selectedSchedule,
-            date_administered: dateVac,
-            completion_status: "Completed",
-          };
-          await newImmunizationRecord(newRecord);
-          toast.success("Record saved successfully!");
-
-          // Update the inventory
-          await administeredVaccine({
-            transaction_date: dateVac,
-            transaction_type: "STOCK OUT",
-            transaction_quantity: vialsUsed,
-            inventory_id: inventory_id,
-            remarks: "Administered Vaccine",
-          });
-        }
-      }
-
-      const isBCGorHepB = ["V001", "V002"].includes(getVacId);
-
-      if (isBCGorHepB) {
-        const checkRecords = await checkRecordsBCGandHb(params.id);
-        if (checkRecords === false) {
-          await createSchedBCGHb(params.id, dateAdministered.toDate());
-        }
-      } else {
-        // Schedule the next dose if applicable
+        // Find the vaccine details for the missed schedule
         const vaccine = vaccineSchedule.find(
           (v) => v.id === selectedScheduleData.vaccine_id
         );
-        const administeredDoses = schedules.filter(
-          (s) =>
-            s.vaccine_id === vaccine.id && s.immunization_records.length > 0
-        ).length;
 
+        // Create a new schedule for the next dose if applicable
         if (
           vaccine &&
           vaccine.nextDose &&
-          administeredDoses + 1 < vaccine.totalDoses
+          selectedScheduleData.immunization_records.length + 1 <
+            vaccine.totalDoses
         ) {
           const nextScheduledDate = dayjs(dateAdministered)
             .add(vaccine.nextDose, "day")
             .toISOString();
+
           const newSchedule = await createNewSchedule(
             params.id,
-            vaccine.id,
+            selectedScheduleData.vaccine_id,
             nextScheduledDate
           );
+
           setSchedules((prev) => [...prev, newSchedule]);
           setDropdownOptions((prev) => [
             ...prev.filter(
@@ -282,13 +209,112 @@ const ChildId = ({ params }) => {
             ),
             newSchedule,
           ]);
+        }
+
+        toast.success("Missed record updated and next schedule created!");
+      } else {
+        // Fetch existing immunization records for the day
+        const existingRecords = await fetchExistingRecords(getVacId, dateVac);
+
+        const babiesAdministeredToday = existingRecords.length;
+        const totalBabiesToAdminister = babiesAdministeredToday + 1;
+
+        // Fetch vaccine details
+        const vaccineData = await fetchVaccineDetails(getVacId);
+        const vialsPerBaby = vaccineData.vials_per_baby;
+
+        // Calculate vials needed
+        const vialsUsed = totalBabiesToAdminister / vialsPerBaby;
+        const inventory_id = await getInventoryId(getVacId);
+
+        if (!Number.isInteger(vialsUsed)) {
+          const stockAvailable = await checkVaccineStock(getVacId, vialsUsed);
+
+          if (!stockAvailable) {
+            toast.error(
+              "Insufficient vaccine stock. Please check your vaccine inventory."
+            );
+            return;
+          } else {
+            const newRecord = {
+              sched_id: selectedSchedule,
+              date_administered: dateVac,
+              completion_status: "Completed",
+            };
+            await newImmunizationRecord(newRecord);
+            toast.success("Record saved successfully!");
+          }
         } else {
-          setDropdownOptions((prev) =>
-            prev.filter((schedule) => schedule.sched_id !== selectedSchedule)
+          const stockAvailable = await checkVaccineStock(getVacId, vialsUsed);
+          if (!stockAvailable) {
+            toast.error(
+              "Insufficient vaccine stock. Please check your vaccine inventory."
+            );
+            return;
+          } else {
+            const newRecord = {
+              sched_id: selectedSchedule,
+              date_administered: dateVac,
+              completion_status: "Completed",
+            };
+            await newImmunizationRecord(newRecord);
+            toast.success("Record saved successfully!");
+
+            // Update the inventory
+            await administeredVaccine({
+              transaction_date: dateVac,
+              transaction_type: "STOCK OUT",
+              transaction_quantity: vialsUsed,
+              inventory_id: inventory_id,
+              remarks: "Administered Vaccine",
+            });
+          }
+        }
+
+        const isBCGorHepB = ["V001", "V002"].includes(getVacId);
+
+        if (isBCGorHepB) {
+          const checkRecords = await checkRecordsBCGandHb(params.id);
+          if (checkRecords === false) {
+            await createSchedBCGHb(params.id, dateAdministered.toDate());
+          }
+        } else {
+          // Schedule the next dose if applicable
+          const vaccine = vaccineSchedule.find(
+            (v) => v.id === selectedScheduleData.vaccine_id
           );
+          const administeredDoses = schedules.filter(
+            (s) =>
+              s.vaccine_id === vaccine.id && s.immunization_records.length > 0
+          ).length;
+
+          if (
+            vaccine &&
+            vaccine.nextDose &&
+            administeredDoses + 1 < vaccine.totalDoses
+          ) {
+            const nextScheduledDate = dayjs(dateAdministered)
+              .add(vaccine.nextDose, "day")
+              .toISOString();
+            const newSchedule = await createNewSchedule(
+              params.id,
+              vaccine.id,
+              nextScheduledDate
+            );
+            setSchedules((prev) => [...prev, newSchedule]);
+            setDropdownOptions((prev) => [
+              ...prev.filter(
+                (schedule) => schedule.sched_id !== selectedSchedule
+              ),
+              newSchedule,
+            ]);
+          } else {
+            setDropdownOptions((prev) =>
+              prev.filter((schedule) => schedule.sched_id !== selectedSchedule)
+            );
+          }
         }
       }
-
       await refreshChildData();
       setSelectedSchedule("");
       setDateAdministered(dayjs());
@@ -412,6 +438,20 @@ const ChildId = ({ params }) => {
                         {`${schedule.vaccine_name} - ${dayjs(
                           schedule.scheduled_date
                         ).format("MMM D, YYYY")}`}
+                        {schedule.immunization_records &&
+                          schedule.immunization_records.some(
+                            (r) => r.completion_status === "Missed"
+                          ) && (
+                            <span
+                              style={{
+                                color: "red",
+                                fontWeight: "bold",
+                                marginLeft: "4px",
+                              }}
+                            >
+                              (missed)
+                            </span>
+                          )}
                       </MenuItem>
                     ))}
                   </Select>
