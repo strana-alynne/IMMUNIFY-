@@ -3,14 +3,12 @@ import {
   Box,
   Container,
   Typography,
-  Stack,
   Grid,
   useTheme,
   useMediaQuery,
 } from "@mui/material";
 import { useRouter } from "next/navigation";
-import React, { useEffect, useState } from "react";
-import DashboardIcon from "@mui/icons-material/Dashboard";
+import { useEffect, useState } from "react";
 import DashBoardCard from "@/app/components/DashBoardCard";
 import ReminderCard from "@/app/components/ReminderCard";
 import {
@@ -22,6 +20,7 @@ import {
   Campaign,
 } from "@mui/icons-material";
 import Map from "@/app/components/Map";
+import DashboardMap from "@/app/components/Dashboard_Map";
 import { createClient } from "@/utils/supabase/client";
 import VaccineAlert from "@/app/components/VaccineAlert";
 import { countMissedChildren, totalChildren } from "@/utils/supabase/api";
@@ -72,7 +71,6 @@ export default function Dashboard() {
         data: { user },
       } = await supabase.auth.getUser();
       if (user) {
-        setUser(user.user_metadata.role);
         fetchConversations(user.user_metadata.role);
       }
     };
@@ -182,7 +180,7 @@ export default function Dashboard() {
             <Typography variant="h5" color="primary" marginBottom={2}>
               DEFAULTER ANALYSIS
             </Typography>
-            <Map />
+            <DashboardMap />
           </Grid>
           <Grid
             item
