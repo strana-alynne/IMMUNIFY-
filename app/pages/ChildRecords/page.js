@@ -479,6 +479,32 @@ export default function ChildRecords() {
               </Button>
             </Paper>
           )}
+          {activeFilter === "schedTomorrow" && (
+            <Paper
+              sx={{
+                p: 2,
+                bgcolor: "primary.light",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <Stack direction="row" spacing={1} alignItems="center">
+                <CalendarMonth color="primary" />
+                <Typography color="primary.main">
+                  Showing {childToday} children for Scheduled Tomorrow
+                </Typography>
+              </Stack>
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={() => setActiveFilter(null)}
+                startIcon={<EventBusy />}
+              >
+                Clear Filter
+              </Button>
+            </Paper>
+          )}
           {/* TextFields */}
           <Stack spacing={2}>
             <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
