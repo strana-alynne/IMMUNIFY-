@@ -1221,7 +1221,7 @@ export async function fetchScheduledChild() {
 //FETCH SCHEDULED CHILD TODAY
 export async function fetchScheduledChildId() {
   const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1); // Add one day
+  tomorrow.setDate(tomorrow.getDate()); // Add one day
   const today = tomorrow.toISOString().split("T")[0]; // Format as YYYY-MM-DD
 
   const { data, error } = await supabase
@@ -1239,7 +1239,7 @@ export async function fetchScheduledChildId() {
 
 export const fetchImmunizedChildId = async () => {
   const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setDate(tomorrow.getDate());
   const today = tomorrow.toISOString().split("T")[0];
 
   const { data, error } = await supabase
@@ -1262,7 +1262,7 @@ export const fetchImmunizedChildId = async () => {
 
 export const fetchSchedTomChildId = async () => {
   const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 2);
+  tomorrow.setDate(tomorrow.getDate() + 1);
   const today = tomorrow.toISOString().split("T")[0];
 
   const { data, error } = await supabase
