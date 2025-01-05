@@ -492,7 +492,7 @@ export default function ChildRecords() {
               <Stack direction="row" spacing={1} alignItems="center">
                 <CalendarMonth color="primary" />
                 <Typography color="primary.main">
-                  Showing {childToday} children for Scheduled Tomorrow
+                  Showing {scheduledTomorrow} children for Scheduled Tomorrow
                 </Typography>
               </Stack>
               <Button
