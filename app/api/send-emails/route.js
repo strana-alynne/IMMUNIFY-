@@ -16,7 +16,7 @@ export async function POST() {
     afterSchedule.setDate(today.getDate() - 1);
 
     // Fetch schedules with vaccine info
-    const { data, error } = await supabase
+    const { data: schedules, error } = await supabase
       .from("Schedule")
       .select(
         "scheduled_date, child_id, vaccine_id, Child(mother_id, Mother(mother_email, mother_name)), Vaccine(vaccine_name)"
@@ -33,48 +33,70 @@ export async function POST() {
       throw error;
     }
 
-    // Send emails
-    for (const schedule of data) {
-      const {
-        scheduled_date,
-        vaccine_id,
-        Child: { Mother },
-        Vaccine,
-      } = schedule;
+    // Group schedules by mother and date
+    const groupedSchedules = schedules.reduce((acc, schedule) => {
+      const motherEmail = schedule.Child.Mother.mother_email;
+      const date = schedule.scheduled_date;
 
-      const vaccineName = Vaccine.vaccine_name;
-      const formattedDate = new Date(scheduled_date).toLocaleDateString();
+      if (!acc[motherEmail]) {
+        acc[motherEmail] = {
+          motherName: schedule.Child.Mother.mother_name,
+          dates: {},
+        };
+      }
 
-      const subject =
-        scheduled_date === threeDaysBefore.toISOString().split("T")[0]
-          ? `Vaccination Reminder: 3 Days Left`
-          : scheduled_date === oneDayBefore.toISOString().split("T")[0]
-          ? `Vaccination Reminder: Tomorrow`
-          : `Vaccination Follow-Up`;
+      if (!acc[motherEmail].dates[date]) {
+        acc[motherEmail].dates[date] = [];
+      }
 
-      const message =
-        scheduled_date === threeDaysBefore.toISOString().split("T")[0]
-          ? `Hi ${Mother.mother_name}, this is a reminder that your child has the ${vaccineName} vaccination scheduled in 3 days on ${formattedDate}.`
-          : scheduled_date === oneDayBefore.toISOString().split("T")[0]
-          ? `Hi ${Mother.mother_name}, this is a reminder that your child has the ${vaccineName} vaccination scheduled tomorrow on ${formattedDate}.`
-          : `Hi ${Mother.mother_name}, we noticed your child's ${vaccineName} vaccination was scheduled yesterday on ${formattedDate}. Please follow up if you missed it.`;
+      acc[motherEmail].dates[date].push(schedule.Vaccine.vaccine_name);
+      return acc;
+    }, {});
 
-      try {
-        const emailResponse = await resend.emails.send({
-          from: "team@immunify.info", // Replace with your verified email
-          to: Mother.mother_email,
-          subject,
-          html: `<p>${message}</p>`,
-        });
+    // Send emails for each mother
+    for (const motherEmail of Object.keys(groupedSchedules)) {
+      const { motherName, dates } = groupedSchedules[motherEmail];
 
-        // Log the email response for debugging
-        console.log("Email Response:", emailResponse);
-      } catch (emailError) {
-        console.error("Error sending email:", emailError.message);
-        return NextResponse.json(
-          { error: emailError.message },
-          { status: 500 }
-        );
+      for (const scheduledDate of Object.keys(dates)) {
+        const vaccines = dates[scheduledDate];
+        const formattedDate = new Date(scheduledDate).toLocaleDateString();
+        const vaccineList = vaccines.join(", ");
+
+        let subject, message;
+
+        if (scheduledDate === threeDaysBefore.toISOString().split("T")[0]) {
+          subject = "Vaccination Reminder: 3 Days Left";
+          message = `Hi ${motherName}, this is a reminder that your child has the following vaccinations scheduled in 3 days on ${formattedDate}:\n\n${vaccines
+            .map((v) => `- ${v}`)
+            .join("\n")}`;
+        } else if (scheduledDate === oneDayBefore.toISOString().split("T")[0]) {
+          subject = "Vaccination Reminder: Tomorrow";
+          message = `Hi ${motherName}, this is a reminder that your child has the following vaccinations scheduled tomorrow on ${formattedDate}:\n\n${vaccines
+            .map((v) => `- ${v}`)
+            .join("\n")}`;
+        } else {
+          subject = "Vaccination Follow-Up";
+          message = `Hi ${motherName}, we noticed your child's following vaccinations were scheduled yesterday on ${formattedDate}. Please follow up if you missed any:\n\n${vaccines
+            .map((v) => `- ${v}`)
+            .join("\n")}`;
+        }
+
+        try {
+          const emailResponse = await resend.emails.send({
+            from: "team@immunify.info",
+            to: motherEmail,
+            subject,
+            html: `<p>${message.replace(/\n/g, "<br>")}</p>`,
+          });
+
+          console.log("Email Response:", emailResponse);
+        } catch (emailError) {
+          console.error("Error sending email:", emailError.message);
+          return NextResponse.json(
+            { error: emailError.message },
+            { status: 500 }
+          );
+        }
       }
     }
 
