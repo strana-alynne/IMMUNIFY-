@@ -9,11 +9,11 @@ export async function POST() {
   try {
     const today = new Date();
     const threeDaysBefore = new Date(today);
-    threeDaysBefore.setDate(today.getDate() + 3);
+    threeDaysBefore.setDate(today.getDate() - 3);
     const oneDayBefore = new Date(today);
-    oneDayBefore.setDate(today.getDate() + 1);
+    oneDayBefore.setDate(today.getDate() - 1);
     const afterSchedule = new Date(today);
-    afterSchedule.setDate(today.getDate() - 1);
+    afterSchedule.setDate(today.getDate() + 1);
 
     // Fetch schedules with vaccine info
     const { data: schedules, error } = await supabase
