@@ -15,6 +15,9 @@ export async function POST() {
     const afterSchedule = new Date(today);
     afterSchedule.setDate(today.getDate() - 1);
 
+    // Convert today to ISO date string for comparison
+    const todayString = today.toISOString().split("T")[0];
+
     // Fetch schedules with vaccine info
     const { data, error } = await supabase
       .from("Schedule")
@@ -26,7 +29,9 @@ export async function POST() {
           threeDaysBefore.toISOString().split("T")[0]
         },scheduled_date.eq.${
           oneDayBefore.toISOString().split("T")[0]
-        },scheduled_date.eq.${afterSchedule.toISOString().split("T")[0]}`
+        },scheduled_date.eq.${todayString},scheduled_date.eq.${
+          afterSchedule.toISOString().split("T")[0]
+        }`
       );
 
     if (error) {
@@ -37,7 +42,6 @@ export async function POST() {
     for (const schedule of data) {
       const {
         scheduled_date,
-        vaccine_id,
         Child: { Mother },
         Vaccine,
       } = schedule;
@@ -45,32 +49,41 @@ export async function POST() {
       const vaccineName = Vaccine.vaccine_name;
       const formattedDate = new Date(scheduled_date).toLocaleDateString();
 
-      const subject =
-        scheduled_date === threeDaysBefore.toISOString().split("T")[0]
-          ? `Vaccination Reminder: 3 Days Left`
-          : scheduled_date === oneDayBefore.toISOString().split("T")[0]
-          ? `Vaccination Reminder: Tomorrow`
-          : `Vaccination Follow-Up`;
+      let subject, message;
 
-      const message =
-        scheduled_date === threeDaysBefore.toISOString().split("T")[0]
-          ? `Hi ${Mother.mother_name}, this is a reminder that your child has the ${vaccineName} vaccination scheduled in 3 days on ${formattedDate}.`
-          : scheduled_date === oneDayBefore.toISOString().split("T")[0]
-          ? `Hi ${Mother.mother_name}, this is a reminder that your child has the ${vaccineName} vaccination scheduled tomorrow on ${formattedDate}.`
-          : `Hi ${Mother.mother_name}, we noticed your child's ${vaccineName} vaccination was scheduled yesterday on ${formattedDate}. Please follow up if you missed it.`;
+      // Determine email content based on schedule timing
+      switch (scheduled_date) {
+        case threeDaysBefore.toISOString().split("T")[0]:
+          subject = "Vaccination Reminder: 3 Days Left";
+          message = `Hi ${Mother.mother_name}, this is a reminder that your child has the ${vaccineName} vaccination scheduled in 3 days on ${formattedDate}.`;
+          break;
+        case oneDayBefore.toISOString().split("T")[0]:
+          subject = "Vaccination Reminder: Tomorrow";
+          message = `Hi ${Mother.mother_name}, this is a reminder that your child has the ${vaccineName} vaccination scheduled tomorrow on ${formattedDate}.`;
+          break;
+        case todayString:
+          subject = "Vaccination Due Today";
+          message = `Hi ${Mother.mother_name}, this is a reminder that your child's ${vaccineName} vaccination is scheduled for today. Please ensure you visit the clinic as planned.`;
+          break;
+        case afterSchedule.toISOString().split("T")[0]:
+          subject = "Vaccination Follow-Up";
+          message = `Hi ${Mother.mother_name}, we noticed your child's ${vaccineName} vaccination was scheduled yesterday on ${formattedDate}. Please follow up if you missed it.`;
+          break;
+        default:
+          continue; // Skip if date doesn't match any conditions
+      }
 
       try {
         const emailResponse = await resend.emails.send({
-          from: "team@immunify.info", // Replace with your verified email
+          from: "team@immunify.info",
           to: Mother.mother_email,
           subject,
           html: `<p>${message}</p>`,
         });
 
-        // Log the email response for debugging
         console.log("Email Response:", emailResponse);
       } catch (emailError) {
-        console.error("Error sending email:", emailError.message);
+        console.error("Error sending email:", emailError);
         return NextResponse.json(
           { error: emailError.message },
           { status: 500 }
