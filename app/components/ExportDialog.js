@@ -12,38 +12,35 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Typography,
 } from "@mui/material";
 import { FileDownload } from "@mui/icons-material";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
 export default function ExportDialog({ vaccines, vaccineName }) {
   const [open, setOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(dayjs());
+  const [selectedYear, setSelectedYear] = useState("");
   const [selectedBatch, setSelectedBatch] = useState("all");
-  const [availableMonths, setAvailableMonths] = useState([]);
+  const [exportedBy, setExportedBy] = useState("");
+  const [availableYears, setAvailableYears] = useState([]);
   const [availableBatches, setAvailableBatches] = useState([]);
 
   useEffect(() => {
-    // Get unique months from transactions
-    const months = [
-      ...new Set(
-        vaccines.map((v) => dayjs(v.transaction_date).format("YYYY-MM"))
-      ),
-    ].map((date) => dayjs(date));
+    // Get unique years from transactions
+    const years = [
+      ...new Set(vaccines.map((v) => dayjs(v.transaction_date).format("YYYY"))),
+    ].sort();
 
     // Get unique batch numbers
     const batches = [...new Set(vaccines.map((v) => v.batch_number))];
 
-    setAvailableMonths(months);
+    setAvailableYears(years);
     setAvailableBatches(batches);
 
-    if (months.length > 0) {
-      setSelectedDate(months[0]);
+    if (years.length > 0) {
+      setSelectedYear(years[years.length - 1]); // Default to most recent year
     }
   }, [vaccines]);
 
@@ -63,16 +60,17 @@ export default function ExportDialog({ vaccines, vaccineName }) {
   const handleClose = () => setOpen(false);
 
   const handleExport = () => {
-    // Filter data based on selected month, year, and batch
+    // Get current date and time for export timestamp
+    const exportTimestamp = dayjs().format("YYYY-MM-DD HH:mm:ss");
+
+    // Filter data based on selected year and batch
     const filteredData = vaccines
       .filter((vaccine) => {
         const vaccineDate = dayjs(vaccine.transaction_date);
-        const matchesDate =
-          vaccineDate.month() === selectedDate.month() &&
-          vaccineDate.year() === selectedDate.year();
+        const matchesYear = vaccineDate.year().toString() === selectedYear;
         const matchesBatch =
           selectedBatch === "all" || vaccine.batch_number === selectedBatch;
-        return matchesDate && matchesBatch;
+        return matchesYear && matchesBatch;
       })
       .sort((a, b) =>
         dayjs(a.transaction_date).diff(dayjs(b.transaction_date))
@@ -101,6 +99,7 @@ export default function ExportDialog({ vaccines, vaccineName }) {
     doc.text("Description: VACCINE", 10, 30);
     doc.text("Re-order Point:", doc.internal.pageSize.width - 60, 30);
     doc.text("Unit of Measurement:", 10, 35);
+    doc.text(`Year: ${selectedYear}`, doc.internal.pageSize.width - 60, 40);
 
     if (selectedBatch !== "all") {
       doc.text(
@@ -109,6 +108,15 @@ export default function ExportDialog({ vaccines, vaccineName }) {
         35
       );
     }
+
+    // Add export information at the bottom of the page
+    const pageHeight = doc.internal.pageSize.height;
+    doc.text(`Exported By: ${exportedBy || "N/A"}`, 10, pageHeight - 10);
+    doc.text(
+      `Export Date: ${exportTimestamp}`,
+      doc.internal.pageSize.width - 80,
+      pageHeight - 10
+    );
 
     // Define table headers
     const headers = [
@@ -141,7 +149,7 @@ export default function ExportDialog({ vaccines, vaccineName }) {
 
     // Add table
     autoTable(doc, {
-      startY: 40,
+      startY: 45,
       head: headers,
       body: tableData,
       theme: "grid",
@@ -168,13 +176,12 @@ export default function ExportDialog({ vaccines, vaccineName }) {
         6: { cellWidth: 30, halign: "center" }, // Expiration Date
         7: { cellWidth: 40 }, // Batch # Lot #
       },
+      margin: { bottom: 15 }, // Add margin at bottom for export info
     });
 
-    // Save PDF with batch information in filename if specific batch selected
+    // Save PDF with year and batch information in filename
     const batchInfo = selectedBatch !== "all" ? `_Batch${selectedBatch}` : "";
-    const fileName = `${vaccineName}_StockCard_${selectedDate.format(
-      "MMMM_YYYY"
-    )}${batchInfo}.pdf`;
+    const fileName = `${vaccineName}_StockCard_${selectedYear}${batchInfo}.pdf`;
     doc.save(fileName);
     handleClose();
   };
@@ -194,23 +201,20 @@ export default function ExportDialog({ vaccines, vaccineName }) {
         <DialogTitle>Export Stock Card</DialogTitle>
         <DialogContent>
           <Stack spacing={3} sx={{ mt: 2 }}>
-            <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <DatePicker
-                views={["month", "year"]}
-                label="Select Month and Year"
-                value={selectedDate}
-                onChange={(newValue) => {
-                  setSelectedDate(newValue);
-                }}
-                shouldDisableMonth={(date) => {
-                  return !availableMonths.some(
-                    (month) =>
-                      month.month() === date.month() &&
-                      month.year() === date.year()
-                  );
-                }}
-              />
-            </LocalizationProvider>
+            <FormControl fullWidth>
+              <InputLabel>Year</InputLabel>
+              <Select
+                value={selectedYear}
+                label="Year"
+                onChange={(e) => setSelectedYear(e.target.value)}
+              >
+                {availableYears.map((year) => (
+                  <MenuItem key={year} value={year}>
+                    {year}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
             <FormControl fullWidth>
               <InputLabel>Batch Number</InputLabel>
@@ -227,6 +231,19 @@ export default function ExportDialog({ vaccines, vaccineName }) {
                 ))}
               </Select>
             </FormControl>
+
+            <TextField
+              fullWidth
+              label="Exported By"
+              value={exportedBy}
+              onChange={(e) => setExportedBy(e.target.value)}
+              placeholder="Enter your name"
+              helperText="This will appear in the exported document"
+            />
+
+            <Typography variant="caption" color="text.secondary">
+              Current date and time will be automatically added to the export
+            </Typography>
           </Stack>
         </DialogContent>
         <DialogActions>
